@@ -1,0 +1,113 @@
+{
+  "project_info": {
+    "project_number": "7031551502",
+    "project_id": "falguni-admin",
+    "storage_bucket": "falguni-admin.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:7031551502:android:9a9ac6901f35a9f23c6e5f",
+        "android_client_info": {
+          "package_name": "com.Falgunigruhudhyog"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "7031551502-3nppq56df8jiiuqr469lpgbn94klv53j.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.Falgunigruhudhyog",
+            "certificate_hash": "025bf5142f6196cf535fa37355aea169fea5d097"
+          }
+        },
+        {
+          "client_id": "7031551502-idlrt9g7if0916sp455c2drb7b3h3oe3.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.Falgunigruhudhyog",
+            "certificate_hash": "2e3d3944de78a3e0d03d1506f61c4935e7eafaa3"
+          }
+        },
+        {
+          "client_id": "7031551502-m6gv016icutapam8lb4b8epp24tugv0q.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCIG4hrwrTleFvlUvNuf9fD3PEqUH3Q2dI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "7031551502-m6gv016icutapam8lb4b8epp24tugv0q.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:7031551502:android:91398b847d32afd63c6e5f",
+        "android_client_info": {
+          "package_name": "com.falguni"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "7031551502-m6gv016icutapam8lb4b8epp24tugv0q.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCIG4hrwrTleFvlUvNuf9fD3PEqUH3Q2dI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "7031551502-m6gv016icutapam8lb4b8epp24tugv0q.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:7031551502:android:39d50df037e404c33c6e5f",
+        "android_client_info": {
+          "package_name": "com.falguni.admin"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "7031551502-m6gv016icutapam8lb4b8epp24tugv0q.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCIG4hrwrTleFvlUvNuf9fD3PEqUH3Q2dI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "7031551502-m6gv016icutapam8lb4b8epp24tugv0q.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
