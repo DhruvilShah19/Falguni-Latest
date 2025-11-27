@@ -1,17 +1,11 @@
-// ignore_for_file: unused_field, unused_import, prefer_final_fields, unused_local_variable
+// ignore_for_file: unused_field, prefer_final_fields, unused_local_variable
 
 import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
-
-import 'package:list_tile_switch/list_tile_switch.dart';
-import 'package:provider/provider.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import '../Providers/auth.dart';
-import '../Theme/theme.dart';
-import '../Theme/theme_data.dart';
 
 class ProfileHome extends StatefulWidget {
   final bool isbottomNav;
@@ -22,388 +16,372 @@ class ProfileHome extends StatefulWidget {
 }
 
 class _ProfileHomeState extends State<ProfileHome> {
+  static const Color kPrimary = Color(0xFF2F2525);
+
   DocumentReference? userRef;
-  DocumentReference? userDetails;
+
   String fullname = '';
   String email = '';
   String phone = '';
-  String password = '';
   String userPic = '';
-  String address = 'Address';
-  String userPicMain = '';
   String addressMain = '';
-  num cartQuantity = 0;
   String referralCode = '';
 
+  bool isLogged = false;
+  bool referralStatus = false;
+
+  // ---------------------------------------------------------
+  // INIT
+  // ---------------------------------------------------------
   @override
   void initState() {
     super.initState();
-    getReferralStatus();
-    getAuth();
-    _getUserDetails();
+    _listenAuth();
+    _getReferralStatus();
     _getUserDoc();
+    _loadUserDetails();
+  }
+
+  void _listenAuth() {
+    FirebaseAuth.instance.authStateChanges().listen((user) {
+      if (!mounted) return;
+      setState(() => isLogged = user != null);
+    });
   }
 
   Future<void> _getUserDoc() async {
-    final FirebaseAuth auth = FirebaseAuth.instance;
-    final FirebaseFirestore firestore = FirebaseFirestore.instance;
-
-    User? user = auth.currentUser;
-    setState(() {
-      userRef = firestore.collection('users').doc(user!.uid);
-    });
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+    userRef = FirebaseFirestore.instance.collection('users').doc(user.uid);
   }
 
-  Future<void> _getUserDetails() async {
-    final FirebaseAuth auth = FirebaseAuth.instance;
-    final FirebaseFirestore firestore = FirebaseFirestore.instance;
+  Future<void> _loadUserDetails() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
 
-    User? user = auth.currentUser;
-    setState(() {
-      userDetails =
-          firestore.collection('users').doc(user!.uid).get().then((value) {
-        setState(() {
-          email = value['email'];
-          fullname = value['fullname'];
-          phone = value['phone'];
-          userPic = value['photoUrl'];
-          addressMain = value['address'];
-          referralCode = value['personalReferralCode'];
-        });
-      }) as DocumentReference<Object?>?;
-    });
-  }
-
-  // Select and image from the gallery or take a picture with the camera
-  // Then upload to Firebase Storage
-
-  whenAddressIsEmpty() {
-    if (addressMain == '') {
-      return address;
-    } else {
-      return addressMain;
-    }
-  }
-
-  whenProfilePicIsempty() {
-    if (userPicMain == '') {
-      return userPic;
-    } else {
-      return userPicMain;
-    }
-  }
-
-  getCart() {
-    if (userRef == null) {
-      return null;
-    } else {
-      userRef!.collection('Cart').get().then((val) {
-        num tempTotal =
-            val.docs.fold(0, (tot, doc) => tot + doc.data()['quantity']);
-
-        setState(() {
-          cartQuantity = tempTotal;
-        });
-      });
-    }
-  }
-
-  dynamic themeMode;
-  var _lightTheme = true;
-  void onThemeChanged(bool value, ThemeNotifier themeNotifier) async {
-    (value)
-        ? themeNotifier.setTheme(lightTheme)
-        : themeNotifier.setTheme(darkTheme);
-    var prefs = await SharedPreferences.getInstance();
-    prefs.setBool('lightMode', value);
-  }
-
-  getThemeDetail() async {
-    SharedPreferences.getInstance().then((prefs) {
-      var lightModeOn = prefs.getBool('lightMode');
+    FirebaseFirestore.instance
+        .collection('users')
+        .doc(user.uid)
+        .snapshots()
+        .listen((value) {
+      if (!mounted || !value.exists) return;
       setState(() {
-        themeMode = lightModeOn!;
+        fullname = value['fullname'] ?? '';
+        email = value['email'] ?? '';
+        phone = value['phone'] ?? '';
+        userPic = value['photoUrl'] ?? '';
+        addressMain = value['address'] ?? '';
+        referralCode = value['personalReferralCode'] ?? '';
       });
     });
   }
 
-  bool isLogged = false;
-  getAuth() {
-    FirebaseAuth.instance.authStateChanges().listen((User? user) async {
-      if (user == null) {
-        setState(() {
-          isLogged = false;
-        });
-      } else {
-        setState(() {
-          isLogged = true;
-        });
-      }
-    });
-  }
-
-  bool referralStatus = false;
-  getReferralStatus() {
+  void _getReferralStatus() {
     FirebaseFirestore.instance
         .collection('Referral System')
         .doc('Referral System')
         .snapshots()
         .listen((value) {
-      setState(() {
-        referralStatus = value['Status'];
-      });
+      if (!mounted) return;
+      setState(() => referralStatus = value['Status'] ?? false);
     });
   }
 
+  // ---------------------------------------------------------
+  // UI HELPERS
+  // ---------------------------------------------------------
+
+  String _initials() {
+    if (fullname.isEmpty) {
+      return email.isNotEmpty ? email[0].toUpperCase() : "U";
+    }
+    final parts = fullname.split(" ");
+    if (parts.length == 1) return parts.first[0].toUpperCase();
+    return (parts.first[0] + parts[1][0]).toUpperCase();
+  }
+
+  Widget _buildAvatar() {
+    if (userPic.isNotEmpty) {
+      return CircleAvatar(
+        radius: 34,
+        backgroundImage: NetworkImage(userPic),
+      );
+    }
+    return CircleAvatar(
+      radius: 34,
+      backgroundColor: Colors.grey.shade300,
+      child: Text(
+        _initials(),
+        style: const TextStyle(
+          color: kPrimary,
+          fontSize: 22,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+    );
+  }
+
+  Widget _tile({
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+  }) {
+    return ListTile(
+      leading: Icon(icon, color: Colors.grey.shade700, size: 22),
+      title: Text(
+        label,
+        style: const TextStyle(
+          fontSize: 16,
+          fontWeight: FontWeight.w500,
+        ),
+      ).tr(),
+      trailing:
+          Icon(Icons.chevron_right, color: Colors.grey.shade400, size: 20),
+      visualDensity: VisualDensity.compact,
+      onTap: onTap,
+    );
+  }
+
+  Widget _sectionHeader(String text) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 18, 16, 6),
+      child: Text(
+        text.tr(),
+        style: TextStyle(
+          fontSize: 14,
+          fontWeight: FontWeight.w600,
+          color: Colors.grey.shade600,
+        ),
+      ),
+    );
+  }
+
+  // ---------------------------------------------------------
+  // BUILD
+  // ---------------------------------------------------------
   @override
   Widget build(BuildContext context) {
-    getThemeDetail();
-    final themeNotifier = Provider.of<ThemeNotifier>(context);
     return Scaffold(
-      resizeToAvoidBottomInset: true,
       appBar: AppBar(
-        automaticallyImplyLeading: widget.isbottomNav == true ? false : true,
-        iconTheme: Theme.of(context).iconTheme,
-        titleTextStyle: TextStyle(color: Theme.of(context).indicatorColor),
-        backgroundColor: Theme.of(context).colorScheme.surface,
-        centerTitle: true,
+        automaticallyImplyLeading: widget.isbottomNav ? false : true,
+        backgroundColor: Colors.white,
         elevation: 0,
-        title: const Text(
-          'Profile',
-        ).tr(),
+        centerTitle: true,
+        title: Text(
+          'Profile'.tr(),
+          style: const TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.w600,
+            color: kPrimary,
+          ),
+        ),
       ),
-      body: ListView(children: [
-        ListTile(
-            title: const Text(
-          "Account",
-          style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-        ).tr()),
-        ListTile(
-          onTap: () {
-            if (userRef == null) {
-              Navigator.of(context).pushNamed('/login');
-            } else {
-              Navigator.of(context).pushNamed('/orders');
-            }
-          },
-          leading: const Icon(Icons.shopping_bag),
-          title: const Text(
-            "Orders",
-            style: TextStyle(
-              fontSize: 18,
+      body: ListView(
+        padding: const EdgeInsets.only(bottom: 40),
+        children: [
+          // -----------------------------------------------------------
+          // HEADER CARD
+          // -----------------------------------------------------------
+          Container(
+            margin: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+            padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(18),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(.05),
+                  blurRadius: 10,
+                  offset: const Offset(0, 2),
+                )
+              ],
             ),
-          ).tr(),
-          trailing: const Icon(Icons.chevron_right),
-        ),
-        ListTile(
-          onTap: () {
-            if (userRef == null) {
-              Navigator.of(context).pushNamed('/login');
-            } else {
-              Navigator.of(context).pushNamed('/courier');
-            }
-          },
-          leading: const Icon(Icons.delivery_dining),
-          title: const Text(
-            "Logistics/Courier",
-            style: TextStyle(
-              fontSize: 18,
+            child: Row(
+              children: [
+                _buildAvatar(),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          fullname.isNotEmpty ? fullname : "Guest".tr(),
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w600,
+                            color: kPrimary,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        if (email.isNotEmpty)
+                          Text(
+                            email,
+                            style: TextStyle(
+                                fontSize: 14, color: Colors.grey.shade600),
+                          ),
+                        if (addressMain.isNotEmpty) ...[
+                          const SizedBox(height: 4),
+                          Row(
+                            children: [
+                              Icon(Icons.location_on_outlined,
+                                  size: 14, color: Colors.grey.shade600),
+                              const SizedBox(width: 4),
+                              Expanded(
+                                child: Text(
+                                  addressMain,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                      fontSize: 13,
+                                      color: Colors.grey.shade600),
+                                ),
+                              ),
+                            ],
+                          )
+                        ]
+                      ]),
+                ),
+              ],
             ),
-          ).tr(),
-          trailing: const Icon(Icons.chevron_right),
-        ),
-        ListTile(
-          onTap: () {
-            if (userRef == null) {
-              Navigator.of(context).pushNamed('/login');
-            } else {
-              Navigator.of(context).pushNamed('/profile');
-            }
-          },
-          leading: const Icon(Icons.person),
-          title: const Text(
-            "Profile",
-            style: TextStyle(
-              fontSize: 18,
+          ),
+
+          // -----------------------------------------------------------
+          // ACCOUNT SECTION
+          // -----------------------------------------------------------
+          _sectionHeader("Account"),
+
+          _tile(
+            icon: Icons.shopping_bag_outlined,
+            label: "Orders",
+            onTap: () {
+              if (!isLogged) {
+                Navigator.pushNamed(context, '/login');
+              } else {
+                Navigator.pushNamed(context, '/orders');
+              }
+            },
+          ),
+          _tile(
+            icon: Icons.delivery_dining,
+            label: "Logistics/Courier",
+            onTap: () {
+              if (!isLogged) {
+                Navigator.pushNamed(context, '/login');
+              } else {
+                Navigator.pushNamed(context, '/courier');
+              }
+            },
+          ),
+          _tile(
+            icon: Icons.person_outline,
+            label: "Profile",
+            onTap: () {
+              if (!isLogged) {
+                Navigator.pushNamed(context, '/login');
+              } else {
+                Navigator.pushNamed(context, '/profile');
+              }
+            },
+          ),
+          _tile(
+            icon: Icons.room_outlined,
+            label: "Delivery Address",
+            onTap: () {
+              if (!isLogged) {
+                Navigator.pushNamed(context, '/login');
+              } else {
+                Navigator.pushNamed(context, '/delivery-address');
+              }
+            },
+          ),
+          _tile(
+            icon: Icons.wallet_outlined,
+            label: "Wallet",
+            onTap: () {
+              if (!isLogged) {
+                Navigator.pushNamed(context, '/login');
+              } else {
+                Navigator.pushNamed(context, '/wallet');
+              }
+            },
+          ),
+          _tile(
+            icon: Icons.favorite_border,
+            label: "Favorites",
+            onTap: () {
+              if (!isLogged) {
+                Navigator.pushNamed(context, '/login');
+              } else {
+                Navigator.pushNamed(context, '/favorites');
+              }
+            },
+          ),
+
+          const Divider(indent: 16, endIndent: 16),
+
+          // -----------------------------------------------------------
+          // OTHER SECTION
+          // -----------------------------------------------------------
+          if (referralStatus)
+            _tile(
+              icon: Icons.wallet_giftcard_outlined,
+              label: "Share and earn",
+              onTap: () {
+                if (!isLogged) {
+                  Navigator.pushNamed(context, '/login');
+                } else {
+                  Navigator.pushNamed(context, '/referral-page');
+                }
+              },
             ),
-          ).tr(),
-          trailing: const Icon(Icons.chevron_right),
-        ),
-        ListTile(
-          onTap: () {
-            if (userRef == null) {
-              Navigator.of(context).pushNamed('/login');
-            } else {
-              Navigator.of(context).pushNamed('/delivery-address');
-            }
-          },
-          leading: const Icon(Icons.room),
-          title: const Text(
-            "Delivery Address",
-            style: TextStyle(
-              fontSize: 18,
+
+          _tile(
+            icon: Icons.card_giftcard_outlined,
+            label: "Promo Code",
+            onTap: () => Navigator.pushNamed(context, '/coupon'),
+          ),
+
+          _tile(
+            icon: Icons.help_center_outlined,
+            label: "F.A.Q.",
+            onTap: () => Navigator.pushNamed(context, '/faq'),
+          ),
+
+          _tile(
+            icon: Icons.notifications_outlined,
+            label: "Notifications",
+            onTap: () {
+              if (!isLogged) {
+                Navigator.pushNamed(context, '/login');
+              } else {
+                Navigator.pushNamed(context, '/notifications');
+              }
+            },
+          ),
+
+          const Divider(indent: 16, endIndent: 16),
+
+          // -----------------------------------------------------------
+          // AUTH SECTION
+          // -----------------------------------------------------------
+          if (isLogged)
+            _tile(
+              icon: Icons.logout,
+              label: "Log Out",
+              onTap: () {
+                AuthService().signOut(context);
+              },
+            )
+          else
+            _tile(
+              icon: Icons.login,
+              label: "Log In",
+              onTap: () {
+                Navigator.pushNamed(context, '/login');
+              },
             ),
-          ).tr(),
-          trailing: const Icon(Icons.chevron_right),
-        ),
-        ListTile(
-          onTap: () {
-            if (userRef == null) {
-              Navigator.of(context).pushNamed('/login');
-            } else {
-              Navigator.of(context).pushNamed('/wallet');
-            }
-          },
-          leading: const Icon(Icons.wallet),
-          title: const Text(
-            "Wallet",
-            style: TextStyle(
-              fontSize: 18,
-            ),
-          ).tr(),
-          trailing: const Icon(Icons.chevron_right),
-        ),
-        ListTile(
-          onTap: () {
-            if (userRef == null) {
-              Navigator.of(context).pushNamed('/login');
-            } else {
-              Navigator.of(context).pushNamed('/favorites');
-            }
-          },
-          leading: const Icon(Icons.favorite),
-          title: const Text(
-            "Favorites",
-            style: TextStyle(
-              fontSize: 18,
-            ),
-          ).tr(),
-          trailing: const Icon(Icons.chevron_right),
-        ),
-        const Divider(
-          endIndent: 10,
-          indent: 10,
-          color: Colors.grey,
-          thickness: 1,
-        ),
-        referralStatus == false
-            ? const SizedBox()
-            : ListTile(
-                onTap: () {
-                  if (userRef == null) {
-                    Navigator.of(context).pushNamed('/login');
-                  } else {
-                    Navigator.of(context).pushNamed('/referral-page');
-                  }
-                },
-                leading: const Icon(Icons.wallet_giftcard),
-                title: const Text(
-                  "Share and earn",
-                  style: TextStyle(
-                    fontSize: 18,
-                  ),
-                ).tr(),
-                trailing: const Icon(Icons.chevron_right),
-              ),
-        ListTile(
-          onTap: () {
-            Navigator.of(context).pushNamed('/coupon');
-          },
-          leading: const Icon(Icons.card_giftcard),
-          title: const Text(
-            "Promo Code",
-            style: TextStyle(
-              fontSize: 18,
-            ),
-          ).tr(),
-          trailing: const Icon(Icons.chevron_right),
-        ),
-        ListTile(
-          onTap: () {
-            Navigator.of(context).pushNamed('/faq');
-          },
-          leading: const Icon(Icons.help_center_rounded),
-          title: const Text(
-            "F.A.Q.",
-            style: TextStyle(
-              fontSize: 18,
-            ),
-          ).tr(),
-          trailing: const Icon(Icons.chevron_right),
-        ),
-        ListTile(
-          onTap: () {
-            if (userRef == null) {
-              Navigator.of(context).pushNamed('/login');
-            } else {
-              Navigator.of(context).pushNamed('/notifications');
-            }
-          },
-          leading: const Icon(Icons.notifications),
-          title: const Text(
-            "Notifications",
-            style: TextStyle(
-              fontSize: 18,
-            ),
-          ).tr(),
-          trailing: const Icon(Icons.chevron_right),
-        ),
-        // ListTile(
-        //   onTap: () {
-        //     Navigator.of(context).pushNamed('/language');
-        //   },
-        //   leading: const Icon(Icons.language),
-        //   title: const Text(
-        //     "Language",
-        //     style: TextStyle(
-        //       fontSize: 18,
-        //     ),
-        //   ).tr(),
-        //   trailing: const Icon(Icons.chevron_right),
-        // ),
-        // ListTileSwitch(
-        //   switchActiveColor: const Color.fromARGB(255, 47, 37, 37),
-        //     leading: const Icon(Icons.color_lens),
-        //     title: const Text('Theme Mode',
-        //         style: TextStyle(
-        //           fontSize: 18,
-        //         )).tr(),
-        //     // ignore: prefer_if_null_operators
-        //     value: themeMode == null ? true : themeMode,
-        //     onChanged: (val) {
-        //       setState(() {
-        //         _lightTheme = val;
-        //         themeMode = val;
-        //       });
-        //       onThemeChanged(val, themeNotifier);
-        //       debugPrint(_lightTheme.toString());
-        //     }),
-        isLogged == true
-            ? ListTile(
-                onTap: () {
-                  AuthService().signOut(context);
-                },
-                leading: const Icon(Icons.logout),
-                title: const Text(
-                  "Log Out",
-                  style: TextStyle(
-                    fontSize: 18,
-                  ),
-                ).tr(),
-              )
-            : ListTile(
-                onTap: () {
-                  Navigator.of(context).pushNamed('/login');
-                },
-                leading: const Icon(Icons.login),
-                title: const Text(
-                  "Log in",
-                  style: TextStyle(
-                    fontSize: 18,
-                  ),
-                ).tr(),
-              ),
-      ]),
+        ],
+      ),
     );
   }
 }

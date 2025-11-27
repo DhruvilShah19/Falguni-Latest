@@ -1,8 +1,9 @@
-// ignore_for_file: unused_local_variable, avoid_print, use_build_context_synchronously
+// ignore_for_file: unused_local_variable, avoid_print, use_build_context_synchronously, prefer_const_constructors
 
 import 'dart:async';
 import 'dart:io';
 import 'dart:math';
+
 import 'package:easy_localization/easy_localization.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:fluttertoast/fluttertoast.dart';
@@ -26,14 +27,23 @@ class AddCourier extends StatefulWidget {
 }
 
 class _AddCourierState extends State<AddCourier> {
+  // THEME
+  static const Color kPrimary = Color(0xFF2F2525); // Espresso
+  static const Color kGold = Color(0xFFC9A86A); // Premium gold
+  static const Color kDark = Color(0xFF1C1515);
+
   String userAddress = '';
   String recipientAddress = '';
   num perKm = 0;
   num perKg = 0;
   String deliveryBoyID = '';
 
+  // ---------------------------------------------------------------------------
+  // MAP PICKERS
+  // ---------------------------------------------------------------------------
+
   _navigateAndDisplaySelection(BuildContext context) async {
-    final result = await Navigator.push(
+    await Navigator.push(
       context,
       MaterialPageRoute(
         builder: (context) {
@@ -51,10 +61,9 @@ class _AddCourierState extends State<AddCourier> {
             onSuggestionSelected: (PlacesDetailsResponse? result) {
               if (result != null) {
                 setState(() {
-                  // selectedPlace = result;
                   userAddress = result.result.formattedAddress ?? "";
                   Navigator.of(context).pop();
-                  print('Seleceted Address is$userAddress');
+                  print('Selected Address is $userAddress');
                 });
               }
             },
@@ -65,7 +74,7 @@ class _AddCourierState extends State<AddCourier> {
   }
 
   _navigateAndDisplaySelection2(BuildContext context) async {
-    final result = await Navigator.push(
+    await Navigator.push(
       context,
       MaterialPageRoute(
         builder: (context) {
@@ -83,10 +92,9 @@ class _AddCourierState extends State<AddCourier> {
             onSuggestionSelected: (PlacesDetailsResponse? result) {
               if (result != null) {
                 setState(() {
-                  // selectedPlace = result;
                   recipientAddress = result.result.formattedAddress ?? "";
                   Navigator.of(context).pop();
-                  print('Seleceted Address is$recipientAddress');
+                  print('Selected Address is $recipientAddress');
                 });
               }
             },
@@ -95,6 +103,10 @@ class _AddCourierState extends State<AddCourier> {
       ),
     );
   }
+
+  // ---------------------------------------------------------------------------
+  // FIRESTORE CONFIG / PRICING
+  // ---------------------------------------------------------------------------
 
   bool kgStatus = false;
   getKgStatus() {
@@ -128,6 +140,7 @@ class _AddCourierState extends State<AddCourier> {
     });
   }
 
+  num parcelID = 0;
   getParcelID() {
     FirebaseFirestore.instance
         .collection('Admin')
@@ -147,6 +160,10 @@ class _AddCourierState extends State<AddCourier> {
         .update({'ParcelID': parcelID + 1});
   }
 
+  // ---------------------------------------------------------------------------
+  // INIT
+  // ---------------------------------------------------------------------------
+
   @override
   initState() {
     super.initState();
@@ -155,9 +172,6 @@ class _AddCourierState extends State<AddCourier> {
     getCourierDetails();
     getCurrencyDetails();
     assignRider();
-    // oneSignalTimer = Timer.periodic(
-    //     const Duration(milliseconds: 100), (Timer t) => initOneSignal());
-    // _handleGetDeviceState();
     getOneSignalDetails();
     getParcelID();
   }
@@ -166,31 +180,6 @@ class _AddCourierState extends State<AddCourier> {
   String playerId = '';
   Timer? oneSignalTimer;
   String vendorToken = '';
-
-  // initOneSignal() {
-  //   if (getOnesignalKey != '') {
-  //     OneSignal.shared.setLogLevel(OSLogLevel.verbose, OSLogLevel.none);
-  //     debugPrint('One singal app id is jjjjjj');
-  //     OneSignal.shared.setAppId(getOnesignalKey);
-  //     debugPrint('$getOnesignalKey is firebase oneSignal key');
-  //     OneSignal.shared
-  //         .promptUserForPushNotificationPermission()
-  //         .then((accepted) {
-  //       debugPrint("Accepted permission: $accepted");
-  //     });
-  //     oneSignalTimer!.cancel();
-  //   }
-  // }
-
-  // void _handleGetDeviceState() async {
-  //   debugPrint("Getting DeviceState");
-  //   var deviceState = await OneSignal.shared.getDeviceState();
-  //   setState(() {
-  //     playerId = deviceState!.userId!;
-  //   });
-
-  //   debugPrint('$playerId is your player ID');
-  // }
 
   getOneSignalDetails() {
     FirebaseFirestore.instance
@@ -204,33 +193,9 @@ class _AddCourierState extends State<AddCourier> {
     });
   }
 
-  // void _handleSendNotification(
-  //     String playerId, String content, String heading) async {
-  //   // var imgUrlString =
-  //   //     "http://cdn1-www.dogtime.com/assets/uploads/gallery/30-impossibly-cute-puppies/impossibly-cute-puppy-2.jpg";
-
-  //   var notification = OSCreateNotification(
-  //     playerIds: [playerId],
-  //     content: content,
-  //     heading: heading,
-  //     // iosAttachments: {"id1": imgUrlString},
-  //     // bigPicture: imgUrlString,
-  //     // buttons: [
-  //     //   OSActionButton(text: "test1", id: "id1"),
-  //     //   OSActionButton(text: "test2", id: "id2")
-  //     // ]
-  //   );
-
-  //   await OneSignal.shared.postNotification(notification).then((value) {
-  //     Fluttertoast.showToast(
-  //         msg: "$value",
-  //         toastLength: Toast.LENGTH_LONG,
-  //         gravity: ToastGravity.CENTER,
-  //         timeInSecForIosWeb: 1,
-
-  //         fontSize: 16.0);
-  //   });
-  // }
+  // ---------------------------------------------------------------------------
+  // PRICING / DISTANCE
+  // ---------------------------------------------------------------------------
 
   num distance = 0;
   num priceKg = 0;
@@ -238,7 +203,6 @@ class _AddCourierState extends State<AddCourier> {
   num weight = 0;
   String getcurrencyName = '';
   String getcurrencyCode = '';
-  final picker = ImagePicker();
   String getcurrencySymbol = '';
   String parcelName = '';
   String sendersName = '';
@@ -251,7 +215,6 @@ class _AddCourierState extends State<AddCourier> {
   String deliveryBoysAddress = '';
   String recipientPhone = '';
   num price = 0;
-  num parcelID = 0;
   String parcelDescription = '';
   String parcelImage = '';
   String userName = '';
@@ -283,10 +246,11 @@ class _AddCourierState extends State<AddCourier> {
       );
 
       double distanceInMeters = Geolocator.distanceBetween(
-          coordinates.latitude!,
-          coordinates.longitude!,
-          coordinates2.latitude!,
-          coordinates2.longitude!);
+        coordinates.latitude!,
+        coordinates.longitude!,
+        coordinates2.latitude!,
+        coordinates2.longitude!,
+      );
 
       setState(() {
         distance = distanceInMeters;
@@ -294,10 +258,15 @@ class _AddCourierState extends State<AddCourier> {
     }
   }
 
+  // ---------------------------------------------------------------------------
+  // IMAGE
+  // ---------------------------------------------------------------------------
+
   XFile? imageFile;
   bool? loading;
+  final picker = ImagePicker();
+
   Future<void> getImage(context) async {
-    final ImagePicker picker = ImagePicker();
     final XFile? image = await picker.pickImage(source: ImageSource.gallery);
     setState(() {
       imageFile = image;
@@ -319,6 +288,10 @@ class _AddCourierState extends State<AddCourier> {
     }
   }
 
+  // ---------------------------------------------------------------------------
+  // FIRESTORE WRITE
+  // ---------------------------------------------------------------------------
+
   final formKey = GlobalKey<FormState>();
 
   addCourier(CourierModel courierModel) {
@@ -326,16 +299,15 @@ class _AddCourierState extends State<AddCourier> {
         .collection('Courier')
         .add(courierModel.toMap())
         .then((value) => updateParcelID());
-    // _handleSendNotification(
-    //     tokenID,
-    //     'Hello, You have a logistics order please preview.',
-    //     'New Logistics Order');
-    updateHistoryDriver(HistoryModel(
+
+    updateHistoryDriver(
+      HistoryModel(
         amount: '',
         paymentSystem: '',
         message: 'Hello, You have a logistics order please preview.',
-        timeCreated:
-            DateFormat.yMMMMEEEEd().format(DateTime.now()).toString()));
+        timeCreated: DateFormat.yMMMMEEEEd().format(DateTime.now()).toString(),
+      ),
+    );
   }
 
   updateHistoryDriver(HistoryModel historyModel) {
@@ -431,345 +403,595 @@ class _AddCourierState extends State<AddCourier> {
     await launchUrl(launchUri);
   }
 
+  // ---------------------------------------------------------------------------
+  // SMALL UI HELPERS
+  // ---------------------------------------------------------------------------
+
+  Widget _sectionTitle(String text) {
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: Text(
+        text.tr(),
+        style: const TextStyle(
+          color: Colors.white70,
+          fontSize: 13,
+          fontWeight: FontWeight.w600,
+          letterSpacing: .4,
+        ),
+      ),
+    );
+  }
+
+  InputDecoration _fieldDecoration(String hint) {
+    return InputDecoration(
+      hintText: hint.tr(),
+      hintStyle: const TextStyle(color: Colors.white54, fontSize: 14),
+      filled: true,
+      fillColor: Colors.white.withOpacity(0.06),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: Colors.white.withOpacity(0.16)),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: Colors.white.withOpacity(0.18)),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: kGold, width: 1.2),
+      ),
+    );
+  }
+
+  Widget _addressChip({
+    required String label,
+    required String value,
+    required VoidCallback onTap,
+  }) {
+    final bool empty = value.isEmpty;
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(14),
+      child: Container(
+        height: 56,
+        decoration: BoxDecoration(
+          color: Colors.white.withOpacity(0.06),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+            color: empty ? Colors.white24 : kGold.withOpacity(0.7),
+            width: 1,
+          ),
+        ),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        child: Row(
+          children: [
+            Icon(Icons.location_on_outlined,
+                color: empty ? Colors.white54 : kGold, size: 20),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(label.tr(),
+                        style: const TextStyle(
+                            color: Colors.white54, fontSize: 11)),
+                    const SizedBox(height: 2),
+                    Text(
+                      empty ? "Tap to select".tr() : value,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style:
+                          const TextStyle(color: Colors.white, fontSize: 13.5),
+                    ),
+                  ]),
+            ),
+            const SizedBox(width: 6),
+            Icon(Icons.edit_location_alt_outlined,
+                color: Colors.white54, size: 18),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ---------------------------------------------------------------------------
+  // BUILD
+  // ---------------------------------------------------------------------------
+
   @override
   Widget build(BuildContext context) {
+    // still using your distance computation
     convertToCoordinate();
-    return Scaffold(
-        appBar: AppBar(
-            elevation: 0,
-            centerTitle: true,
-            title: const Text(
-              'Add New Courier',
-            ).tr()),
-        body: SingleChildScrollView(
-            child: Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: Form(
-            key: formKey,
-            child: Column(children: [
-              const SizedBox(height: 20),
-              Row(
-                children: [
-                  const Text(
-                    'From:',
-                    style: TextStyle(fontSize: 15),
-                  ).tr(),
-                ],
-              ),
-              const SizedBox(height: 10),
-              SizedBox(
-                height: 50,
-                width: double.infinity,
-                child: OutlinedButton(
-                    child: Text(userAddress),
-                    onPressed: () {
-                      _navigateAndDisplaySelection(context);
-                    }),
-              ),
-              const SizedBox(height: 20),
-              Row(
-                children: [
-                  const Text(
-                    'Recipient Address:',
-                    style: TextStyle(fontSize: 15),
-                  ).tr(),
-                ],
-              ),
-              const SizedBox(height: 10),
-              SizedBox(
-                height: 50,
-                width: double.infinity,
-                child: OutlinedButton(
-                    child: Text(recipientAddress),
-                    onPressed: () {
-                      _navigateAndDisplaySelection2(context);
-                    }),
-              ),
-              const SizedBox(height: 20),
-              TextFormField(
-                onChanged: (value) {
-                  setState(() {
-                    recipientName = value;
-                  });
-                },
-                validator: (String? val) {
-                  if (val == '') {
-                    return 'Required field'.tr();
-                  } else {
-                    return null;
-                  }
-                },
-                decoration: InputDecoration(
-                  focusedBorder: const OutlineInputBorder(
-                    borderSide:
-                        BorderSide(color: Colors.greenAccent, width: 1.0),
-                  ),
-                  enabledBorder: const OutlineInputBorder(),
-                  hintText: 'Recipient Name'.tr(),
-                ),
-              ),
-              const SizedBox(height: 20),
-              TextFormField(
-                keyboardType: TextInputType.phone,
-                onChanged: (value) {
-                  setState(() {
-                    recipientPhone = value;
-                  });
-                },
-                validator: (String? val) {
-                  if (val == '') {
-                    return 'Required field'.tr();
-                  } else {
-                    return null;
-                  }
-                },
-                decoration: InputDecoration(
-                  focusedBorder: const OutlineInputBorder(
-                    borderSide:
-                        BorderSide(color: Colors.greenAccent, width: 1.0),
-                  ),
-                  enabledBorder: const OutlineInputBorder(),
-                  hintText: 'Recipient Phone'.tr(),
-                ),
-              ),
-              const SizedBox(height: 20),
-              TextFormField(
-                onChanged: (value) {
-                  setState(() {
-                    parcelName = value;
-                  });
-                },
-                validator: (String? val) {
-                  if (val == '') {
-                    return 'Required field'.tr();
-                  } else {
-                    return null;
-                  }
-                },
-                decoration: InputDecoration(
-                  focusedBorder: const OutlineInputBorder(
-                    borderSide:
-                        BorderSide(color: Colors.greenAccent, width: 1.0),
-                  ),
-                  enabledBorder: const OutlineInputBorder(),
-                  hintText: 'Parcel Name'.tr(),
-                ),
-              ),
-              const SizedBox(height: 20),
-              TextFormField(
-                keyboardType: TextInputType.number,
-                onChanged: (value) {
-                  setState(() {
-                    weight = int.parse(value);
-                  });
-                },
-                validator: (String? val) {
-                  if (val == '') {
-                    return 'Required field'.tr();
-                  } else {
-                    return null;
-                  }
-                },
-                decoration: InputDecoration(
-                  focusedBorder: const OutlineInputBorder(
-                    borderSide:
-                        BorderSide(color: Colors.greenAccent, width: 1.0),
-                  ),
-                  enabledBorder: const OutlineInputBorder(),
-                  hintText: 'Parcel Weight In Kg'.tr(),
-                ),
-              ),
-              const SizedBox(height: 20),
-              TextFormField(
-                onChanged: (value) {
-                  setState(() {
-                    parcelDescription = value;
-                  });
-                },
-                validator: (String? val) {
-                  if (val == '') {
-                    return 'Required field'.tr();
-                  } else {
-                    return null;
-                  }
-                },
-                maxLines: 5,
-                decoration: InputDecoration(
-                  focusedBorder: const OutlineInputBorder(
-                    borderSide:
-                        BorderSide(color: Colors.greenAccent, width: 1.0),
-                  ),
-                  enabledBorder: const OutlineInputBorder(),
-                  hintText: 'Parcel Description'.tr(),
-                ),
-              ),
-              const SizedBox(height: 20),
-              Row(children: [const Text('Parcel Image').tr()]),
-              const SizedBox(height: 20),
-              parcelImage == ''
-                  ? const Icon(Icons.image, size: 120, color: Colors.grey)
-                  : Image.file(
-                      File(imageFile!.path),
-                      fit: BoxFit.cover,
-                      height: 120,
-                      width: 120,
-                    ),
-              const SizedBox(height: 20),
-              InkWell(
-                  onTap: () {
-                    getImage(context);
-                  },
-                  child: Icon(Icons.photo_camera,
-                      size: 40, color: Colors.blue.shade800)),
-              const SizedBox(height: 20),
-              const SizedBox(height: 20),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text('Admin selected calculation format:',
-                          style: TextStyle(fontWeight: FontWeight.bold))
-                      .tr(),
-                  kgStatus == true ? Text('Per Kg $kg') : Text('Per Km $km')
-                ],
-              ),
-              const SizedBox(height: 10),
-              Row(
-                children: [
-                  Text('Distance:  ${distance.round() / 1000}Km',
-                      style: const TextStyle(fontWeight: FontWeight.bold)),
-                ],
-              ),
-              const SizedBox(height: 10),
-              Row(
-                children: [
-                  const Text('Price:',
-                      style: TextStyle(fontWeight: FontWeight.bold)),
-                  const SizedBox(width: 10),
-                  kgStatus == false
-                      ? Text(
-                          '$getcurrencySymbol ${distance.round() / 1000 * km}',
-                          style: const TextStyle(fontWeight: FontWeight.bold))
-                      : Text('$getcurrencySymbol ${weight * kg}',
-                          style: const TextStyle(fontWeight: FontWeight.bold)),
-                ],
-              ),
 
-              Column(
+    final priceValue =
+        kgStatus == false ? (distance.round() / 1000 * km) : (weight * kg);
+
+    return Scaffold(
+      extendBodyBehindAppBar: true,
+      appBar: AppBar(
+        elevation: 0,
+        backgroundColor: Colors.transparent,
+        centerTitle: true,
+        iconTheme: const IconThemeData(color: Colors.white),
+        title: Text(
+          'Add New Courier'.tr(),
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 20,
+            fontWeight: FontWeight.w700,
+            letterSpacing: .3,
+          ),
+        ),
+      ),
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              Color(0xFF1C1515),
+              Color(0xFF2F2525),
+              Color(0xFF1C1515),
+            ],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+          ),
+        ),
+        child: SafeArea(
+          child: SingleChildScrollView(
+            padding:
+                const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+            child: Form(
+              key: formKey,
+              child: Column(
                 children: [
-                  Padding(
-                    padding: const EdgeInsets.only(left: 12, top: 12),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  // MAIN CARD
+                  Container(
+                    padding: const EdgeInsets.fromLTRB(16, 18, 16, 18),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withOpacity(0.25),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: Colors.white.withOpacity(0.12),
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.4),
+                          blurRadius: 18,
+                          offset: const Offset(0, 10),
+                        ),
+                      ],
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text("Assigned Rider's Detail",
-                                style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 18,
-                                    color: Colors.grey))
-                            .tr(),
+                        // FROM ADDRESS
+                        _sectionTitle('From:'),
+                        const SizedBox(height: 8),
+                        _addressChip(
+                          label: "Sender Address",
+                          value: userAddress.isEmpty ? "" : userAddress,
+                          onTap: () => _navigateAndDisplaySelection(context),
+                        ),
+
+                        const SizedBox(height: 20),
+
+                        // RECIPIENT ADDRESS
+                        _sectionTitle('Recipient Address:'),
+                        const SizedBox(height: 8),
+                        _addressChip(
+                          label: "Recipient Address",
+                          value:
+                              recipientAddress.isEmpty ? "" : recipientAddress,
+                          onTap: () => _navigateAndDisplaySelection2(context),
+                        ),
+
+                        const SizedBox(height: 22),
+
+                        // RECIPIENT NAME
+                        _sectionTitle('Recipient Name'),
+                        const SizedBox(height: 6),
+                        TextFormField(
+                          style: const TextStyle(color: Colors.white),
+                          onChanged: (value) => setState(() {
+                            recipientName = value;
+                          }),
+                          validator: (String? val) {
+                            if (val == null || val.trim().isEmpty) {
+                              return 'Required field'.tr();
+                            }
+                            return null;
+                          },
+                          decoration: _fieldDecoration('Recipient Name'),
+                        ),
+
+                        const SizedBox(height: 18),
+
+                        // RECIPIENT PHONE
+                        _sectionTitle('Recipient Phone'),
+                        const SizedBox(height: 6),
+                        TextFormField(
+                          style: const TextStyle(color: Colors.white),
+                          keyboardType: TextInputType.phone,
+                          onChanged: (value) => setState(() {
+                            recipientPhone = value;
+                          }),
+                          validator: (String? val) {
+                            if (val == null || val.trim().isEmpty) {
+                              return 'Required field'.tr();
+                            }
+                            return null;
+                          },
+                          decoration: _fieldDecoration('Recipient Phone'),
+                        ),
+
+                        const SizedBox(height: 18),
+
+                        // PARCEL NAME
+                        _sectionTitle('Parcel Name'),
+                        const SizedBox(height: 6),
+                        TextFormField(
+                          style: const TextStyle(color: Colors.white),
+                          onChanged: (value) => setState(() {
+                            parcelName = value;
+                          }),
+                          validator: (String? val) {
+                            if (val == null || val.trim().isEmpty) {
+                              return 'Required field'.tr();
+                            }
+                            return null;
+                          },
+                          decoration: _fieldDecoration('Parcel Name'),
+                        ),
+
+                        const SizedBox(height: 18),
+
+                        // WEIGHT
+                        _sectionTitle('Parcel Weight In Kg'),
+                        const SizedBox(height: 6),
+                        TextFormField(
+                          style: const TextStyle(color: Colors.white),
+                          keyboardType: TextInputType.number,
+                          onChanged: (value) {
+                            setState(() {
+                              weight = int.tryParse(value) ?? 0;
+                            });
+                          },
+                          validator: (String? val) {
+                            if (val == null || val.trim().isEmpty) {
+                              return 'Required field'.tr();
+                            }
+                            return null;
+                          },
+                          decoration: _fieldDecoration('Parcel Weight In Kg'),
+                        ),
+
+                        const SizedBox(height: 18),
+
+                        // DESCRIPTION
+                        _sectionTitle('Parcel Description'),
+                        const SizedBox(height: 6),
+                        TextFormField(
+                          style: const TextStyle(color: Colors.white),
+                          maxLines: 4,
+                          onChanged: (value) => setState(() {
+                            parcelDescription = value;
+                          }),
+                          validator: (String? val) {
+                            if (val == null || val.trim().isEmpty) {
+                              return 'Required field'.tr();
+                            }
+                            return null;
+                          },
+                          decoration: _fieldDecoration('Parcel Description'),
+                        ),
+
+                        const SizedBox(height: 22),
+
+                        // IMAGE
+                        _sectionTitle('Parcel Image'),
+                        const SizedBox(height: 10),
+                        Center(
+                          child: Column(
+                            children: [
+                              Container(
+                                width: 140,
+                                height: 140,
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(18),
+                                  border: Border.all(
+                                    color: Colors.white24,
+                                    width: 1.2,
+                                  ),
+                                  color: Colors.white.withOpacity(0.04),
+                                ),
+                                child: parcelImage == ''
+                                    ? Column(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
+                                        children: const [
+                                          Icon(Icons.image_outlined,
+                                              size: 38, color: Colors.white54),
+                                          SizedBox(height: 8),
+                                          Text(
+                                            "No image selected",
+                                            style: TextStyle(
+                                                color: Colors.white60,
+                                                fontSize: 12),
+                                          ),
+                                        ],
+                                      )
+                                    : ClipRRect(
+                                        borderRadius: BorderRadius.circular(18),
+                                        child: Image.file(
+                                          File(imageFile!.path),
+                                          fit: BoxFit.cover,
+                                        ),
+                                      ),
+                              ),
+                              const SizedBox(height: 12),
+                              InkWell(
+                                onTap: () => getImage(context),
+                                borderRadius: BorderRadius.circular(999),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 16, vertical: 8),
+                                  decoration: BoxDecoration(
+                                    color: kGold,
+                                    borderRadius: BorderRadius.circular(999),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: const [
+                                      Icon(Icons.camera_alt,
+                                          size: 18, color: kPrimary),
+                                      SizedBox(width: 8),
+                                      Text(
+                                        "Upload Image",
+                                        style: TextStyle(
+                                          color: kPrimary,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+
+                        const SizedBox(height: 22),
+
+                        // PRICING + DISTANCE
+                        Container(
+                          padding: const EdgeInsets.all(14),
+                          decoration: BoxDecoration(
+                            color: Colors.black.withOpacity(0.4),
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(
+                              color: Colors.white.withOpacity(0.16),
+                            ),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Admin selected calculation format:'.tr(),
+                                style: const TextStyle(
+                                  color: Colors.white70,
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 13,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                kgStatus == true ? 'Per Kg $kg' : 'Per Km $km',
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 14,
+                                ),
+                              ),
+                              const SizedBox(height: 12),
+                              Text(
+                                'Distance:  ${distance.round() / 1000} Km',
+                                style: const TextStyle(
+                                  color: Colors.white70,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              Row(
+                                children: [
+                                  const Text(
+                                    'Price:',
+                                    style: TextStyle(
+                                      color: Colors.white70,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    '$getcurrencySymbol ${priceValue.toStringAsFixed(2)}',
+                                    style: const TextStyle(
+                                      color: kGold,
+                                      fontWeight: FontWeight.w700,
+                                      fontSize: 16,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+
+                        const SizedBox(height: 22),
+
+                        // RIDER DETAILS
+                        Text(
+                          "Assigned Rider's Detail".tr(),
+                          style: const TextStyle(
+                            color: Colors.white70,
+                            fontWeight: FontWeight.w600,
+                            fontSize: 14,
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        Container(
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.06),
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(
+                              color: Colors.white.withOpacity(0.12),
+                            ),
+                          ),
+                          child: Column(
+                            children: [
+                              ListTile(
+                                leading: const CircleAvatar(
+                                  radius: 18,
+                                  backgroundColor: Colors.white12,
+                                  child: Icon(Icons.person,
+                                      color: Colors.white, size: 18),
+                                ),
+                                title: Text(
+                                  deliveryBoysName.isEmpty
+                                      ? '-'
+                                      : deliveryBoysName,
+                                  style: const TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.w600),
+                                ),
+                                subtitle: Text(
+                                  "Rider's name".tr(),
+                                  style: const TextStyle(
+                                      color: Colors.white60, fontSize: 12),
+                                ),
+                              ),
+                              const Divider(
+                                height: 0,
+                                color: Colors.white10,
+                              ),
+                              ListTile(
+                                leading: const Icon(Icons.phone,
+                                    color: Colors.white70),
+                                title: Text(
+                                  deliveryBoysPhone.isEmpty
+                                      ? '-'
+                                      : deliveryBoysPhone,
+                                  style: const TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.w500),
+                                ),
+                                subtitle: Text(
+                                  "Rider's phone".tr(),
+                                  style: const TextStyle(
+                                      color: Colors.white60, fontSize: 12),
+                                ),
+                                trailing: OutlinedButton(
+                                  style: OutlinedButton.styleFrom(
+                                    side: const BorderSide(color: kGold),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(999),
+                                    ),
+                                  ),
+                                  onPressed: deliveryBoysPhone.isEmpty
+                                      ? null
+                                      : () => _callRider(deliveryBoysPhone),
+                                  child: Text(
+                                    'Call Rider'.tr(),
+                                    style: const TextStyle(
+                                      color: kGold,
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
                       ],
                     ),
                   ),
-                  const SizedBox(height: 10),
-                  Padding(
-                    padding: const EdgeInsets.only(left: 10, right: 10),
-                    child: Card(
-                      elevation: 0.1,
-                      child: ListTile(
-                        title: Text(deliveryBoysName),
-                        subtitle: const Text("Rider's name").tr(),
-                        leading: const Icon(Icons.person),
-                      ),
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.only(left: 10, right: 10),
-                    child: Card(
-                      elevation: 0.1,
-                      child: ListTile(
-                        title: Text(deliveryBoysPhone),
-                        subtitle: const Text("Rider's phone").tr(),
-                        leading: const Icon(Icons.phone),
-                        trailing: OutlinedButton(
-                            onPressed: () {
-                              _callRider(deliveryBoysPhone);
-                            },
-                            child: const Text('Call Rider').tr()),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 20),
-              // Container(
-              //   width: double.infinity,
-              //   child: ElevatedButton(
-              //       style: ButtonStyle(
-              //         elevation: MaterialStateProperty.all(10),
-              //         backgroundColor: MaterialStateProperty.all<Color>(
-              //           Colors.blue.shade800,
-              //         ),
-              //       ),
-              //       onPressed: () async {
-              //         selectRider(context);
-              //       },
-              //       child: Text('Assign a rider',
-              //           style: TextStyle(color: Colors.white))),
-              // ),
-              SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
+
+                  const SizedBox(height: 24),
+
+                  // SUBMIT BUTTON
+                  SizedBox(
+                    width: double.infinity,
+                    height: 52,
+                    child: ElevatedButton(
                       style: ElevatedButton.styleFrom(
-                          backgroundColor:
-                              const Color.fromARGB(255, 47, 37, 37)),
+                        backgroundColor: kGold,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        elevation: 6,
+                        shadowColor: Colors.black.withOpacity(0.6),
+                      ),
                       onPressed: () {
                         if (formKey.currentState!.validate() &&
                             recipientAddress != '' &&
                             deliveryBoyID != '' &&
                             userAddress != '' &&
                             parcelImage != '') {
-                          addCourier(CourierModel(
-                            status: false,
-                            parcelName: parcelName,
-                            sendersName: userName,
-                            sendersPhone: userPhone,
-                            sendersAddress: userAddress,
-                            recipientName: recipientName,
-                            recipientAddress: recipientAddress,
-                            recipientPhone: recipientPhone,
-                            deliveryDate: DateTime.now().toString(),
-                            deliveryBoysName: '',
-                            deliveryBoyID: deliveryBoyID,
-                            deliveryBoysPhone: '',
-                            deliveryBoysAddress: '',
-                            weight: weight,
-                            comission: (price * updateComission()) / 100,
-                            price: kgStatus == false
-                                ? distance.round() / 1000 * km
-                                : weight * kg,
-                            km: km,
-                            parcelDescription: parcelDescription,
-                            parcelID: parcelID + 1,
-                            parcelImage: parcelImage,
-                            userUID: userID,
-                          ));
+                          addCourier(
+                            CourierModel(
+                              status: false,
+                              parcelName: parcelName,
+                              sendersName: userName,
+                              sendersPhone: userPhone,
+                              sendersAddress: userAddress,
+                              recipientName: recipientName,
+                              recipientAddress: recipientAddress,
+                              recipientPhone: recipientPhone,
+                              deliveryDate: DateTime.now().toString(),
+                              deliveryBoysName: '',
+                              deliveryBoyID: deliveryBoyID,
+                              deliveryBoysPhone: '',
+                              deliveryBoysAddress: '',
+                              weight: weight,
+                              comission: (price * updateComission()) / 100,
+                              price: priceValue,
+                              km: km,
+                              parcelDescription: parcelDescription,
+                              parcelID: parcelID + 1,
+                              parcelImage: parcelImage,
+                              userUID: userID,
+                            ),
+                          );
                           Navigator.of(context).pop();
                         } else {
                           Fluttertoast.showToast(
-                              msg: "Some fields are empty".tr(),
-                              toastLength: Toast.LENGTH_SHORT,
-                              gravity: ToastGravity.TOP,
-                              timeInSecForIosWeb: 1,
-                              backgroundColor: Theme.of(context).primaryColor,
-                              textColor: Colors.white,
-                              fontSize: 14.0);
+                            msg: "Some fields are empty".tr(),
+                            toastLength: Toast.LENGTH_SHORT,
+                            gravity: ToastGravity.TOP,
+                            timeInSecForIosWeb: 1,
+                            backgroundColor: Theme.of(context).primaryColor,
+                            textColor: Colors.white,
+                            fontSize: 14.0,
+                          );
                         }
                       },
-                      child: const Text('Submit',
-                              style: TextStyle(color: Colors.white))
-                          .tr()))
-            ]),
+                      child: Text(
+                        'Submit'.tr(),
+                        style: const TextStyle(
+                          color: kPrimary,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 16,
+                        ),
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 18),
+                ],
+              ),
+            ),
           ),
-        )));
+        ),
+      ),
+    );
   }
 }

@@ -1,12 +1,13 @@
+// ignore_for_file: prefer_if_null_operators
+
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:curved_labeled_navigation_bar/curved_navigation_bar.dart';
-import 'package:curved_labeled_navigation_bar/curved_navigation_bar_item.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:list_tile_switch/list_tile_switch.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
 import 'package:falguni_app/Pages/cart_page.dart';
 import 'package:falguni_app/Pages/favorites.dart';
 import 'package:falguni_app/Pages/home_page.dart';
@@ -26,476 +27,552 @@ class BottomNavPage extends StatefulWidget {
 }
 
 class _BottomNavPageState extends State<BottomNavPage> {
+  /// Brand accent (brown) – used only as highlight, not full backgrounds
+  static const Color kPrimary = Color(0xFF2F2525);
+
   int _page = 0;
+
   DocumentReference? userDetails;
+  DocumentReference? userRef;
+
   String fullname = '';
   String email = '';
   String userPic = '';
   num wallet = 0;
-  String currencySymbol = '';
-  bool courier = false;
-  num cartQuantity = 0;
   String deliveryAddress = '';
-  String address = '';
-  double addressLat = 0;
-  double addressLong = 0;
-  final GlobalKey<CurvedNavigationBarState> _bottomNavigationKey = GlobalKey();
-  DocumentReference? userRef;
-  Future<void> _getUserDoc() async {
-    final FirebaseAuth auth = FirebaseAuth.instance;
-    final FirebaseFirestore firestore = FirebaseFirestore.instance;
+  bool referralStatus = false;
+  bool isLogged = false;
 
-    User? user = auth.currentUser;
+  dynamic themeMode;
+  bool _lightTheme = true;
+
+  final GlobalKey<ScaffoldState> _scaffoldHome = GlobalKey<ScaffoldState>();
+
+  @override
+  void initState() {
+    super.initState();
+    _getUserDoc();
+    _getUserDetails();
+    _getReferralStatus();
+    _listenAuth();
+    _loadTheme();
+  }
+
+  // ---------------------------------------------------------------------------
+  // INIT / DATA
+  // ---------------------------------------------------------------------------
+
+  Future<void> _getUserDoc() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
     setState(() {
-      userRef = firestore.collection('users').doc(user!.uid);
+      userRef = FirebaseFirestore.instance.collection('users').doc(user.uid);
     });
   }
 
-  dynamic themeMode;
-  var _lightTheme = true;
-  void onThemeChanged(bool value, ThemeNotifier themeNotifier) async {
-    (value)
-        ? themeNotifier.setTheme(lightTheme)
-        : themeNotifier.setTheme(darkTheme);
-    var prefs = await SharedPreferences.getInstance();
-    prefs.setBool('lightMode', value);
-  }
+  Future<void> _getUserDetails() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
 
-  getThemeDetail() async {
-    SharedPreferences.getInstance().then((prefs) {
-      var lightModeOn = prefs.getBool('lightMode');
+    // Listen to user document
+    FirebaseFirestore.instance
+        .collection('users')
+        .doc(user.uid)
+        .snapshots()
+        .listen((value) {
+      if (!mounted || !value.exists) return;
       setState(() {
-        themeMode = lightModeOn!;
+        fullname = (value['fullname'] ?? '').toString().split(' ')[0].trim();
+        email = value['email'] ?? '';
+        userPic = value['photoUrl'] ?? '';
+        wallet = value['wallet'] ?? 0;
+        deliveryAddress = value['DeliveryAddress'] ?? '';
       });
     });
   }
 
-  @override
-  void initState() {
-    _getUserDoc();
-    _getUserDetails();
-    getReferralStatus();
-    getAuth();
-    super.initState();
-  }
-
-  bool referralStatus = false;
-  getReferralStatus() {
+  void _getReferralStatus() {
     FirebaseFirestore.instance
         .collection('Referral System')
         .doc('Referral System')
         .snapshots()
         .listen((value) {
+      if (!mounted || !value.exists) return;
       setState(() {
-        referralStatus = value['Status'];
+        referralStatus = value['Status'] ?? false;
       });
     });
   }
 
-  bool isLogged = false;
-  getAuth() {
-    FirebaseAuth.instance.authStateChanges().listen((User? user) async {
-      if (user == null) {
-        setState(() {
-          isLogged = false;
-        });
-      } else {
-        setState(() {
-          isLogged = true;
-        });
-      }
+  void _listenAuth() {
+    FirebaseAuth.instance.authStateChanges().listen((User? user) {
+      if (!mounted) return;
+      setState(() {
+        isLogged = user != null;
+      });
     });
   }
 
-  Future<void> _getUserDetails() async {
-    final FirebaseAuth auth = FirebaseAuth.instance;
-    final FirebaseFirestore firestore = FirebaseFirestore.instance;
-
-    User? user = auth.currentUser;
+  Future<void> _loadTheme() async {
+    final prefs = await SharedPreferences.getInstance();
+    final lightModeOn = prefs.getBool('lightMode');
+    if (!mounted) return;
     setState(() {
-      userDetails = firestore
-          .collection('users')
-          .doc(user!.uid)
-          .snapshots()
-          .listen((value) {
-        setState(() {
-          fullname = value['fullname'].split(' ')[0].trim();
-          email = value['email'];
-          userPic = value['photoUrl'];
-          wallet = value['wallet'];
-          deliveryAddress = value['DeliveryAddress'];
-        });
-      }) as DocumentReference<Object?>?;
+      themeMode = lightModeOn ?? true;
+      _lightTheme = themeMode;
     });
   }
 
-  openDrawerHome() {
-    _scaffoldHome.currentState!.openDrawer();
+  // ---------------------------------------------------------------------------
+  // THEME
+  // ---------------------------------------------------------------------------
+
+  void _onThemeChanged(bool value, ThemeNotifier themeNotifier) async {
+    value
+        ? themeNotifier.setTheme(lightTheme)
+        : themeNotifier.setTheme(darkTheme);
+    final prefs = await SharedPreferences.getInstance();
+    prefs.setBool('lightMode', value);
   }
 
-  final GlobalKey<ScaffoldState> _scaffoldHome = GlobalKey<ScaffoldState>();
+  // ---------------------------------------------------------------------------
+  // DRAWER HELPERS
+  // ---------------------------------------------------------------------------
+
+  void _openDrawerHome() {
+    _scaffoldHome.currentState?.openDrawer();
+  }
+
+  String _initials() {
+    final base = (fullname.isNotEmpty ? fullname : email).trim();
+    if (base.isEmpty) return "U";
+    final parts = base.split(" ");
+    if (parts.length == 1) {
+      return parts.first.substring(0, 1).toUpperCase();
+    }
+    return (parts.first[0] + parts[1][0]).toUpperCase();
+  }
+
+  Widget _buildUserAvatar() {
+    if (userPic.isNotEmpty) {
+      return CircleAvatar(
+        radius: 28,
+        backgroundImage: NetworkImage(userPic),
+        backgroundColor: Colors.grey.shade200,
+      );
+    }
+    return CircleAvatar(
+      radius: 28,
+      backgroundColor: Colors.grey.shade200,
+      child: Text(
+        _initials(),
+        style: const TextStyle(
+          fontWeight: FontWeight.w600,
+          fontSize: 18,
+          color: kPrimary,
+        ),
+      ),
+    );
+  }
+
+  Widget _drawerItem({
+    required IconData icon,
+    required String title,
+    required VoidCallback onTap,
+    Color? iconColor,
+    Color? textColor,
+  }) {
+    return ListTile(
+      dense: false,
+      leading: Icon(icon, color: iconColor ?? Colors.grey.shade800, size: 22),
+      title: Text(
+        title,
+        style: TextStyle(
+          fontSize: 15,
+          fontWeight: FontWeight.w500,
+          color: textColor ?? Colors.grey.shade900,
+        ),
+      ),
+      trailing:
+          Icon(Icons.chevron_right, color: Colors.grey.shade400, size: 20),
+      onTap: onTap,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 12),
+    );
+  }
+
+  // ---------------------------------------------------------------------------
+  // BUILD
+  // ---------------------------------------------------------------------------
+
   @override
   Widget build(BuildContext context) {
-    getThemeDetail();
-    // ignore: avoid_print
-    print(isLogged);
     final themeNotifier = Provider.of<ThemeNotifier>(context);
+    final isLight = themeMode == null ? true : (themeMode as bool);
+
     return Scaffold(
       key: _scaffoldHome,
+
+      // -----------------------------------------------------------------------
+      // MODERN MINIMAL DRAWER
+      // -----------------------------------------------------------------------
       drawer: SizedBox(
-        width: double.infinity,
+        width: MediaQuery.of(context).size.width * 0.82,
         child: Drawer(
-          child: ListView(children: [
-            DrawerHeader(
-              padding: EdgeInsets.zero,
-              child: ClipPath(
-                clipper: CustomClipPath(),
-                child: Container(
-                  height: 200,
-                  color: Colors.blue,
-                  child: Column(
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          IconButton(
-                              onPressed: () {
-                                Navigator.pop(context);
-                              },
-                              icon: Icon(Icons.arrow_back,
-                                  color: themeMode == true || themeMode == null
-                                      ? Colors.black
-                                      : Colors.white)),
-                          // IconButton(
-                          //     color: Colors.black,
-                          //     onPressed: () {},
-                          //     icon: const Icon(Icons.call)),
-                        ],
-                      ),
-                      isLogged == false
-                          ? const Text('Hello, Guest',
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 25,
-                              )).tr()
-                          : Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
+          child: SafeArea(
+            child: Column(
+              children: [
+                // Header
+                DrawerHeader(
+                  margin: EdgeInsets.zero,
+                  padding: EdgeInsets.zero,
+                  child: ClipPath(
+                    clipper: CustomClipPath(),
+                    child: Container(
+                      color: Colors.white,
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 10, 16, 12),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // Top row
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                const Text('Hello,',
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 25,
-                                    )).tr(),
-                                Text(' $fullname',
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 25,
-                                    )),
+                                IconButton(
+                                  onPressed: () => Navigator.pop(context),
+                                  icon: Icon(
+                                    Icons.arrow_back,
+                                    color: Colors.grey.shade800,
+                                  ),
+                                ),
+                                Icon(
+                                  isLight
+                                      ? Icons.light_mode_outlined
+                                      : Icons.dark_mode_outlined,
+                                  color: Colors.grey.shade600,
+                                  size: 20,
+                                ),
                               ],
+                            ),
+                            const SizedBox(height: 4),
+                            Row(
+                              children: [
+                                _buildUserAvatar(),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        isLogged
+                                            ? 'Hello, $fullname'
+                                            : 'Hello, Guest'.tr(),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: const TextStyle(
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                      if (isLogged && email.isNotEmpty) ...[
+                                        const SizedBox(height: 4),
+                                        Text(
+                                          email,
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: TextStyle(
+                                            fontSize: 13,
+                                            color: Colors.grey.shade600,
+                                          ),
+                                        ),
+                                      ],
+                                      if (isLogged &&
+                                          deliveryAddress.isNotEmpty) ...[
+                                        const SizedBox(height: 4),
+                                        Row(
+                                          children: [
+                                            Icon(
+                                              Icons.location_on_outlined,
+                                              size: 14,
+                                              color: Colors.grey.shade500,
+                                            ),
+                                            const SizedBox(width: 4),
+                                            Expanded(
+                                              child: Text(
+                                                deliveryAddress,
+                                                maxLines: 1,
+                                                overflow: TextOverflow.ellipsis,
+                                                style: TextStyle(
+                                                  fontSize: 12,
+                                                  color: Colors.grey.shade600,
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ],
+                                    ],
+                                  ),
+                                )
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+
+                // Body list (scrollable)
+                Expanded(
+                  child: ListView(
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.only(
+                            left: 16.0, bottom: 6, top: 4),
+                        child: Text(
+                          "Account".tr(),
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.grey.shade600,
+                          ),
+                        ),
+                      ),
+                      _drawerItem(
+                        icon: Icons.shopping_bag_outlined,
+                        title: "Orders".tr(),
+                        onTap: () {
+                          if (userRef == null) {
+                            Navigator.of(context).pushNamed('/login');
+                          } else {
+                            Navigator.of(context).pushNamed('/orders');
+                          }
+                        },
+                      ),
+                      _drawerItem(
+                        icon: Icons.delivery_dining,
+                        title: "Logistics/Courier".tr(),
+                        onTap: () {
+                          if (userRef == null) {
+                            Navigator.of(context).pushNamed('/login');
+                          } else {
+                            Navigator.of(context).pushNamed('/courier');
+                          }
+                        },
+                      ),
+                      _drawerItem(
+                        icon: Icons.person_outline,
+                        title: "Profile".tr(),
+                        onTap: () {
+                          if (userRef == null) {
+                            Navigator.of(context).pushNamed('/login');
+                          } else {
+                            Navigator.of(context).pushNamed('/profile');
+                          }
+                        },
+                      ),
+                      _drawerItem(
+                        icon: Icons.room_outlined,
+                        title: "Delivery Address".tr(),
+                        onTap: () {
+                          if (userRef == null) {
+                            Navigator.of(context).pushNamed('/login');
+                          } else {
+                            Navigator.of(context)
+                                .pushNamed('/delivery-address');
+                          }
+                        },
+                      ),
+                      _drawerItem(
+                        icon: Icons.wallet_outlined,
+                        title: "Wallet".tr(),
+                        onTap: () {
+                          if (userRef == null) {
+                            Navigator.of(context).pushNamed('/login');
+                          } else {
+                            Navigator.of(context).pushNamed('/wallet');
+                          }
+                        },
+                      ),
+                      _drawerItem(
+                        icon: Icons.favorite_border,
+                        title: "Favorites".tr(),
+                        onTap: () {
+                          if (userRef == null) {
+                            Navigator.of(context).pushNamed('/login');
+                          } else {
+                            Navigator.of(context).pushNamed('/favorites');
+                          }
+                        },
+                      ),
+
+                      const Divider(indent: 16, endIndent: 16),
+
+                      if (referralStatus)
+                        _drawerItem(
+                          icon: Icons.wallet_giftcard_outlined,
+                          title: "Share and earn".tr(),
+                          onTap: () {
+                            if (userRef == null) {
+                              Navigator.of(context).pushNamed('/login');
+                            } else {
+                              Navigator.of(context).pushNamed('/referral-page');
+                            }
+                          },
+                        ),
+                      _drawerItem(
+                        icon: Icons.card_giftcard_outlined,
+                        title: "Promo Code".tr(),
+                        onTap: () => Navigator.of(context).pushNamed('/coupon'),
+                      ),
+                      _drawerItem(
+                        icon: Icons.help_center_outlined,
+                        title: "F.A.Q.".tr(),
+                        onTap: () => Navigator.of(context).pushNamed('/faq'),
+                      ),
+                      _drawerItem(
+                        icon: Icons.notifications_outlined,
+                        title: "Notifications".tr(),
+                        onTap: () {
+                          if (userRef == null) {
+                            Navigator.of(context).pushNamed('/login');
+                          } else {
+                            Navigator.of(context).pushNamed('/notifications');
+                          }
+                        },
+                      ),
+
+                      // Theme switch
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                        child: ListTileSwitch(
+                          leading: const Icon(Icons.color_lens_outlined),
+                          title: const Text(
+                            'Theme Mode',
+                            style: TextStyle(fontSize: 15),
+                          ).tr(),
+                          value: themeMode == null ? true : themeMode,
+                          onChanged: (val) {
+                            setState(() {
+                              _lightTheme = val;
+                              themeMode = val;
+                            });
+                            _onThemeChanged(val, themeNotifier);
+                          },
+                        ),
+                      ),
+
+                      const SizedBox(height: 8),
+
+                      // Login / Logout
+                      isLogged
+                          ? _drawerItem(
+                              icon: Icons.logout,
+                              title: "Log Out".tr(),
+                              onTap: () {
+                                AuthService().signOut(context);
+                              },
+                              iconColor: Colors.redAccent,
+                              textColor: Colors.redAccent,
                             )
+                          : _drawerItem(
+                              icon: Icons.login,
+                              title: "Log in".tr(),
+                              onTap: () {
+                                Navigator.of(context).pushNamed('/login');
+                              },
+                            ),
+                      const SizedBox(height: 8),
                     ],
                   ),
                 ),
-              ),
+              ],
             ),
-            ListTile(
-                title: const Text(
-              "Account",
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-            ).tr()),
-            ListTile(
-              onTap: () {
-                if (userRef == null) {
-                  Navigator.of(context).pushNamed('/login');
-                } else {
-                  Navigator.of(context).pushNamed('/orders');
-                }
-              },
-              leading: const Icon(Icons.shopping_bag),
-              title: const Text(
-                "Orders",
-                style: TextStyle(
-                  fontSize: 18,
-                ),
-              ).tr(),
-              trailing: const Icon(Icons.chevron_right),
-            ),
-            ListTile(
-              onTap: () {
-                if (userRef == null) {
-                  Navigator.of(context).pushNamed('/login');
-                } else {
-                  Navigator.of(context).pushNamed('/courier');
-                }
-              },
-              leading: const Icon(Icons.delivery_dining),
-              title: const Text(
-                "Logistics/Courier",
-                style: TextStyle(
-                  fontSize: 18,
-                ),
-              ).tr(),
-              trailing: const Icon(Icons.chevron_right),
-            ),
-            ListTile(
-              onTap: () {
-                if (userRef == null) {
-                  Navigator.of(context).pushNamed('/login');
-                } else {
-                  Navigator.of(context).pushNamed('/profile');
-                }
-              },
-              leading: const Icon(Icons.person),
-              title: const Text(
-                "Profile",
-                style: TextStyle(
-                  fontSize: 18,
-                ),
-              ).tr(),
-              trailing: const Icon(Icons.chevron_right),
-            ),
-            ListTile(
-              onTap: () {
-                if (userRef == null) {
-                  Navigator.of(context).pushNamed('/login');
-                } else {
-                  Navigator.of(context).pushNamed('/delivery-address');
-                }
-              },
-              leading: const Icon(Icons.room),
-              title: const Text(
-                "Delivery Address",
-                style: TextStyle(
-                  fontSize: 18,
-                ),
-              ).tr(),
-              trailing: const Icon(Icons.chevron_right),
-            ),
-            ListTile(
-              onTap: () {
-                if (userRef == null) {
-                  Navigator.of(context).pushNamed('/login');
-                } else {
-                  Navigator.of(context).pushNamed('/wallet');
-                }
-              },
-              leading: const Icon(Icons.wallet),
-              title: const Text(
-                "Wallet",
-                style: TextStyle(
-                  fontSize: 18,
-                ),
-              ).tr(),
-              trailing: const Icon(Icons.chevron_right),
-            ),
-            ListTile(
-              onTap: () {
-                if (userRef == null) {
-                  Navigator.of(context).pushNamed('/login');
-                } else {
-                  Navigator.of(context).pushNamed('/favorites');
-                }
-              },
-              leading: const Icon(Icons.favorite),
-              title: const Text(
-                "Favorites",
-                style: TextStyle(
-                  fontSize: 18,
-                ),
-              ).tr(),
-              trailing: const Icon(Icons.chevron_right),
-            ),
-            const Divider(
-              endIndent: 10,
-              indent: 10,
-              color: Colors.grey,
-              thickness: 1,
-            ),
-            referralStatus == false
-                ? const SizedBox()
-                : ListTile(
-                    onTap: () {
-                      if (userRef == null) {
-                        Navigator.of(context).pushNamed('/login');
-                      } else {
-                        Navigator.of(context).pushNamed('/referral-page');
-                      }
-                    },
-                    leading: const Icon(Icons.wallet_giftcard),
-                    title: const Text(
-                      "Share and earn",
-                      style: TextStyle(
-                        fontSize: 18,
-                      ),
-                    ).tr(),
-                    trailing: const Icon(Icons.chevron_right),
-                  ),
-            ListTile(
-              onTap: () {
-                Navigator.of(context).pushNamed('/coupon');
-              },
-              leading: const Icon(Icons.card_giftcard),
-              title: const Text(
-                "Promo Code",
-                style: TextStyle(
-                  fontSize: 18,
-                ),
-              ).tr(),
-              trailing: const Icon(Icons.chevron_right),
-            ),
-            ListTile(
-              onTap: () {
-                Navigator.of(context).pushNamed('/faq');
-              },
-              leading: const Icon(Icons.help_center_rounded),
-              title: const Text(
-                "F.A.Q.",
-                style: TextStyle(
-                  fontSize: 18,
-                ),
-              ).tr(),
-              trailing: const Icon(Icons.chevron_right),
-            ),
-            ListTile(
-              onTap: () {
-                if (userRef == null) {
-                  Navigator.of(context).pushNamed('/login');
-                } else {
-                  Navigator.of(context).pushNamed('/notifications');
-                }
-              },
-              leading: const Icon(Icons.notifications),
-              title: const Text(
-                "Notifications",
-                style: TextStyle(
-                  fontSize: 18,
-                ),
-              ).tr(),
-              trailing: const Icon(Icons.chevron_right),
-            ),
-            // ListTile(
-            //   onTap: () {
-            //     Navigator.of(context).pushNamed('/language');
-            //   },
-            //   leading: const Icon(Icons.language),
-            //   title: const Text(
-            //     "Language",
-            //     style: TextStyle(
-            //       fontSize: 18,
-            //     ),
-            //   ).tr(),
-            //   trailing: const Icon(Icons.chevron_right),
-            // ),
-            ListTileSwitch(
-                leading: const Icon(Icons.color_lens),
-                title: const Text('Theme Mode',
-                    style: TextStyle(
-                      fontSize: 18,
-                    )).tr(),
-                // ignore: prefer_if_null_operators
-                value: themeMode == null ? true : themeMode,
-                onChanged: (val) {
-                  setState(() {
-                    _lightTheme = val;
-                    themeMode = val;
-                  });
-                  onThemeChanged(val, themeNotifier);
-                  debugPrint(_lightTheme.toString());
-                }),
-            isLogged == true
-                ? ListTile(
-                    onTap: () {
-                      AuthService().signOut(context);
-                    },
-                    leading: const Icon(Icons.logout),
-                    title: const Text(
-                      "Log Out",
-                      style: TextStyle(
-                        fontSize: 18,
-                      ),
-                    ).tr(),
-                  )
-                : ListTile(
-                    onTap: () {
-                      Navigator.of(context).pushNamed('/login');
-                    },
-                    leading: const Icon(Icons.login),
-                    title: const Text(
-                      "Log in",
-                      style: TextStyle(
-                        fontSize: 18,
-                      ),
-                    ).tr(),
-                  ),
-          ]),
+          ),
         ),
       ),
-      bottomNavigationBar: CurvedNavigationBar(
-        key: _bottomNavigationKey,
-        height: 60,
-        iconPadding: 4,
-        index: 0,
-        items: const [
-          CurvedNavigationBarItem(
-            child: Icon(
-              Icons.home,
-              color: Colors.white,
+
+      // -----------------------------------------------------------------------
+      // MODERN MINIMAL BOTTOM NAV
+      // -----------------------------------------------------------------------
+      bottomNavigationBar: Container(
+        decoration: BoxDecoration(
+          color: Colors.transparent,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 10,
+              offset: const Offset(0, -2),
             ),
-            // label: 'Home',
+          ],
+        ),
+        child: ClipRRect(
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(18)),
+          child: BottomNavigationBar(
+            currentIndex: _page,
+            onTap: (index) {
+              if (!isLogged && (index == 1 || index == 2 || index == 3)) {
+                setState(() {
+                  _page = index;
+                });
+                Navigator.pushNamed(context, '/login');
+              } else {
+                setState(() {
+                  _page = index;
+                });
+              }
+            },
+            type: BottomNavigationBarType.fixed,
+            backgroundColor: Colors.white,
+            selectedItemColor: kPrimary,
+            unselectedItemColor: Colors.grey.shade500,
+            showSelectedLabels: false,
+            showUnselectedLabels: false,
+            elevation: 0,
+            items: const [
+              BottomNavigationBarItem(
+                icon: Icon(Icons.home_outlined),
+                activeIcon: Icon(Icons.home),
+                label: 'Home',
+              ),
+              BottomNavigationBarItem(
+                icon: Icon(Icons.shopping_cart_outlined),
+                activeIcon: Icon(Icons.shopping_cart),
+                label: 'Cart',
+              ),
+              BottomNavigationBarItem(
+                icon: Icon(Icons.favorite_border),
+                activeIcon: Icon(Icons.favorite),
+                label: 'Favorites',
+              ),
+              BottomNavigationBarItem(
+                icon: Icon(Icons.person_outline),
+                activeIcon: Icon(Icons.person),
+                label: 'Profile',
+              ),
+            ],
           ),
-          CurvedNavigationBarItem(
-            child: Icon(Icons.shopping_cart, color: Colors.white),
-            //  label: 'Search',
-          ),
-          CurvedNavigationBarItem(
-            child: Icon(Icons.favorite, color: Colors.white),
-            // label: 'Chat',
-          ),
-          CurvedNavigationBarItem(
-            child: Icon(Icons.person, color: Colors.white),
-            //  label: 'Feed',
-          ),
-        ],
-        color: const Color.fromARGB(255, 67, 10, 10),
-        buttonBackgroundColor: const Color.fromARGB(255, 47, 37, 37),
-        backgroundColor: Theme.of(context).cardColor,
-        animationCurve: Curves.easeInOut,
-        animationDuration: const Duration(milliseconds: 400),
-        onTap: (index) {
-          if (isLogged == false && (index == 1 || index == 2 || index == 3)) {
-            setState(() {
-              _page = index;
-            });
-            Navigator.pushNamed(context, '/login');
-          } else {
-            setState(() {
-              _page = index;
-            });
-          }
-        },
-        letIndexChange: (index) => true,
+        ),
       ),
+
+      // -----------------------------------------------------------------------
+      // BODY – unchanged logic, just using _page
+      // -----------------------------------------------------------------------
       body: _page == 0
-          ? HomePage(
-              openDrawer: openDrawerHome,
-            )
+          ? HomePage(openDrawer: _openDrawerHome)
           : _page == 1
-              ? isLogged == false
+              ? (!isLogged
                   ? const LoadingPage()
-                  : const CartPage(
-                      isbottomNav: true,
-                    )
+                  : const CartPage(isbottomNav: true))
               : _page == 2
-                  ? isLogged == false
+                  ? (!isLogged
                       ? const LoadingPage()
-                      : const FavoritesPage(
-                          isbottomNav: true,
-                        )
-                  : isLogged == false
+                      : const FavoritesPage(isbottomNav: true))
+                  : (!isLogged
                       ? const LoadingPage()
-                      : const ProfileHome(
-                          isbottomNav: true,
-                        ),
+                      : const ProfileHome(isbottomNav: true)),
     );
   }
 }

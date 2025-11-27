@@ -17,6 +17,13 @@ class ProcessingOrders extends StatefulWidget {
 class _ProcessingOrdersState extends State<ProcessingOrders> {
   DocumentReference? userRef;
 
+  static const Color kPrimary = Color(0xFF2F2525);
+  static const Color kGold = Color(0xFFC9A86A);
+
+  String userID = '';
+  List<OrderModel2> orders = [];
+  String currencySymbol = '';
+
   @override
   initState() {
     super.initState();
@@ -25,13 +32,12 @@ class _ProcessingOrdersState extends State<ProcessingOrders> {
     _getUserModelDoc();
   }
 
-  String userID = '';
-  List<OrderModel2> orders = [];
   Future<void> fetchOrders() async {
     final FirebaseAuth auth = FirebaseAuth.instance;
     final FirebaseFirestore firestore = FirebaseFirestore.instance;
 
     User? user = auth.currentUser;
+
     setState(() {
       userRef =
           firestore.collection('users').doc(user!.uid).get().then((value) {
@@ -49,39 +55,42 @@ class _ProcessingOrdersState extends State<ProcessingOrders> {
           for (var doc in data.docs) {
             if (mounted) {
               setState(() {
-                orders.add(OrderModel2(
-                  orders: [
-                    ...(doc.data()['orders']).map((items) {
-                      return OrdersList.fromMap(items);
-                    })
-                  ],
-                  pickupAddress: doc.data()['pickupAddress'],
-                  confirmationStatus: doc.data()['confirmationStatus'],
-                  uid: doc.data()['uid'],
-                  marketID: doc.data()['marketID'],
-                  vendorID: doc.data()['vendorID'],
-                  userID: doc.data()['userID'],
-                  deliveryAddress: doc.data()['deliveryAddress'],
-                  houseNumber: doc.data()['houseNumber'],
-                  closesBusStop: doc.data()['closesBusStop'],
-                  deliveryBoyID: doc.data()['deliveryBoyID'],
-                  status: doc.data()['status'],
-                  accept: doc.data()['accept'],
-                  orderID: doc.data()['orderID'],
-                  timeCreated: doc.data()['timeCreated'],
-                  total: doc.data()['total'],
-                  deliveryFee: doc.data()['deliveryFee'],
-                  acceptDelivery: doc.data()['acceptDelivery'],
-                  paymentType: doc.data()['paymentType'],
-                ));
+                orders.add(
+                  OrderModel2(
+                    orders: [
+                      ...(doc.data()['orders']).map((items) {
+                        return OrdersList.fromMap(items);
+                      })
+                    ],
+                    pickupAddress: doc.data()['pickupAddress'],
+                    confirmationStatus: doc.data()['confirmationStatus'],
+                    uid: doc.data()['uid'],
+                    marketID: doc.data()['marketID'],
+                    vendorID: doc.data()['vendorID'],
+                    userID: doc.data()['userID'],
+                    deliveryAddress: doc.data()['deliveryAddress'],
+                    houseNumber: doc.data()['houseNumber'],
+                    closesBusStop: doc.data()['closesBusStop'],
+                    deliveryBoyID: doc.data()['deliveryBoyID'],
+                    status: doc.data()['status'],
+                    accept: doc.data()['accept'],
+                    orderID: doc.data()['orderID'],
+                    timeCreated: doc.data()['timeCreated'],
+                    total: doc.data()['total'],
+                    deliveryFee: doc.data()['deliveryFee'],
+                    acceptDelivery: doc.data()['acceptDelivery'],
+                    paymentType: doc.data()['paymentType'],
+                  ),
+                );
               });
             }
           }
-          // Sort orders by 'uid' (which is a timestamp string)
+
+          // Sort by uid timestamp (string → date)
           orders.sort((a, b) {
-            DateTime dateA = DateTime.parse(a.uid);
-            DateTime dateB = DateTime.parse(b.uid);
-            return dateB.compareTo(dateA); // Sort from latest to oldest
+            DateTime da = DateTime.parse(a.uid);
+            DateTime db = DateTime.parse(b.uid);
+            return db.compareTo(da); // newest first
           });
         });
       }) as DocumentReference?;
@@ -91,18 +100,12 @@ class _ProcessingOrdersState extends State<ProcessingOrders> {
   Future<void> _getUserModelDoc() async {
     final FirebaseAuth auth = FirebaseAuth.instance;
     final FirebaseFirestore firestore = FirebaseFirestore.instance;
+
     User? user = auth.currentUser;
     setState(() {
       userRef = firestore.collection('users').doc(user!.uid);
     });
   }
-
-  String currencyName = '';
-  String currencyCode = '';
-  String currencySymbol = '';
-  String getcurrencyName = '';
-  String getcurrencyCode = '';
-  String getcurrencySymbol = '';
 
   getCurrencyDetails() {
     FirebaseFirestore.instance
@@ -111,118 +114,175 @@ class _ProcessingOrdersState extends State<ProcessingOrders> {
         .get()
         .then((value) {
       setState(() {
-        getcurrencyName = value['Currency name'];
-        getcurrencyCode = value['Currency code'];
-        getcurrencySymbol = value['Currency symbol'];
+        currencySymbol = value['Currency symbol'];
       });
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    return ListView(
-      physics: const BouncingScrollPhysics(),
-      shrinkWrap: true,
-      scrollDirection: Axis.vertical,
-      children: [
-        const SizedBox(
-          height: 20,
+    return Container(
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            Color(0xFF1C1515),
+            Color(0xFF2F2525),
+            Color(0xFF1C1515),
+          ],
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
         ),
-        orders.isEmpty
-            ? Center(
-                child: Image.asset(
-                  'assets/image/empty.png',
-                  height: MediaQuery.of(context).size.height / 2,
+      ),
+      child: ListView(
+        physics: const BouncingScrollPhysics(),
+        children: [
+          const SizedBox(height: 16),
+          orders.isEmpty
+              ? Center(
+                  child: Image.asset(
+                    'assets/image/empty.png',
+                    height: MediaQuery.of(context).size.height / 2.5,
+                  ),
+                )
+              : ListView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: orders.length,
+                  itemBuilder: (context, i) {
+                    return _orderCard(context, orders[i], currencySymbol);
+                  },
                 ),
-              )
-            : ListView.builder(
-                physics: const ScrollPhysics(),
-                shrinkWrap: true,
-                itemCount: orders.length,
-                itemBuilder: (context, i) {
-                  return _buildOrders(context, orders[i], i, getcurrencySymbol);
-                }),
-      ],
+        ],
+      ),
     );
   }
-}
 
-_buildOrders(
-    BuildContext context, OrderModel2 orders, int i, String getcurrencySymbol) {
-  return InkWell(
-    onTap: () {
-      Navigator.of(context).push(MaterialPageRoute(
-          builder: (context) => OrdersPreview(
-                orderModel: orders,
-                currencySymbol: getcurrencySymbol,
-              )));
-    },
-    child: Padding(
-      padding: const EdgeInsets.all(8.0),
-      child: SizedBox(
-        height: 110,
-        child: Card(
-            elevation: 0,
-            child: Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Column(
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text('#${orders.orderID}',
-                          style: const TextStyle(
-                              fontWeight: FontWeight.bold, fontSize: 18)),
-                      Text(orders.timeCreated),
-                    ],
-                  ),
-                  const SizedBox(height: 10),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Column(
-                        children: [
-                          const Text('Amount').tr(),
-                          const SizedBox(height: 2),
-                          Text(
-                              '$getcurrencySymbol${Formatter().converter(orders.total.toDouble())}',
-                              style: const TextStyle(
-                                  fontWeight: FontWeight.bold, fontSize: 18)),
-                        ],
-                      ),
-                      const SizedBox(
-                          height: 40,
-                          child: VerticalDivider(
-                              thickness: 1, color: Colors.grey)),
-                      orders.paymentType == 'Wallet'
-                          ? Column(
-                              children: [
-                                const Text('Payment type').tr(),
-                                const SizedBox(height: 2),
-                                const Text('Wallet',
-                                        style: TextStyle(
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: 18))
-                                    .tr(),
-                              ],
-                            )
-                          : Column(
-                              children: [
-                                const Text('Payment type').tr(),
-                                const SizedBox(height: 2),
-                                const Text('Cash on delivery',
-                                        style: TextStyle(
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: 18))
-                                    .tr(),
-                              ],
-                            ),
-                    ],
-                  ),
-                ],
+  Widget _orderCard(BuildContext context, OrderModel2 order, String symbol) {
+    return InkWell(
+      onTap: () {
+        Navigator.of(context).push(MaterialPageRoute(
+            builder: (context) =>
+                OrdersPreview(orderModel: order, currencySymbol: symbol)));
+      },
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        child: Container(
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.06),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: kGold.withOpacity(0.4), width: 1),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.35),
+                blurRadius: 14,
+                offset: const Offset(0, 6),
               ),
-            )),
+            ],
+          ),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Top Row
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      "#${order.orderID}",
+                      style: const TextStyle(
+                        color: kGold,
+                        fontSize: 19,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    Text(
+                      order.timeCreated,
+                      style: TextStyle(
+                        color: Colors.white.withOpacity(0.75),
+                        fontSize: 12.5,
+                      ),
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 14),
+
+                // Amount + Payment
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    // Amount
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text("Amount".tr(),
+                            style: const TextStyle(
+                                color: Colors.white70, fontSize: 12)),
+                        const SizedBox(height: 3),
+                        Text(
+                          "$symbol${Formatter().converter(order.total.toDouble())}",
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 17,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ],
+                    ),
+
+                    Container(width: 1, height: 35, color: Colors.white24),
+
+                    // Payment type
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Text("Payment Type".tr(),
+                            style: const TextStyle(
+                                color: Colors.white70, fontSize: 12)),
+                        const SizedBox(height: 3),
+                        Text(
+                          order.paymentType == "Wallet"
+                              ? "Wallet"
+                              : "Cash on delivery",
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 16.5,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ).tr(),
+                      ],
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 14),
+
+                // Processing Badge
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+                    decoration: BoxDecoration(
+                      color: Colors.orange.withOpacity(0.85),
+                      borderRadius: BorderRadius.circular(40),
+                    ),
+                    child: const Text(
+                      "Processing",
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ).tr(),
+                  ),
+                )
+              ],
+            ),
+          ),
+        ),
       ),
-    ),
-  );
+    );
+  }
 }

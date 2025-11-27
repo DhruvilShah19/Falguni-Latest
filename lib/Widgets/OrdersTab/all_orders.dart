@@ -17,16 +17,17 @@ class AllOrders extends StatefulWidget {
 class _AllOrdersState extends State<AllOrders> {
   DocumentReference? userRef;
 
+  String userID = '';
+  List<OrderModel2> orders = [];
+
   @override
-  initState() {
+  void initState() {
     super.initState();
     fetchOrders();
     getCurrencyDetails();
     _getUserModelDoc();
   }
 
-  String userID = '';
-  List<OrderModel2> orders = [];
   Future<void> fetchOrders() async {
     final FirebaseAuth auth = FirebaseAuth.instance;
     final FirebaseFirestore firestore = FirebaseFirestore.instance;
@@ -76,11 +77,12 @@ class _AllOrdersState extends State<AllOrders> {
               });
             }
           }
-          // Sort orders by 'uid' (which is a timestamp string)
+
+          // Sort latest → oldest
           orders.sort((a, b) {
             DateTime dateA = DateTime.parse(a.uid);
             DateTime dateB = DateTime.parse(b.uid);
-            return dateB.compareTo(dateA); // Sort from latest to oldest
+            return dateB.compareTo(dateA);
           });
         });
       }) as DocumentReference?;
@@ -96,11 +98,6 @@ class _AllOrdersState extends State<AllOrders> {
     });
   }
 
-  String currencyName = '';
-  String currencyCode = '';
-  String currencySymbol = '';
-  String getcurrencyName = '';
-  String getcurrencyCode = '';
   String getcurrencySymbol = '';
 
   getCurrencyDetails() {
@@ -110,117 +107,211 @@ class _AllOrdersState extends State<AllOrders> {
         .get()
         .then((value) {
       setState(() {
-        getcurrencyName = value['Currency name'];
-        getcurrencyCode = value['Currency code'];
         getcurrencySymbol = value['Currency symbol'];
       });
     });
   }
 
+  // COLORS
+  static const Color kPrimary = Color(0xFF2F2525);
+  static const Color kCard = Color(0xFF3B2E2E);
+  static const Color kGold = Color(0xFFC9A86A);
+
   @override
   Widget build(BuildContext context) {
-    return ListView(
-      physics: const BouncingScrollPhysics(),
-      shrinkWrap: true,
-      scrollDirection: Axis.vertical,
-      children: [
-        const SizedBox(
-          height: 20,
+    return Container(
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            Color(0xFF1C1515),
+            Color(0xFF2F2525),
+            Color(0xFF1C1515),
+          ],
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
         ),
-        orders.isEmpty
-            ? Center(
-                child: Image.asset(
-                  'assets/image/empty.png',
-                  height: MediaQuery.of(context).size.height / 2,
+      ),
+      child: ListView(
+        physics: const BouncingScrollPhysics(),
+        children: [
+          const SizedBox(height: 16),
+          orders.isEmpty
+              ? Center(
+                  child: Padding(
+                    padding: const EdgeInsets.only(top: 50),
+                    child: Image.asset(
+                      'assets/image/empty.png',
+                      height: 280,
+                    ),
+                  ),
+                )
+              : ListView.builder(
+                  physics: const NeverScrollableScrollPhysics(),
+                  shrinkWrap: true,
+                  itemCount: orders.length,
+                  itemBuilder: (context, i) {
+                    return _orderCard(context, orders[i], getcurrencySymbol);
+                  },
                 ),
-              )
-            : ListView.builder(
-                physics: const ScrollPhysics(),
-                shrinkWrap: true,
-                itemCount: orders.length,
-                itemBuilder: (context, i) {
-                  return _buildOrders(context, orders[i], i, getcurrencySymbol);
-                }),
-      ],
+        ],
+      ),
     );
   }
-}
 
-_buildOrders(
-    BuildContext context, OrderModel2 orders, int i, String getcurrencySymbol) {
-  return InkWell(
-    onTap: () {
-      Navigator.of(context).push(MaterialPageRoute(
-          builder: (context) => OrdersPreview(
-                orderModel: orders,
-                currencySymbol: getcurrencySymbol,
-              )));
-    },
-    child: Padding(
-      padding: const EdgeInsets.all(8.0),
-      child: SizedBox(
-        height: 110,
-        child: Card(
-            elevation: 0,
-            child: Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Column(
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text('#${orders.orderID}',
-                          style: const TextStyle(
-                              fontWeight: FontWeight.bold, fontSize: 18)),
-                      Text(orders.timeCreated),
-                    ],
-                  ),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Column(
-                        children: [
-                          const Text('Amount').tr(),
-                          const SizedBox(height: 2),
-                          Text(
-                              '$getcurrencySymbol${Formatter().converter(orders.total.toDouble())}',
-                              style: const TextStyle(
-                                  fontWeight: FontWeight.bold, fontSize: 18)),
-                        ],
-                      ),
-                      const SizedBox(
-                          height: 40,
-                          child: VerticalDivider(
-                              thickness: 1, color: Colors.grey)),
-                      orders.paymentType == 'Wallet'
-                          ? Column(
-                              children: [
-                                const Text('Payment type'),
-                                const SizedBox(height: 2),
-                                const Text('Wallet',
-                                        style: TextStyle(
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: 18))
-                                    .tr(),
-                              ],
-                            )
-                          : Column(
-                              children: [
-                                const Text('Payment type').tr(),
-                                const SizedBox(height: 2),
-                                const Text('Cash on delivery',
-                                        style: TextStyle(
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: 18))
-                                    .tr(),
-                              ],
-                            ),
-                    ],
-                  ),
-                ],
+  Widget _orderCard(BuildContext context, OrderModel2 order, String currency) {
+    return InkWell(
+      onTap: () {
+        Navigator.of(context).push(MaterialPageRoute(
+            builder: (context) => OrdersPreview(
+                  orderModel: order,
+                  currencySymbol: currency,
+                )));
+      },
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        child: Container(
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.06),
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(color: Colors.white24),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.25),
+                blurRadius: 12,
+                offset: const Offset(0, 6),
               ),
-            )),
+            ],
+          ),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Order ID + Date
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      "#${order.orderID}",
+                      style: const TextStyle(
+                        color: kGold,
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    Text(
+                      order.timeCreated,
+                      style: const TextStyle(
+                        color: Colors.white70,
+                        fontSize: 12.5,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+
+                // Amount + Payment Type
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    // Amount
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          "Amount".tr(),
+                          style: const TextStyle(
+                            color: Colors.white60,
+                            fontSize: 12,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          "$currency${Formatter().converter(order.total.toDouble())}",
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 17,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+
+                    Container(
+                      height: 36,
+                      width: 1,
+                      color: Colors.white24,
+                    ),
+
+                    // Payment type
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Text(
+                          "Payment Type".tr(),
+                          style: const TextStyle(
+                            color: Colors.white60,
+                            fontSize: 12,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          order.paymentType == 'Wallet'
+                              ? 'Wallet'.tr()
+                              : 'Cash on delivery'.tr(),
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 12),
+
+                // Status chip
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: _chipColor(order.status),
+                      borderRadius: BorderRadius.circular(30),
+                    ),
+                    child: Text(
+                      order.status,
+                      style: const TextStyle(
+                        color: Colors.black,
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                )
+              ],
+            ),
+          ),
+        ),
       ),
-    ),
-  );
+    );
+  }
+
+  Color _chipColor(String status) {
+    switch (status) {
+      case "Received":
+        return Colors.amber;
+      case "Processing":
+        return Colors.orangeAccent;
+      case "Completed":
+        return Colors.greenAccent;
+      case "Cancelled":
+        return Colors.redAccent;
+      default:
+        return Colors.grey;
+    }
+  }
 }

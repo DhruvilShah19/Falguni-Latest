@@ -1,486 +1,19 @@
-// // ignore_for_file: avoid_print, unused_local_variable
-
-// import 'dart:async';
-// import 'dart:io';
-// import 'package:cached_network_image/cached_network_image.dart';
-// import 'package:cloud_firestore/cloud_firestore.dart';
-// import 'package:firebase_auth/firebase_auth.dart';
-// import 'package:firebase_storage/firebase_storage.dart';
-// import 'package:flutter/material.dart';
-// import 'package:easy_localization/easy_localization.dart';
-// import 'package:flutter_custom_clippers/flutter_custom_clippers.dart';
-// import 'package:flutter_spinkit/flutter_spinkit.dart';
-// import 'package:image_picker/image_picker.dart';
-// import 'package:falguni_app/Model/constant.dart';
-// import 'package:map_location_picker/map_location_picker.dart';
-// import '../Providers/auth.dart';
-
-// class ProfilePage extends StatefulWidget {
-//   final bool isbottomNav;
-//   const ProfilePage({super.key, required this.isbottomNav});
-
-//   @override
-//   State<ProfilePage> createState() => _ProfilePageState();
-// }
-
-// class _ProfilePageState extends State<ProfilePage> {
-//   DocumentReference? userRef;
-//   DocumentReference? userDetails;
-//   String fullname = '';
-//   String email = '';
-//   String phone = '';
-//   String password = '';
-//   final _formKey = GlobalKey<FormState>();
-//   String userPic = '';
-//   String address = 'Address';
-//   String userPicMain = '';
-//   String addressMain = '';
-//   num cartQuantity = 0;
-//   String referralCode = '';
-
-//   @override
-//   void initState() {
-//     super.initState();
-//     _getUserDetails();
-//     _getUserDoc();
-//   }
-
-//   Future<void> _getUserDoc() async {
-//     final FirebaseAuth auth = FirebaseAuth.instance;
-//     final FirebaseFirestore firestore = FirebaseFirestore.instance;
-
-//     User? user = auth.currentUser;
-//     setState(() {
-//       userRef = firestore.collection('users').doc(user!.uid);
-//     });
-//   }
-
-//   Future<void> _getUserDetails() async {
-//     final FirebaseAuth auth = FirebaseAuth.instance;
-//     final FirebaseFirestore firestore = FirebaseFirestore.instance;
-
-//     User? user = auth.currentUser;
-//     setState(() {
-//       userDetails = firestore
-//           .collection('users')
-//           .doc(user!.uid)
-//           .snapshots()
-//           .listen((value) {
-//         setState(() {
-//           email = value['email'];
-//           fullname = value['fullname'];
-//           phone = value['phone'];
-//           userPic = value['photoUrl'];
-//           address = value['address'];
-//           referralCode = value['personalReferralCode'];
-//         });
-//       }) as DocumentReference<Object?>?;
-//     });
-//   }
-
-//   _navigateAndDisplaySelection(BuildContext context) async {
-//     final result = await Navigator.push(
-//       context,
-//       MaterialPageRoute(
-//         builder: (context) {
-//           return MapLocationPicker(
-//             apiKey: googleApiKey,
-//             popOnNextButtonTaped: true,
-//             currentLatLng: const LatLng(29.146727, 76.464895),
-//             onNext: (GeocodingResult? result) {
-//               if (result != null) {
-//                 setState(() {
-//                   address = result.formattedAddress ?? "";
-//                 });
-//               }
-//             },
-//             onSuggestionSelected: (PlacesDetailsResponse? result) {
-//               if (result != null) {
-//                 setState(() {
-//                   // selectedPlace = result;
-//                   address = result.result.formattedAddress ?? "";
-//                   Navigator.of(context).pop();
-//                   print('Seleceted Address is$address');
-//                 });
-//               }
-//             },
-//           );
-//         },
-//       ),
-//     );
-//     // setState(() {
-//     //   address = result ?? '';
-//     //   debugPrint(address);
-//     // });
-//   }
-
-//   // Select and image from the gallery or take a picture with the camera
-//   // Then upload to Firebase Storage
-
-//   XFile? imageFile;
-//   bool? loading;
-//   Future<void> _upload() async {
-//     final ImagePicker picker = ImagePicker();
-//     final XFile? image = await picker.pickImage(source: ImageSource.gallery);
-
-//     setState(() {
-//       imageFile = image;
-//       loading = true;
-//     });
-//     if (imageFile != null) {
-//       var snapshot = await FirebaseStorage.instance
-//           .ref()
-//           .child(imageFile!.path)
-//           .putFile(File(imageFile!.path));
-//       String downloadUrl =
-//           await snapshot.ref.getDownloadURL().whenComplete(() => setState(() {
-//                 loading = false;
-//               }));
-
-//       setState(() {
-//         userPicMain = downloadUrl;
-//       });
-//       debugPrint(userPicMain);
-//     }
-//   }
-
-//   whenProfilePicIsempty() {
-//     if (userPicMain == '') {
-//       return userPic;
-//     } else {
-//       return userPicMain;
-//     }
-//   }
-
-//   getCart() {
-//     if (userRef == null) {
-//       return null;
-//     } else {
-//       userRef!.collection('Cart').get().then((val) {
-//         num tempTotal =
-//             val.docs.fold(0, (tot, doc) => tot + doc.data()['quantity']);
-
-//         setState(() {
-//           cartQuantity = tempTotal;
-//         });
-//       });
-//     }
-//   }
-
-//   @override
-//   Widget build(BuildContext context) {
-//     return Scaffold(
-//       resizeToAvoidBottomInset: true,
-//       appBar: AppBar(
-//         automaticallyImplyLeading: widget.isbottomNav == true ? false : true,
-//         iconTheme: Theme.of(context).iconTheme,
-//         titleTextStyle: TextStyle(color: Theme.of(context).indicatorColor),
-//         backgroundColor: Theme.of(context).colorScheme.surface,
-//         centerTitle: true,
-//         elevation: 0,
-//         title: const Text(
-//           'PROFILE',
-//         ).tr(),
-//       ),
-//       body: SingleChildScrollView(
-//         child: SizedBox(
-//           height: MediaQuery.of(context).size.height,
-//           child: Column(
-//             children: [
-//               Form(
-//                 key: _formKey,
-//                 child: Expanded(
-//                   flex: 7,
-//                   child: Column(
-//                     children: [
-//                       Padding(
-//                         padding: const EdgeInsets.all(8.0),
-//                         child: Row(
-//                           children: [
-//                             const Text('YOUR PERSONAL DATA',
-//                                     style: TextStyle(
-//                                         color: Colors.grey,
-//                                         fontWeight: FontWeight.bold))
-//                                 .tr(),
-//                           ],
-//                         ),
-//                       ),
-//                       Stack(
-//                         children: [
-//                           imageFile != null
-//                               ? ClipOval(
-//                                   child: Image.file(
-//                                   File(imageFile!.path),
-//                                   fit: BoxFit.cover,
-//                                   height: 120,
-//                                   width: 120,
-//                                 ))
-//                               : ClipOval(
-//                                   child: CachedNetworkImage(
-//                                     height: 120,
-//                                     fit: BoxFit.cover,
-//                                     width: 120,
-//                                     imageUrl: userPic == ''
-//                                         ? "https://eitrawmaterials.eu/wp-content/uploads/2016/09/person-icon.png"
-//                                         : userPic,
-//                                     placeholder: (context, url) =>
-//                                         const SpinKitRing(
-//                                       color: Color.fromARGB(255, 47, 37, 37),
-//                                       size: 30,
-//                                       lineWidth: 3,
-//                                     ),
-//                                     errorWidget: (context, url, error) =>
-//                                         const Icon(Icons.error),
-//                                   ),
-//                                 ),
-//                           Positioned(
-//                               bottom: 0,
-//                               right: 0,
-//                               child: Container(
-//                                 decoration: const BoxDecoration(
-//                                   shape: BoxShape.circle,
-//                                   color: Color.fromARGB(255, 47, 37, 37),
-//                                 ),
-//                                 child: IconButton(
-//                                   icon: const Icon(
-//                                     Icons.camera_alt,
-//                                     color: Colors.white,
-//                                   ),
-//                                   onPressed: () async {
-//                                     _upload();
-//                                   },
-//                                 ),
-//                               ))
-//                         ],
-//                       ),
-//                       const SizedBox(height: 10),
-//                       Padding(
-//                         padding: const EdgeInsets.all(12.0),
-//                         child: Row(
-//                           children: [
-//                             const Flexible(
-//                                 flex: 1,
-//                                 child: Icon(
-//                                   Icons.person,
-//                                   size: 40,
-//                                   color: Colors.grey,
-//                                 )),
-//                             const SizedBox(
-//                               width: 10,
-//                             ),
-//                             Flexible(
-//                               flex: 6,
-//                               child: TextFormField(
-//                                 keyboardType: TextInputType.name,
-//                                 validator: (value) {
-//                                   if (value!.isEmpty && fullname.isEmpty) {
-//                                     return 'Required field'.tr();
-//                                   } else {
-//                                     return null;
-//                                   }
-//                                 },
-//                                 decoration: InputDecoration(
-//                                     hintText: fullname,
-//                                     focusColor: Color.fromARGB(255, 47, 37, 37)),
-//                                 onChanged: (value) {
-//                                   setState(() {
-//                                     fullname = value;
-//                                   });
-//                                 },
-//                               ),
-//                             )
-//                           ],
-//                         ),
-//                       ),
-//                       Padding(
-//                         padding: const EdgeInsets.all(12.0),
-//                         child: Row(
-//                           children: [
-//                             const Flexible(
-//                                 flex: 1,
-//                                 child: Icon(
-//                                   Icons.email_outlined,
-//                                   size: 40,
-//                                   color: Colors.grey,
-//                                 )),
-//                             const SizedBox(
-//                               width: 10,
-//                             ),
-//                             Flexible(
-//                               flex: 6,
-//                               child: TextFormField(
-//                                 readOnly: true,
-//                                 keyboardType: TextInputType.emailAddress,
-//                                 decoration: InputDecoration(
-//                                     hintText: email, focusColor: Color.fromARGB(255, 47, 37, 37)),
-//                               ),
-//                             )
-//                           ],
-//                         ),
-//                       ),
-//                       Padding(
-//                         padding: const EdgeInsets.all(12.0),
-//                         child: Row(
-//                           children: [
-//                             const Flexible(
-//                                 flex: 1,
-//                                 child: Icon(
-//                                   Icons.phone,
-//                                   size: 40,
-//                                   color: Colors.grey,
-//                                 )),
-//                             const SizedBox(
-//                               width: 10,
-//                             ),
-//                             Flexible(
-//                               flex: 6,
-//                               child: TextFormField(
-//                                 maxLength: 10,
-//                                 // onTap: () {
-//                                 //   Fluttertoast.showToast(
-//                                 //       msg: "Phone number can't be changed".tr(),
-//                                 //       toastLength: Toast.LENGTH_SHORT,
-//                                 //       gravity: ToastGravity.CENTER,
-//                                 //       timeInSecForIosWeb: 1,
-//                                 //       fontSize: 14.0);
-//                                 // },
-//                                 // readOnly: true,
-//                                 validator: (value) {
-//                                   if (value!.isEmpty && phone.isEmpty) {
-//                                     return 'Required field'.tr();
-//                                   } else {
-//                                     return null;
-//                                   }
-//                                 },
-//                                 keyboardType: TextInputType.phone,
-//                                 onChanged: (value) {
-//                                   setState(() {
-//                                     phone = value;
-//                                   });
-//                                 },
-//                                 decoration: InputDecoration(
-//                                     hintText:
-//                                         phone == '' ? '+91 XXXX XXXXXX' : phone,
-//                                     focusColor: Color.fromARGB(255, 47, 37, 37)),
-//                               ),
-//                             )
-//                           ],
-//                         ),
-//                       ),
-//                       Padding(
-//                         padding: const EdgeInsets.all(12.0),
-//                         child: Row(
-//                           children: [
-//                             const Flexible(
-//                                 flex: 1,
-//                                 child: Icon(
-//                                   Icons.location_city,
-//                                   size: 40,
-//                                   color: Colors.grey,
-//                                 )),
-//                             const SizedBox(
-//                               width: 10,
-//                             ),
-//                             Flexible(
-//                                 flex: 6,
-//                                 child: Container(
-//                                   decoration: BoxDecoration(
-//                                     border: Border(
-//                                       bottom: BorderSide(
-//                                           width: 2,
-//                                           color: Colors.grey.shade400),
-//                                     ),
-//                                   ),
-//                                   child: ListTile(
-//                                     onTap: () {
-//                                       _navigateAndDisplaySelection(context);
-//                                     },
-//                                     title: Text(address,
-//                                             style: TextStyle(
-//                                                 color: Colors.grey[600]))
-//                                         .tr(),
-//                                   ),
-//                                 ))
-//                           ],
-//                         ),
-//                       ),
-//                       const SizedBox(height: 20),
-//                       loading == true
-//                           ? Padding(
-//                               padding: const EdgeInsets.all(8.0),
-//                               child: SizedBox(
-//                                   height: 50,
-//                                   width: double.infinity,
-//                                   child: ElevatedButton(
-//                                       style: ElevatedButton.styleFrom(
-//                                           backgroundColor: Color.fromARGB(255, 47, 37, 37)),
-//                                       onPressed: null,
-//                                       child: const Text('Save',
-//                                               style: TextStyle(
-//                                                   fontSize: 20,
-//                                                   color: Colors.white))
-//                                           .tr())),
-//                             )
-//                           : Padding(
-//                               padding: const EdgeInsets.all(8.0),
-//                               child: SizedBox(
-//                                   height: 50,
-//                                   width: double.infinity,
-//                                   child: ElevatedButton(
-//                                       style: ElevatedButton.styleFrom(
-//                                           backgroundColor: Color.fromARGB(255, 47, 37, 37)),
-//                                       onPressed: () async {
-//                                         if (_formKey.currentState!.validate()) {
-//                                           AuthService().updateProfile(
-//                                               fullname,
-//                                               phone == '' ? phone : '+91$phone',
-//                                               context,
-//                                               userPicMain,
-//                                               address);
-//                                         }
-//                                       },
-//                                       child: const Text('Save',
-//                                               style: TextStyle(
-//                                                   fontSize: 20,
-//                                                   color: Colors.white))
-//                                           .tr())),
-//                             ),
-//                     ],
-//                   ),
-//                 ),
-//               ),
-//               Expanded(
-//                 flex: 2,
-//                 child: ClipPath(
-//                   clipper: OvalTopBorderClipper(),
-//                   child:
-//                       Container(color: const Color.fromARGB(255, 47, 37, 37)),
-//                 ),
-//               ),
-//             ],
-//           ),
-//         ),
-//       ),
-//     );
-//   }
-// }
-
 // ignore_for_file: avoid_print, unused_local_variable, use_build_context_synchronously
 
 import 'dart:async';
 import 'dart:io';
+
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:falguni_app/Pages/login_page.dart';
+import 'package:falguni_app/Pages/delivery_addresses.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
-import 'package:flutter_custom_clippers/flutter_custom_clippers.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:falguni_app/Model/constant.dart';
-import 'package:map_location_picker/map_location_picker.dart';
+
 import '../Providers/auth.dart';
 
 class ProfilePage extends StatefulWidget {
@@ -493,527 +26,440 @@ class ProfilePage extends StatefulWidget {
 
 class _ProfilePageState extends State<ProfilePage> {
   DocumentReference? userRef;
-  DocumentReference? userDetails;
+
   String fullname = '';
   String email = '';
   String phone = '';
-  String password = '';
-  final _formKey = GlobalKey<FormState>();
   String userPic = '';
-  String address = 'Address';
   String userPicMain = '';
-  String addressMain = '';
-  num cartQuantity = 0;
+  String address = 'Select Address';
   String referralCode = '';
+  num cartQuantity = 0;
+
+  final _formKey = GlobalKey<FormState>();
+  XFile? imageFile;
+  bool loadingImage = false;
+
+  static const Color kGold = Color(0xFFC9A86A);
+  static const Color kPrimaryDark = Color(0xFF1C1515);
+  static const Color kCardDark = Color(0xFF2F2525);
 
   @override
   void initState() {
     super.initState();
-    _getUserDetails();
-    _getUserDoc();
+    _getUserRef();
+    _listenUserDetails();
   }
 
-  Future<void> _getUserDoc() async {
-    final FirebaseAuth auth = FirebaseAuth.instance;
-    final FirebaseFirestore firestore = FirebaseFirestore.instance;
-
-    User? user = auth.currentUser;
+  Future<void> _getUserRef() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
     setState(() {
-      userRef = firestore.collection('users').doc(user!.uid);
+      userRef = FirebaseFirestore.instance.collection('users').doc(user.uid);
     });
   }
 
-  Future<void> _getUserDetails() async {
-    final FirebaseAuth auth = FirebaseAuth.instance;
-    final FirebaseFirestore firestore = FirebaseFirestore.instance;
+  void _listenUserDetails() {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
 
-    User? user = auth.currentUser;
-    setState(() {
-      userDetails = firestore
-          .collection('users')
-          .doc(user!.uid)
-          .snapshots()
-          .listen((value) {
-        setState(() {
-          email = value['email'];
-          fullname = value['fullname'];
-          phone = value['phone'];
-          userPic = value['photoUrl'];
-          address = value['address'];
-          referralCode = value['personalReferralCode'];
-        });
-      }) as DocumentReference<Object?>?;
+    FirebaseFirestore.instance
+        .collection('users')
+        .doc(user.uid)
+        .snapshots()
+        .listen((value) {
+      if (!mounted || !value.exists) return;
+
+      setState(() {
+        email = value['email'];
+        fullname = value['fullname'];
+        phone = value['phone'];
+        userPic = value['photoUrl'];
+
+        /// Always read default address
+        address = value.data()?['DeliveryAddress']?.toString() ??
+            value.data()?['address']?.toString() ??
+            "Select Address";
+
+        referralCode = value['personalReferralCode'];
+      });
     });
   }
 
-  _navigateAndDisplaySelection(BuildContext context) async {
-    final result = await Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) {
-          return MapLocationPicker(
-            apiKey: googleApiKey,
-            popOnNextButtonTaped: true,
-            currentLatLng: const LatLng(29.146727, 76.464895),
-            onNext: (GeocodingResult? result) {
-              if (result != null) {
-                setState(() {
-                  address = result.formattedAddress ?? "";
-                });
-              }
-            },
-            onSuggestionSelected: (PlacesDetailsResponse? result) {
-              if (result != null) {
-                setState(() {
-                  address = result.result.formattedAddress ?? "";
-                  Navigator.of(context).pop();
-                  print('Seleceted Address is$address');
-                });
-              }
-            },
-          );
-        },
+  Future<void> _uploadImage() async {
+    final picker = ImagePicker();
+    final picked = await picker.pickImage(source: ImageSource.gallery);
+
+    if (picked == null) return;
+
+    setState(() {
+      imageFile = picked;
+      loadingImage = true;
+    });
+
+    try {
+      final ref = FirebaseStorage.instance.ref().child(picked.path);
+      final task = await ref.putFile(File(picked.path));
+      final url = await task.ref.getDownloadURL();
+
+      setState(() {
+        userPicMain = url;
+      });
+    } finally {
+      if (mounted) setState(() => loadingImage = false);
+    }
+  }
+
+  String get _activePic => userPicMain.isNotEmpty ? userPicMain : userPic;
+
+  String _initials() {
+    String base = fullname.isNotEmpty ? fullname : email;
+    if (base.trim().isEmpty) return "U";
+
+    final parts = base.trim().split(" ");
+    if (parts.length == 1) return parts.first[0].toUpperCase();
+    return (parts.first[0] + parts[1][0]).toUpperCase();
+  }
+
+  Widget _initialsAvatar() {
+    return CircleAvatar(
+      radius: 60,
+      backgroundColor: kGold.withOpacity(0.15),
+      child: Text(
+        _initials(),
+        style: const TextStyle(
+          fontSize: 32,
+          fontWeight: FontWeight.bold,
+          color: kGold,
+        ),
       ),
     );
   }
 
-  XFile? imageFile;
-  bool? loading;
-  Future<void> _upload() async {
-    final ImagePicker picker = ImagePicker();
-    final XFile? image = await picker.pickImage(source: ImageSource.gallery);
-
-    setState(() {
-      imageFile = image;
-      loading = true;
-    });
+  Widget _buildAvatar() {
     if (imageFile != null) {
-      var snapshot = await FirebaseStorage.instance
-          .ref()
-          .child(imageFile!.path)
-          .putFile(File(imageFile!.path));
-      String downloadUrl =
-          await snapshot.ref.getDownloadURL().whenComplete(() => setState(() {
-                loading = false;
-              }));
-
-      setState(() {
-        userPicMain = downloadUrl;
-      });
+      return ClipOval(
+        child: Image.file(
+          File(imageFile!.path),
+          height: 120,
+          width: 120,
+          fit: BoxFit.cover,
+        ),
+      );
     }
+
+    if (_activePic.isNotEmpty) {
+      return ClipOval(
+        child: CachedNetworkImage(
+          height: 120,
+          width: 120,
+          fit: BoxFit.cover,
+          imageUrl: _activePic,
+          placeholder: (_, __) => const SpinKitRing(
+            color: kGold,
+            size: 30,
+            lineWidth: 3,
+          ),
+          errorWidget: (_, __, ___) => _initialsAvatar(),
+        ),
+      );
+    }
+
+    return _initialsAvatar();
   }
 
-  whenProfilePicIsempty() {
-    if (userPicMain == '') {
-      return userPic;
-    } else {
-      return userPicMain;
-    }
+  void _saveProfile() {
+    if (!_formKey.currentState!.validate()) return;
+
+    final finalPhone = phone.isEmpty ? phone : "+91$phone";
+
+    AuthService().updateProfile(
+      fullname,
+      finalPhone,
+      context,
+      userPicMain,
+      address,
+    );
   }
 
-  getCart() {
-    if (userRef == null) {
-      return null;
-    } else {
-      userRef!.collection('Cart').get().then((val) {
-        num tempTotal =
-            val.docs.fold(0, (tot, doc) => tot + doc.data()['quantity']);
-
-        setState(() {
-          cartQuantity = tempTotal;
+  Future<void> _confirmDelete() async {
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (_) {
+        bool agree = false;
+        return StatefulBuilder(builder: (ctx, setStateDialog) {
+          return AlertDialog(
+            backgroundColor: kPrimaryDark,
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            title: const Text("Delete Account",
+                style: TextStyle(color: kGold, fontWeight: FontWeight.bold)),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text(
+                  "Are you sure you want to delete your account? This cannot be undone.",
+                  style: TextStyle(color: Colors.white70, fontSize: 14),
+                ),
+                CheckboxListTile(
+                  value: agree,
+                  onChanged: (val) =>
+                      setStateDialog(() => agree = val ?? false),
+                  title: const Text(
+                    'I understand and want to delete my account.',
+                    style: TextStyle(color: Colors.white70, fontSize: 13),
+                  ),
+                  activeColor: kGold,
+                  checkColor: Colors.black,
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child:
+                    const Text("Cancel", style: TextStyle(color: Colors.white)),
+              ),
+              TextButton(
+                onPressed: agree ? () => Navigator.pop(context, true) : null,
+                child: const Text(
+                  "Delete",
+                  style: TextStyle(color: Colors.redAccent),
+                ),
+              ),
+            ],
+          );
         });
-      });
+      },
+    );
+
+    if (result == true) _deleteAccount();
+  }
+
+  Future<void> _deleteAccount() async {
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) return;
+
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .delete();
+      await user.delete();
+      await AuthService().signOut(context);
+
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (_) => const LoginPage()),
+        (route) => false,
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text("Error: $e")));
     }
+  }
+
+  Widget _fieldContainer({
+    required IconData icon,
+    required Widget child,
+  }) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.05),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: Colors.white.withOpacity(.12)),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, color: kGold, size: 22),
+          const SizedBox(width: 14),
+          Expanded(child: child),
+        ],
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      resizeToAvoidBottomInset: true,
+      backgroundColor: kPrimaryDark,
       appBar: AppBar(
-        automaticallyImplyLeading: widget.isbottomNav == true ? false : true,
-        iconTheme: Theme.of(context).iconTheme,
-        titleTextStyle: TextStyle(color: Theme.of(context).indicatorColor),
-        backgroundColor: Theme.of(context).colorScheme.surface,
-        centerTitle: true,
+        automaticallyImplyLeading: !widget.isbottomNav,
+        backgroundColor: Colors.transparent,
         elevation: 0,
-        title: const Text('PROFILE').tr(),
+        iconTheme: const IconThemeData(color: Colors.white),
+        centerTitle: true,
+        title: const Text(
+          "Edit Profile",
+          style: TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.w700,
+            fontSize: 20,
+            letterSpacing: .3,
+          ),
+        ),
       ),
       body: SingleChildScrollView(
-        child: SizedBox(
-          height: MediaQuery.of(context).size.height,
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+        child: Form(
+          key: _formKey,
           child: Column(
             children: [
-              Form(
-                key: _formKey,
-                child: Expanded(
-                  flex: 7,
-                  child: Column(
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: Row(
-                          children: [
-                            const Text('YOUR PERSONAL DATA',
-                                    style: TextStyle(
-                                        color: Colors.grey,
-                                        fontWeight: FontWeight.bold))
-                                .tr(),
-                          ],
-                        ),
-                      ),
-                      Stack(
-                        children: [
-                          imageFile != null
-                              ? ClipOval(
-                                  child: Image.file(
-                                  File(imageFile!.path),
-                                  fit: BoxFit.cover,
-                                  height: 120,
-                                  width: 120,
-                                ))
-                              : ClipOval(
-                                  child: CachedNetworkImage(
-                                    height: 120,
-                                    fit: BoxFit.cover,
-                                    width: 120,
-                                    imageUrl: userPic == ''
-                                        ? "https://eitrawmaterials.eu/wp-content/uploads/2016/09/person-icon.png"
-                                        : userPic,
-                                    placeholder: (context, url) =>
-                                        const SpinKitRing(
-                                      color: Color.fromARGB(255, 47, 37, 37),
-                                      size: 30,
-                                      lineWidth: 3,
-                                    ),
-                                    errorWidget: (context, url, error) =>
-                                        const Icon(Icons.error),
+              // Avatar
+              Center(
+                child: Stack(
+                  children: [
+                    _buildAvatar(),
+                    Positioned(
+                      bottom: 0,
+                      right: 2,
+                      child: GestureDetector(
+                        onTap: _uploadImage,
+                        child: CircleAvatar(
+                          radius: 22,
+                          backgroundColor: kGold,
+                          child: loadingImage
+                              ? const SizedBox(
+                                  height: 18,
+                                  width: 18,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: Colors.black,
                                   ),
-                                ),
-                          Positioned(
-                              bottom: 0,
-                              right: 0,
-                              child: Container(
-                                decoration: const BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  color: Color.fromARGB(255, 47, 37, 37),
-                                ),
-                                child: IconButton(
-                                  icon: const Icon(
-                                    Icons.camera_alt,
-                                    color: Colors.white,
-                                  ),
-                                  onPressed: () async {
-                                    _upload();
-                                  },
-                                ),
-                              ))
-                        ],
-                      ),
-                      const SizedBox(height: 10),
-                      Padding(
-                        padding: const EdgeInsets.all(12.0),
-                        child: Row(
-                          children: [
-                            const Flexible(
-                                flex: 1,
-                                child: Icon(
-                                  Icons.person,
-                                  size: 40,
-                                  color: Colors.grey,
-                                )),
-                            const SizedBox(width: 10),
-                            Flexible(
-                              flex: 6,
-                              child: TextFormField(
-                                keyboardType: TextInputType.name,
-                                validator: (value) {
-                                  if (value!.isEmpty && fullname.isEmpty) {
-                                    return 'Required field'.tr();
-                                  } else {
-                                    return null;
-                                  }
-                                },
-                                decoration: InputDecoration(
-                                    hintText: fullname,
-                                    focusColor:
-                                        const Color.fromARGB(255, 47, 37, 37)),
-                                onChanged: (value) {
-                                  setState(() {
-                                    fullname = value;
-                                  });
-                                },
-                              ),
-                            )
-                          ],
+                                )
+                              : const Icon(Icons.camera_alt,
+                                  size: 18, color: Colors.black),
                         ),
                       ),
-                      Padding(
-                        padding: const EdgeInsets.all(12.0),
-                        child: Row(
-                          children: [
-                            const Flexible(
-                                flex: 1,
-                                child: Icon(
-                                  Icons.email_outlined,
-                                  size: 40,
-                                  color: Colors.grey,
-                                )),
-                            const SizedBox(width: 10),
-                            Flexible(
-                              flex: 6,
-                              child: TextFormField(
-                                readOnly: true,
-                                keyboardType: TextInputType.emailAddress,
-                                decoration: InputDecoration(
-                                    hintText: email,
-                                    focusColor:
-                                        const Color.fromARGB(255, 47, 37, 37)),
-                              ),
-                            )
-                          ],
-                        ),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.all(12.0),
-                        child: Row(
-                          children: [
-                            const Flexible(
-                                flex: 1,
-                                child: Icon(
-                                  Icons.phone,
-                                  size: 40,
-                                  color: Colors.grey,
-                                )),
-                            const SizedBox(width: 10),
-                            Flexible(
-                              flex: 6,
-                              child: TextFormField(
-                                maxLength: 10,
-                                validator: (value) {
-                                  if (value!.isEmpty && phone.isEmpty) {
-                                    return 'Required field'.tr();
-                                  } else {
-                                    return null;
-                                  }
-                                },
-                                keyboardType: TextInputType.phone,
-                                onChanged: (value) {
-                                  setState(() {
-                                    phone = value;
-                                  });
-                                },
-                                decoration: InputDecoration(
-                                    hintText:
-                                        phone == '' ? '+91 XXXX XXXXXX' : phone,
-                                    focusColor:
-                                        const Color.fromARGB(255, 47, 37, 37)),
-                              ),
-                            )
-                          ],
-                        ),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.all(12.0),
-                        child: Row(
-                          children: [
-                            const Flexible(
-                                flex: 1,
-                                child: Icon(
-                                  Icons.location_city,
-                                  size: 40,
-                                  color: Colors.grey,
-                                )),
-                            const SizedBox(width: 10),
-                            Flexible(
-                              flex: 6,
-                              child: Container(
-                                decoration: BoxDecoration(
-                                  border: Border(
-                                    bottom: BorderSide(
-                                        width: 2, color: Colors.grey.shade400),
-                                  ),
-                                ),
-                                child: ListTile(
-                                  onTap: () {
-                                    _navigateAndDisplaySelection(context);
-                                  },
-                                  title: Text(address,
-                                          style: TextStyle(
-                                              color: Colors.grey[600]))
-                                      .tr(),
-                                ),
-                              ),
-                            )
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 20),
-                      loading == true
-                          ? Padding(
-                              padding: const EdgeInsets.all(8.0),
-                              child: SizedBox(
-                                  height: 50,
-                                  width: double.infinity,
-                                  child: ElevatedButton(
-                                      style: ElevatedButton.styleFrom(
-                                          backgroundColor: const Color.fromARGB(
-                                              255, 47, 37, 37)),
-                                      onPressed: null,
-                                      child: const Text('Save',
-                                              style: TextStyle(
-                                                  fontSize: 20,
-                                                  color: Colors.white))
-                                          .tr())),
-                            )
-                          : Padding(
-                              padding: const EdgeInsets.all(8.0),
-                              child: SizedBox(
-                                  height: 50,
-                                  width: double.infinity,
-                                  child: ElevatedButton(
-                                      style: ElevatedButton.styleFrom(
-                                          backgroundColor: const Color.fromARGB(
-                                              255, 47, 37, 37)),
-                                      onPressed: () async {
-                                        if (_formKey.currentState!.validate()) {
-                                          AuthService().updateProfile(
-                                              fullname,
-                                              phone == '' ? phone : '+91$phone',
-                                              context,
-                                              userPicMain,
-                                              address);
-                                        }
-                                      },
-                                      child: const Text('Save',
-                                              style: TextStyle(
-                                                  fontSize: 20,
-                                                  color: Colors.white))
-                                          .tr())),
-                            ),
-                      // 👇👇 Delete My Account button
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                        child: SizedBox(
-                          height: 50,
-                          width: double.infinity,
-                          child: OutlinedButton(
-                            style: OutlinedButton.styleFrom(
-                              side: const BorderSide(color: Colors.red),
-                            ),
-                            onPressed: () async {
-                              bool isChecked = false;
+                    ),
+                  ],
+                ),
+              ),
 
-                              final confirm = await showDialog<bool>(
-                                context: context,
-                                builder: (context) {
-                                  return StatefulBuilder(
-                                    builder: (context, setState) => AlertDialog(
-                                      title: const Text('Delete Account'),
-                                      content: Column(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          const Text(
-                                              'Are you sure you want to delete your account? This cannot be undone.'),
-                                          const SizedBox(height: 16),
-                                          CheckboxListTile(
-                                            value: isChecked,
-                                            onChanged: (value) {
-                                              setState(() {
-                                                isChecked = value ?? false;
-                                              });
-                                            },
-                                            title: const Text(
-                                              'I understand and want to delete my account.',
-                                              style: TextStyle(fontSize: 14),
-                                            ),
-                                            controlAffinity:
-                                                ListTileControlAffinity.leading,
-                                          ),
-                                        ],
-                                      ),
-                                      actions: [
-                                        TextButton(
-                                          onPressed: () =>
-                                              Navigator.of(context).pop(false),
-                                          child: const Text('Cancel'),
-                                        ),
-                                        TextButton(
-                                          onPressed: isChecked
-                                              ? () => Navigator.of(context)
-                                                  .pop(true)
-                                              : null,
-                                          child: const Text(
-                                            'Delete',
-                                            style: TextStyle(color: Colors.red),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  );
-                                },
-                              );
+              const SizedBox(height: 30),
 
-                              if (confirm == true) {
-                                try {
-                                  final user =
-                                      FirebaseAuth.instance.currentUser;
+              // Full name
+              _fieldContainer(
+                icon: Icons.person,
+                child: TextFormField(
+                  style: const TextStyle(color: Colors.white),
+                  validator: (v) =>
+                      (v == null || v.isEmpty) ? "Required field".tr() : null,
+                  decoration: InputDecoration(
+                    hintText: fullname.isEmpty ? "Full Name" : fullname,
+                    hintStyle: const TextStyle(color: Colors.white54),
+                    border: InputBorder.none,
+                  ),
+                  onChanged: (v) => fullname = v,
+                ),
+              ),
 
-                                  await FirebaseFirestore.instance
-                                      .collection('users')
-                                      .doc(user!.uid)
-                                      .delete();
-
-                                  await user.delete();
-
-                                  // Sign out and redirect to initial screen
-                                  await AuthService().signOut(context);
-
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                      content: Text(
-                                          'Your account has been deleted.'),
-                                    ),
-                                  );
-
-                                  await Future.delayed(
-                                      const Duration(milliseconds: 300));
-
-                                  Navigator.pushAndRemoveUntil(
-                                    context,
-                                    MaterialPageRoute(
-                                        builder: (context) =>
-                                            const LoginPage()),
-                                    (route) => false,
-                                  );
-                                } catch (e) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                        content:
-                                            Text('Error deleting account: $e')),
-                                  );
-                                }
-                              }
-                            },
-                            child: const Text(
-                              'Delete My Account',
-                              style: TextStyle(color: Colors.red, fontSize: 16),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
+              // Email (read only)
+              _fieldContainer(
+                icon: Icons.email_outlined,
+                child: TextFormField(
+                  readOnly: true,
+                  style: const TextStyle(color: Colors.white70),
+                  decoration: InputDecoration(
+                    hintText: email,
+                    hintStyle: const TextStyle(color: Colors.white60),
+                    border: InputBorder.none,
                   ),
                 ),
               ),
-              Expanded(
-                flex: 2,
-                child: ClipPath(
-                  clipper: OvalTopBorderClipper(),
-                  child:
-                      Container(color: const Color.fromARGB(255, 47, 37, 37)),
+
+              // Phone
+              _fieldContainer(
+                icon: Icons.phone,
+                child: TextFormField(
+                  maxLength: 10,
+                  keyboardType: TextInputType.phone,
+                  style: const TextStyle(color: Colors.white),
+                  decoration: InputDecoration(
+                    counterText: "",
+                    hintText: phone.isEmpty ? "+91 XXXXX XXXXX" : phone,
+                    hintStyle: const TextStyle(color: Colors.white54),
+                    border: InputBorder.none,
+                  ),
+                  validator: (v) =>
+                      (v == null || v.isEmpty) ? "Required field".tr() : null,
+                  onChanged: (v) => phone = v,
                 ),
               ),
+
+              // Address
+              _fieldContainer(
+                icon: Icons.location_on_outlined,
+                child: GestureDetector(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (_) => const DeliveryAddressesPage()),
+                    );
+                  },
+                  child: Text(
+                    address.isEmpty ? "Select Address" : address,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(color: Colors.white70),
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 20),
+
+              // Save Button
+              SizedBox(
+                width: double.infinity,
+                height: 52,
+                child: ElevatedButton(
+                  onPressed: _saveProfile,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: kGold,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                  ),
+                  child: const Text(
+                    "Save",
+                    style: TextStyle(
+                      color: Colors.black,
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 16),
+
+              // Delete account
+              SizedBox(
+                width: double.infinity,
+                height: 52,
+                child: OutlinedButton(
+                  onPressed: _confirmDelete,
+                  style: OutlinedButton.styleFrom(
+                    side: const BorderSide(color: Colors.redAccent, width: 1),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                  ),
+                  child: const Text(
+                    "Delete My Account",
+                    style: TextStyle(
+                      color: Colors.redAccent,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 40),
             ],
           ),
         ),

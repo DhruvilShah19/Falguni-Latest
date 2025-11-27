@@ -18,123 +18,177 @@ class CourierPage extends StatefulWidget {
 }
 
 class _CourierPageState extends State<CourierPage> {
+  static const Color kPrimary = Color(0xFF2F2525);
+  static const Color kGold = Color(0xFFC9A86A);
+
   DocumentReference? userRef;
-
   String userID = '';
-  Future<void> _getUserModelDoc() async {
-    final FirebaseAuth auth = FirebaseAuth.instance;
-    final FirebaseFirestore firestore = FirebaseFirestore.instance;
 
-    User? user = auth.currentUser;
-    setState(() {
-      userRef = firestore.collection('users').doc(user!.uid);
-    });
+  Future<void> _getUserModelDoc() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      userRef = FirebaseFirestore.instance.collection('users').doc(user.uid);
+    }
   }
 
   getuserID() async {
-    if (userRef == null) {
-      return null;
-    } else {
-      userRef!.get().then((value) async {
+    if (userRef == null) return;
+
+    userRef!.get().then((value) {
+      if (mounted) {
         setState(() {
           userID = value['id'];
         });
-      }).then((value) async {
-        // debugPrint(userID);
-      });
-    }
+      }
+    });
   }
 
   @override
   void initState() {
+    super.initState();
     _getUserModelDoc();
     getuserID();
-    super.initState();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        appBar: AppBar(
-          iconTheme: Theme.of(context).iconTheme,
-          titleTextStyle: TextStyle(color: Theme.of(context).indicatorColor),
-          backgroundColor: Theme.of(context).colorScheme.background,
-          centerTitle: true,
-          elevation: 0,
-          title: const Text(
-            'Courier System',
-          ).tr(),
+      extendBodyBehindAppBar: true,
+      floatingActionButton: FloatingActionButton(
+        backgroundColor: kGold,
+        elevation: 6,
+        child: const Icon(Icons.add, color: kPrimary),
+        onPressed: () {
+          Navigator.push(
+              context, MaterialPageRoute(builder: (_) => const AddCourier()));
+        },
+      ),
+      appBar: AppBar(
+        elevation: 0,
+        backgroundColor: Colors.transparent,
+        centerTitle: true,
+        iconTheme: const IconThemeData(color: Colors.white),
+        title: Text(
+          "Courier System".tr(),
+          style: const TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.w700,
+            fontSize: 20,
+          ),
         ),
-        floatingActionButton: FloatingActionButton(
-            backgroundColor: const Color.fromARGB(255, 47, 37, 37),
-            onPressed: () {
-              Navigator.of(context).push(
-                  MaterialPageRoute(builder: (context) => const AddCourier()));
-            },
-            child: const Icon(Icons.add)),
-        body: StreamBuilder<List<CourierModel>>(
-            stream: FirebaseFirestore.instance
-                .collection('Courier')
-                .where('userUID', isEqualTo: userID)
-                .snapshots()
-                .map((event) => event.docs
-                    .map((e) => CourierModel.fromMap(e.data(), e.id))
-                    .toList()),
-            builder: (context, snapshot) {
-              if (snapshot.hasData) {
-                return snapshot.data!.isEmpty
-                    ? Center(
-                        child: Image.asset(
-                          'assets/image/rider update.png',
-                          height: MediaQuery.of(context).size.height / 2,
+      ),
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              Color(0xFF1C1515),
+              Color(0xFF2F2525),
+              Color(0xFF1C1515),
+            ],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+          ),
+        ),
+        padding: const EdgeInsets.only(top: kToolbarHeight + 20),
+        child: StreamBuilder<List<CourierModel>>(
+          stream: FirebaseFirestore.instance
+              .collection('Courier')
+              .where('userUID', isEqualTo: userID)
+              .snapshots()
+              .map((event) => event.docs
+                  .map((e) => CourierModel.fromMap(e.data(), e.id))
+                  .toList()),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return _buildShimmer();
+            }
+
+            if (!snapshot.hasData || snapshot.data!.isEmpty) {
+              return Center(
+                child: Image.asset(
+                  'assets/image/rider update.png',
+                  height: MediaQuery.of(context).size.height / 2,
+                ),
+              );
+            }
+
+            final data = snapshot.data!;
+
+            return ListView.builder(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              itemCount: data.length,
+              itemBuilder: (_, index) {
+                final courier = data[index];
+                return GestureDetector(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => CourierOverview(courierModel: courier),
+                      ),
+                    );
+                  },
+                  child: Container(
+                    margin: const EdgeInsets.symmetric(vertical: 8),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.08),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: Colors.white12),
+                    ),
+                    child: ListTile(
+                      contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 8),
+                      title: Text(
+                        "Parcel ID: #${courier.parcelID}",
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 16,
                         ),
-                      )
-                    : ListView.builder(
-                        shrinkWrap: true,
-                        itemCount: snapshot.data!.length,
-                        itemBuilder: (context, int index) {
-                          CourierModel courierModel = snapshot.data![index];
-                          return Card(
-                            elevation: 0,
-                            child: ListTile(
-                                onTap: () {
-                                  Navigator.of(context).push(MaterialPageRoute(
-                                      builder: (context) => CourierOverview(
-                                            courierModel: courierModel,
-                                          )));
-                                },
-                                trailing: const Icon(Icons.chevron_right),
-                                subtitle: courierModel.status == true
-                                    ? const Text('Completed').tr()
-                                    : const SizedBox(),
-                                title: Text(
-                                    'Parcel ID: #${courierModel.parcelID}')),
-                          );
-                        });
-              } else {
-                return Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 16.0, vertical: 16.0),
-                  child: Shimmer.fromColors(
-                    baseColor: Colors.grey[300]!,
-                    highlightColor: Colors.grey[100]!,
-                    enabled: true,
-                    child: ListView.builder(
-                      shrinkWrap: true,
-                      itemBuilder: (_, __) => SizedBox(
-                          height: 100,
-                          width: double.infinity,
-                          child: Card(
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(20.0),
-                            ),
-                          )),
-                      itemCount: 10,
+                      ),
+                      subtitle: courier.status == true
+                          ? Text(
+                              "Completed".tr(),
+                              style: const TextStyle(
+                                color: kGold,
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            )
+                          : const SizedBox(),
+                      trailing: const Icon(Icons.chevron_right,
+                          color: Colors.white70),
                     ),
                   ),
                 );
-              }
-            }));
+              },
+            );
+          },
+        ),
+      ),
+    );
+  }
+
+  // ---------------------------------------------------------------------------
+  // SHIMMER SKELETON
+  // ---------------------------------------------------------------------------
+
+  Widget _buildShimmer() {
+    return Shimmer.fromColors(
+      baseColor: Colors.white.withOpacity(0.15),
+      highlightColor: Colors.white.withOpacity(0.3),
+      child: ListView.builder(
+        padding: const EdgeInsets.all(16),
+        itemCount: 6,
+        itemBuilder: (_, __) => Container(
+          height: 80,
+          margin: const EdgeInsets.symmetric(vertical: 8),
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.08),
+            borderRadius: BorderRadius.circular(16),
+          ),
+        ),
+      ),
+    );
   }
 }

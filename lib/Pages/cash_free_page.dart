@@ -1,4 +1,4 @@
-// ignore_for_file: avoid_print
+// ignore_for_file: avoid_print, deprecated_member_use, prefer_const_constructors
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -357,6 +357,191 @@ class _CashFreePageState extends State<CashFreePage> {
   }
 }
 
+// class CashFreeAmountWidget extends StatefulWidget {
+//   const CashFreeAmountWidget({super.key});
+
+//   @override
+//   State<CashFreeAmountWidget> createState() => _CashFreeAmountWidgetState();
+// }
+
+// class _CashFreeAmountWidgetState extends State<CashFreeAmountWidget> {
+//   var uuid = const Uuid();
+//   var uuid2 = const Uuid();
+//   int amount = 0;
+//   String phone = '';
+//   dynamic responseData;
+//   bool isLoading = false;
+//   String fullname = '';
+//   String email = '';
+//   getUserDetail() {
+//     final FirebaseAuth auth = FirebaseAuth.instance;
+//     final FirebaseFirestore firestore = FirebaseFirestore.instance;
+
+//     User? user = auth.currentUser;
+//     firestore.collection('users').doc(user!.uid).get().then((value) {
+//       setState(() {
+//         fullname = value['fullname'];
+//         email = value['email'];
+//       });
+//     });
+//   }
+
+//   void makeHttpPostRequest() async {
+//     setState(() {
+//       isLoading = true;
+//     });
+//     String apiUrl = dotenv.env['apiUrl']!;
+
+//     Map<String, String> headers = {
+//       'Content-Type': 'application/json',
+//       'x-client-id': dotenv.env['client_id']!,
+//       'x-client-secret': dotenv.env['client_secret']!,
+//       'x-api-version': '2023-08-01',
+//       'x-request-id': 'developer_name',
+//     };
+
+//     Map<String, dynamic> requestBody = {
+//       "order_amount": amount.toDouble(),
+//       "order_id": uuid.v1(),
+//       "order_currency": "INR",
+//       "customer_details": {
+//         "customer_id": uuid2.v1(),
+//         "customer_name": fullname,
+//         "customer_email": email,
+//         "customer_phone": "+91$phone"
+//       },
+//       "order_meta": {"notify_url": dotenv.env['notify_url']!},
+//       "order_note": "some order note here",
+//     };
+
+//     try {
+//       final http.Response response = await http.post(
+//         Uri.parse(apiUrl),
+//         headers: headers,
+//         body: jsonEncode(requestBody),
+//       );
+
+//       if (response.statusCode == 200) {
+//         setState(() {
+//           isLoading = false;
+//         });
+//         print('Request successful');
+//         print('Response: ${response.body}');
+//         setState(() {
+//           responseData = response.body;
+//         });
+//         // Convert the JSON string to a Map
+//         var responseDataRequest = jsonDecode(response.body);
+//         if (responseData != null) {
+//           // ignore: use_build_context_synchronously
+//           Navigator.push(context, MaterialPageRoute(builder: (context) {
+//             return CashFreePage(
+//               amount: amount,
+//               response: responseData,
+//               orderID: responseDataRequest['order_id'],
+//               paymentSessionId: responseDataRequest["payment_session_id"],
+//             );
+//           }));
+//         }
+//       } else {
+//         setState(() {
+//           isLoading = false;
+//         });
+//         print('Request failed with status: ${response.statusCode}');
+//         print('Response: ${response.body}');
+//       }
+//     } catch (e) {
+//       setState(() {
+//         isLoading = false;
+//       });
+//       print('Error during HTTP request: $e');
+//     }
+//   }
+
+//   @override
+//   void initState() {
+//     getUserDetail();
+//     super.initState();
+//   }
+
+//   @override
+//   Widget build(BuildContext context) {
+//     return Scaffold(
+//       appBar: AppBar(
+//         iconTheme: Theme.of(context).iconTheme,
+//         backgroundColor: Theme.of(context).cardColor,
+//         title: Text(
+//           'Enter amount',
+//           style: TextStyle(color: Theme.of(context).iconTheme.color),
+//         ),
+//         elevation: 0,
+//       ),
+//       body: SingleChildScrollView(
+//         child: Column(
+//           children: [
+//             const SizedBox(height: 20),
+//             const Padding(
+//               padding: EdgeInsets.all(8.0),
+//               child: Row(
+//                 children: [
+//                   Text('Amount'),
+//                 ],
+//               ),
+//             ),
+//             // const SizedBox(height: 10),
+//             Padding(
+//               padding: const EdgeInsets.all(8.0),
+//               child: TextFormField(
+//                 onChanged: (v) {
+//                   setState(() {
+//                     amount = int.parse(v);
+//                   });
+//                 },
+//                 decoration: const InputDecoration(
+//                     hintText: 'Enter Amount', border: OutlineInputBorder()),
+//               ),
+//             ),
+//             const Padding(
+//               padding: EdgeInsets.all(8.0),
+//               child: Row(
+//                 children: [
+//                   Text('Phone'),
+//                 ],
+//               ),
+//             ),
+//             // const SizedBox(height: 10),
+//             Padding(
+//               padding: const EdgeInsets.all(8.0),
+//               child: TextFormField(
+//                 maxLength: 10,
+//                 onChanged: (v) {
+//                   setState(() {
+//                     phone = v;
+//                   });
+//                 },
+//                 decoration: const InputDecoration(
+//                     counterText: '',
+//                     hintText: 'XXX XXX XXXX',
+//                     border: OutlineInputBorder()),
+//               ),
+//             ),
+//             const SizedBox(height: 20),
+//             ElevatedButton(
+//                 onPressed: amount == 0 || phone.length < 10 || isLoading == true
+//                     ? null
+//                     : () {
+//                         makeHttpPostRequest();
+//                       },
+//                 child: const Text('Pay'))
+//           ],
+//         ),
+//       ),
+//     );
+//   }
+// }
+
+final TextEditingController amountController = TextEditingController();
+
 class CashFreeAmountWidget extends StatefulWidget {
   const CashFreeAmountWidget({super.key});
 
@@ -373,6 +558,15 @@ class _CashFreeAmountWidgetState extends State<CashFreeAmountWidget> {
   bool isLoading = false;
   String fullname = '';
   String email = '';
+
+  static const Color kGold = Color(0xFFC9A86A);
+
+  @override
+  void initState() {
+    getUserDetail();
+    super.initState();
+  }
+
   getUserDetail() {
     final FirebaseAuth auth = FirebaseAuth.instance;
     final FirebaseFirestore firestore = FirebaseFirestore.instance;
@@ -386,12 +580,11 @@ class _CashFreeAmountWidgetState extends State<CashFreeAmountWidget> {
     });
   }
 
+  // -------------------- PAYMENT REQUEST --------------------
   void makeHttpPostRequest() async {
-    setState(() {
-      isLoading = true;
-    });
-    String apiUrl = dotenv.env['apiUrl']!;
+    setState(() => isLoading = true);
 
+    String apiUrl = dotenv.env['apiUrl']!;
     Map<String, String> headers = {
       'Content-Type': 'application/json',
       'x-client-id': dotenv.env['client_id']!,
@@ -421,118 +614,372 @@ class _CashFreeAmountWidgetState extends State<CashFreeAmountWidget> {
         body: jsonEncode(requestBody),
       );
 
+      setState(() => isLoading = false);
+
       if (response.statusCode == 200) {
-        setState(() {
-          isLoading = false;
-        });
-        print('Request successful');
-        print('Response: ${response.body}');
-        setState(() {
-          responseData = response.body;
-        });
-        // Convert the JSON string to a Map
+        responseData = response.body;
         var responseDataRequest = jsonDecode(response.body);
-        if (responseData != null) {
-          // ignore: use_build_context_synchronously
-          Navigator.push(context, MaterialPageRoute(builder: (context) {
-            return CashFreePage(
-              amount: amount,
-              response: responseData,
-              orderID: responseDataRequest['order_id'],
-              paymentSessionId: responseDataRequest["payment_session_id"],
-            );
-          }));
-        }
+
+        // IGNORE BUILD CONTEXT WARNING
+        // ignore: use_build_context_synchronously
+        Navigator.push(context, MaterialPageRoute(builder: (context) {
+          return CashFreePage(
+            amount: amount,
+            response: responseData,
+            orderID: responseDataRequest['order_id'],
+            paymentSessionId: responseDataRequest["payment_session_id"],
+          );
+        }));
       } else {
-        setState(() {
-          isLoading = false;
-        });
-        print('Request failed with status: ${response.statusCode}');
-        print('Response: ${response.body}');
+        print("Payment API Error: ${response.body}");
       }
     } catch (e) {
-      setState(() {
-        isLoading = false;
-      });
-      print('Error during HTTP request: $e');
+      setState(() => isLoading = false);
+      print("Payment Exception: $e");
     }
   }
 
-  @override
-  void initState() {
-    getUserDetail();
-    super.initState();
-  }
+  // -------------------- UI --------------------
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFF1D1A1A),
       appBar: AppBar(
         iconTheme: Theme.of(context).iconTheme,
-        backgroundColor: Theme.of(context).cardColor,
-        title: Text(
-          'Enter amount',
-          style: TextStyle(color: Theme.of(context).iconTheme.color),
+        backgroundColor: const Color(0xFF2F2525),
+        title: const Text(
+          'Add Money',
+          style: TextStyle(color: Colors.white),
         ),
         elevation: 0,
       ),
       body: SingleChildScrollView(
+        padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // ---------- LABEL ----------
+            const Text(
+              "Enter Amount",
+              style: TextStyle(color: Colors.white70, fontSize: 14),
+            ),
+            const SizedBox(height: 10),
+
+            // ---------- INPUT FIELD ----------
+// Amount Input Field
+            TextFormField(
+              controller: amountController,
+              style: const TextStyle(color: Colors.white),
+              keyboardType: TextInputType.number,
+              onChanged: (v) {
+                setState(() => amount = int.tryParse(v) ?? 0);
+              },
+              decoration: InputDecoration(
+                hintText: "Enter Amount",
+                hintStyle: const TextStyle(color: Colors.white38),
+                filled: true,
+                fillColor: Colors.white.withOpacity(0.07),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(color: Colors.white24),
+                ),
+              ),
+            ),
+
             const SizedBox(height: 20),
-            const Padding(
-              padding: EdgeInsets.all(8.0),
-              child: Row(
-                children: [
-                  Text('Amount'),
-                ],
+// QUICK AMOUNT PILLS
+            Wrap(
+              spacing: 15,
+              children: [100, 200, 500, 1000].map((amt) {
+                bool selected = amount == amt;
+
+                return GestureDetector(
+                  onTap: () {
+                    setState(() {
+                      amount = amt;
+                      amountController.text =
+                          amt.toString(); // <-- UPDATE TEXT FIELD
+                    });
+                  },
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 250),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 18, vertical: 12),
+                    decoration: BoxDecoration(
+                      color: selected ? kGold : Colors.white.withOpacity(0.09),
+                      borderRadius: BorderRadius.circular(28),
+                      border: Border.all(
+                        color: selected ? kGold : Colors.white24,
+                        width: selected ? 2 : 1,
+                      ),
+                      boxShadow: selected
+                          ? [
+                              BoxShadow(
+                                color: kGold.withOpacity(0.5),
+                                blurRadius: 5,
+                                offset: const Offset(0, 4),
+                              )
+                            ]
+                          : [],
+                    ),
+                    child: Text(
+                      "₹$amt",
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                        color: selected ? Colors.black : Colors.white70,
+                      ),
+                    ),
+                  ),
+                );
+              }).toList(),
+            ),
+
+            const SizedBox(height: 30),
+
+            // ---------- PHONE FIELD ----------
+            const Text(
+              "Phone Number",
+              style: TextStyle(color: Colors.white70, fontSize: 14),
+            ),
+            const SizedBox(height: 8),
+
+            TextFormField(
+              style: const TextStyle(color: Colors.white),
+              maxLength: 10,
+              keyboardType: TextInputType.phone,
+              onChanged: (v) => setState(() => phone = v),
+              decoration: InputDecoration(
+                counterText: "",
+                hintText: "XXX XXX XXXX",
+                hintStyle: const TextStyle(color: Colors.white38),
+                filled: true,
+                fillColor: Colors.white.withOpacity(0.07),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(color: Colors.white24),
+                ),
               ),
             ),
-            // const SizedBox(height: 10),
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: TextFormField(
-                onChanged: (v) {
-                  setState(() {
-                    amount = int.parse(v);
-                  });
-                },
-                decoration: const InputDecoration(
-                    hintText: 'Enter Amount', border: OutlineInputBorder()),
-              ),
-            ),
-            const Padding(
-              padding: EdgeInsets.all(8.0),
-              child: Row(
-                children: [
-                  Text('Phone'),
-                ],
-              ),
-            ),
-            // const SizedBox(height: 10),
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: TextFormField(
-                maxLength: 10,
-                onChanged: (v) {
-                  setState(() {
-                    phone = v;
-                  });
-                },
-                decoration: const InputDecoration(
-                    counterText: '',
-                    hintText: 'XXX XXX XXXX',
-                    border: OutlineInputBorder()),
-              ),
-            ),
-            const SizedBox(height: 20),
-            ElevatedButton(
-                onPressed: amount == 0 || phone.length < 10 || isLoading == true
+
+            const SizedBox(height: 30),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: (amount <= 0 || phone.length < 10 || isLoading)
                     ? null
-                    : () {
-                        makeHttpPostRequest();
-                      },
-                child: const Text('Pay'))
+                    : () => makeHttpPostRequest(),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor:
+                      (amount <= 0 || phone.length < 10 || isLoading)
+                          ? Colors.grey.withOpacity(0.35) // Disabled color
+                          : kGold,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  disabledForegroundColor: Colors.white70.withOpacity(0.6),
+                  disabledBackgroundColor: Colors.grey.withOpacity(0.25),
+                ),
+                child: Text(
+                  (amount <= 0 || phone.length < 10 || isLoading)
+                      ? "Fill out all the fields to continue"
+                      : "Continue to Pay",
+                  style: const TextStyle(
+                    color: Colors.black,
+                    fontSize: 17,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 25),
+
+            // ---------- INFO TEXT ----------
+            Column(
+              children: [
+                const SizedBox(height: 28),
+
+                // Gold Divider
+                Divider(
+                  color: kGold.withOpacity(0.35),
+                  thickness: 1.2,
+                  indent: 40,
+                  endIndent: 40,
+                ),
+
+                const SizedBox(height: 14),
+
+                Text(
+                  "Payments secured by CashFree",
+                  style: TextStyle(
+                    color: kGold.withOpacity(0.85),
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+
+                const SizedBox(height: 16),
+
+                // INLINE SUPPORT METHODS (NO EXTRA WIDGETS)
+                Wrap(
+                  alignment: WrapAlignment.center,
+                  spacing: 14,
+                  runSpacing: 10,
+                  children: [
+                    // UPI
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 15, vertical: 10),
+                      decoration: BoxDecoration(
+                        color: Color(0xFF2F2525),
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(
+                            color: kGold.withOpacity(0.5), width: 1.2),
+                        boxShadow: [
+                          BoxShadow(
+                            color: kGold.withOpacity(0.18),
+                            blurRadius: 5,
+                            offset: const Offset(0, 4),
+                          )
+                        ],
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.qr_code_2_rounded,
+                              size: 16, color: kGold.withOpacity(0.85)),
+                          const SizedBox(width: 8),
+                          Text(
+                            "UPI",
+                            style: TextStyle(
+                                color: kGold.withOpacity(0.9),
+                                fontWeight: FontWeight.w600,
+                                fontSize: 12),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    // CARDS
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 15, vertical: 10),
+                      decoration: BoxDecoration(
+                        color: Color(0xFF2F2525),
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(
+                            color: kGold.withOpacity(0.5), width: 1.2),
+                        boxShadow: [
+                          BoxShadow(
+                            color: kGold.withOpacity(0.18),
+                            blurRadius: 5,
+                            offset: const Offset(0, 4),
+                          )
+                        ],
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.credit_card_rounded,
+                              size: 16, color: kGold.withOpacity(0.85)),
+                          const SizedBox(width: 8),
+                          Text(
+                            "Credit / Debit Cards",
+                            style: TextStyle(
+                                color: kGold.withOpacity(0.9),
+                                fontWeight: FontWeight.w600,
+                                fontSize: 12),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    // NETBANKING
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 15, vertical: 10),
+                      decoration: BoxDecoration(
+                        color: Color(0xFF2F2525),
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(
+                            color: kGold.withOpacity(0.5), width: 1.2),
+                        boxShadow: [
+                          BoxShadow(
+                            color: kGold.withOpacity(0.18),
+                            blurRadius: 5,
+                            offset: const Offset(0, 4),
+                          )
+                        ],
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.account_balance_rounded,
+                              size: 16, color: kGold.withOpacity(0.85)),
+                          const SizedBox(width: 8),
+                          Text(
+                            "Netbanking",
+                            style: TextStyle(
+                                color: kGold.withOpacity(0.9),
+                                fontWeight: FontWeight.w600,
+                                fontSize: 12),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    // WALLETS
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 15, vertical: 10),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF2F2525),
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(
+                            color: kGold.withOpacity(0.5), width: 1.2),
+                        boxShadow: [
+                          BoxShadow(
+                            color: kGold.withOpacity(0.18),
+                            blurRadius: 5,
+                            offset: const Offset(0, 4),
+                          )
+                        ],
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.account_balance_wallet_rounded,
+                              size: 16, color: kGold.withOpacity(0.85)),
+                          const SizedBox(width: 8),
+                          Text(
+                            "Wallets",
+                            style: TextStyle(
+                                color: kGold.withOpacity(0.9),
+                                fontWeight: FontWeight.w600,
+                                fontSize: 12),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 24),
+
+                Text(
+                  "Fast • Secure • 256-bit Encrypted",
+                  style: TextStyle(
+                    color: Colors.white60,
+                    fontSize: 12,
+                  ),
+                ),
+
+                const SizedBox(height: 10),
+              ],
+            )
           ],
         ),
       ),

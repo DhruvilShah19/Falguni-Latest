@@ -133,6 +133,11 @@ dependencies:
   sign_in_with_apple: ^6.1.4
   crypto: ^3.0.6
   flutter_signin_button: ^2.0.0
+  confetti: ^0.7.0
+  lottie: ^2.3.0
+  share_plus: ^10.0.0
+  fl_chart: ^0.69.0
+
 
 dependency_overrides:
   modal_bottom_sheet: ^3.0.0-pre
@@ -177,7 +182,7 @@ flutter:
   assets:
     - assets/image/
     - assets/languagesFile/
-    - .env
+    # - .env
 
   # To add assets to your application, add an assets section, like this:
   # assets:

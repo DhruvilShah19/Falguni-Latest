@@ -1,6 +1,8 @@
-// ignore_for_file: avoid_print, use_build_context_synchronously, deprecated_member_use
+// ignore_for_file: avoid_print, use_build_context_synchronously, deprecated_member_use, prefer_const_constructors
 
 import 'dart:async';
+import 'dart:convert';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:falguni_app/Widgets/product_return_detail.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -11,11 +13,10 @@ import 'package:gap/gap.dart';
 import 'package:geocode/geocode.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
-// import 'package:onesignal_flutter/onesignal_flutter.dart';
-import 'dart:convert';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:http/http.dart' as http;
 import 'package:url_launcher/url_launcher.dart';
+
 import '../Model/formatter.dart';
 import '../Model/history.dart';
 import '../Model/order_model.dart';
@@ -24,15 +25,23 @@ import '../Widgets/map.dart';
 class OrdersPreview extends StatefulWidget {
   final OrderModel2 orderModel;
   final String currencySymbol;
-  const OrdersPreview(
-      {required this.orderModel, required this.currencySymbol, super.key});
+
+  const OrdersPreview({
+    required this.orderModel,
+    required this.currencySymbol,
+    super.key,
+  });
 
   @override
   State<OrdersPreview> createState() => _OrdersPreviewState();
 }
 
 class _OrdersPreviewState extends State<OrdersPreview> {
-  int _index = 0;
+  // THEME COLORS (matching notifications page)
+  static const Color kPrimary = Color(0xFF2F2525); // Espresso
+  static const Color kDarkBg = Color(0xFF1C1515);
+  static const Color kGold = Color(0xFFC9A86A); // Premium gold
+
   String marketName = '';
   String marketAddress = '';
   String marketPhone = '';
@@ -65,17 +74,47 @@ class _OrdersPreviewState extends State<OrdersPreview> {
   String userProfilePic = '';
   num? tip;
 
+  String? porterMaindOrderID = '';
+
+  num marketLat = 0;
+  num marketLong = 0;
+  String? ridersName = '';
+  String ridersPhone = '';
+  String status = '';
+  String vehicleNumber = '';
+  String vehicleType = '';
+  String ridersPhone2 = '';
+  num amount = 0;
+  dynamic partnerInfo;
+
+  double deliveryAddressLat = 0;
+  double deliveryAddressLong = 0;
+
+  String currentAddress = '';
+  double addressLat = 0;
+  double addressLong = 0;
+
+  bool pleaseWait = false;
+
+  // ---------------------------------------------------------------------------
+  // RATING DIALOGS (unchanged logic, minor UI tweaks)
+  // ---------------------------------------------------------------------------
+
   ratingAndReviewProduct(String productID, num totalRatingProduct,
       num totalNumberOfUserRatingProduct) {
     showDialog(
-        context: context,
-        builder: (context) {
-          return AlertDialog(
-            title: const Text('Review Product').tr(),
-            content: SizedBox(
-              height: MediaQuery.of(context).size.height / 3,
-              width: double.infinity,
-              child: Column(children: [
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          backgroundColor: Colors.white,
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: const Text('Review Product').tr(),
+          content: SizedBox(
+            height: MediaQuery.of(context).size.height / 3,
+            width: double.infinity,
+            child: Column(
+              children: [
                 RatingBar.builder(
                   initialRating: 1,
                   minRating: 1,
@@ -95,7 +134,12 @@ class _OrdersPreviewState extends State<OrdersPreview> {
                 ),
                 const SizedBox(height: 10),
                 TextField(
-                  decoration: InputDecoration(hintText: 'Review Product'.tr()),
+                  decoration: InputDecoration(
+                    hintText: 'Review Product'.tr(),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
                   onChanged: (val) {
                     setState(() {
                       reviewProduct = val;
@@ -104,46 +148,53 @@ class _OrdersPreviewState extends State<OrdersPreview> {
                 ),
                 const SizedBox(height: 20),
                 ElevatedButton(
-                    onPressed: () {
-                      FirebaseFirestore.instance
-                          .collection('Products')
-                          .doc(productID)
-                          .update({
-                        'totalRating': totalRatingProduct + ratingValProduct,
-                        'totalNumberOfUserRating':
-                            totalNumberOfUserRatingProduct + 1
-                      });
-                      FirebaseFirestore.instance
-                          .collection('Products')
-                          .doc(productID)
-                          .collection('Ratings')
-                          .add({
-                        'rating': ratingValProduct,
-                        'review': reviewProduct,
-                        'fullname': userFullname,
-                        'profilePicture': userProfilePic,
-                        'timeCreated': DateFormat.yMMMMEEEEd()
-                            .format(DateTime.now())
-                            .toString()
-                      }).then((value) => Navigator.of(context).pop());
-                    },
-                    child: const Text('Submit').tr())
-              ]),
+                  onPressed: () {
+                    FirebaseFirestore.instance
+                        .collection('Products')
+                        .doc(productID)
+                        .update({
+                      'totalRating': totalRatingProduct + ratingValProduct,
+                      'totalNumberOfUserRating':
+                          totalNumberOfUserRatingProduct + 1
+                    });
+                    FirebaseFirestore.instance
+                        .collection('Products')
+                        .doc(productID)
+                        .collection('Ratings')
+                        .add({
+                      'rating': ratingValProduct,
+                      'review': reviewProduct,
+                      'fullname': userFullname,
+                      'profilePicture': userProfilePic,
+                      'timeCreated': DateFormat.yMMMMEEEEd()
+                          .format(DateTime.now())
+                          .toString()
+                    }).then((value) => Navigator.of(context).pop());
+                  },
+                  child: const Text('Submit').tr(),
+                )
+              ],
             ),
-          );
-        });
+          ),
+        );
+      },
+    );
   }
 
   ratingAndReviewRider() {
     showDialog(
-        context: context,
-        builder: (context) {
-          return AlertDialog(
-            title: const Text('Rate And Review Rider').tr(),
-            content: SizedBox(
-              height: MediaQuery.of(context).size.height / 3,
-              width: double.infinity,
-              child: Column(children: [
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          backgroundColor: Colors.white,
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: const Text('Rate And Review Rider').tr(),
+          content: SizedBox(
+            height: MediaQuery.of(context).size.height / 3,
+            width: double.infinity,
+            child: Column(
+              children: [
                 RatingBar.builder(
                   initialRating: 1,
                   minRating: 1,
@@ -163,7 +214,12 @@ class _OrdersPreviewState extends State<OrdersPreview> {
                 ),
                 const SizedBox(height: 10),
                 TextField(
-                  decoration: InputDecoration(hintText: 'Review Rider'.tr()),
+                  decoration: InputDecoration(
+                    hintText: 'Review Rider'.tr(),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
                   onChanged: (val) {
                     setState(() {
                       reviewRider = val;
@@ -172,46 +228,53 @@ class _OrdersPreviewState extends State<OrdersPreview> {
                 ),
                 const SizedBox(height: 20),
                 ElevatedButton(
-                    onPressed: () {
-                      FirebaseFirestore.instance
-                          .collection('drivers')
-                          .doc(deliveryBoyID)
-                          .update({
-                        'totalRating': totalRatingRider + ratingValRider,
-                        'totalNumberOfUserRating':
-                            totalNumberOfUserRatingRider + 1
-                      });
-                      FirebaseFirestore.instance
-                          .collection('drivers')
-                          .doc(deliveryBoyID)
-                          .collection('Ratings')
-                          .add({
-                        'rating': ratingValRider,
-                        'review': reviewRider,
-                        'fullname': userFullname,
-                        'profilePicture': userProfilePic,
-                        'timeCreated': DateFormat.yMMMMEEEEd()
-                            .format(DateTime.now())
-                            .toString()
-                      }).then((value) => Navigator.of(context).pop());
-                    },
-                    child: const Text('Submit').tr())
-              ]),
+                  onPressed: () {
+                    FirebaseFirestore.instance
+                        .collection('drivers')
+                        .doc(deliveryBoyID)
+                        .update({
+                      'totalRating': totalRatingRider + ratingValRider,
+                      'totalNumberOfUserRating':
+                          totalNumberOfUserRatingRider + 1
+                    });
+                    FirebaseFirestore.instance
+                        .collection('drivers')
+                        .doc(deliveryBoyID)
+                        .collection('Ratings')
+                        .add({
+                      'rating': ratingValRider,
+                      'review': reviewRider,
+                      'fullname': userFullname,
+                      'profilePicture': userProfilePic,
+                      'timeCreated': DateFormat.yMMMMEEEEd()
+                          .format(DateTime.now())
+                          .toString()
+                    }).then((value) => Navigator.of(context).pop());
+                  },
+                  child: const Text('Submit').tr(),
+                )
+              ],
             ),
-          );
-        });
+          ),
+        );
+      },
+    );
   }
 
   ratingAndReviewMarket() {
     showDialog(
-        context: context,
-        builder: (context) {
-          return AlertDialog(
-            title: const Text('Rate And Review Market').tr(),
-            content: SizedBox(
-              height: MediaQuery.of(context).size.height / 3,
-              width: double.infinity,
-              child: Column(children: [
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          backgroundColor: Colors.white,
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: const Text('Rate And Review Market').tr(),
+          content: SizedBox(
+            height: MediaQuery.of(context).size.height / 3,
+            width: double.infinity,
+            child: Column(
+              children: [
                 RatingBar.builder(
                   initialRating: 1,
                   minRating: 1,
@@ -231,7 +294,12 @@ class _OrdersPreviewState extends State<OrdersPreview> {
                 ),
                 const SizedBox(height: 10),
                 TextField(
-                  decoration: InputDecoration(hintText: 'Review Market'.tr()),
+                  decoration: InputDecoration(
+                    hintText: 'Review Market'.tr(),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
                   onChanged: (val) {
                     setState(() {
                       reviewMarket = val;
@@ -240,37 +308,43 @@ class _OrdersPreviewState extends State<OrdersPreview> {
                 ),
                 const SizedBox(height: 20),
                 ElevatedButton(
-                    onPressed: () {
-                      FirebaseFirestore.instance
-                          .collection('Markets')
-                          .doc(widget.orderModel.marketID)
-                          .update({
-                        'totalRating': totalRatingMarket + ratingValMarket,
-                        'totalNumberOfUserRating':
-                            totalNumberOfUserRatingMarket + 1
-                      });
-                      FirebaseFirestore.instance
-                          .collection('Markets')
-                          .doc(widget.orderModel.marketID)
-                          .collection('Ratings')
-                          .add({
-                        'rating': ratingValMarket,
-                        'review': reviewMarket,
-                        'fullname': userFullname,
-                        'profilePicture': userProfilePic,
-                        'timeCreated': DateFormat.yMMMMEEEEd()
-                            .format(DateTime.now())
-                            .toString()
-                      }).then((value) => Navigator.of(context).pop());
-                    },
-                    child: const Text('Submit'))
-              ]),
+                  onPressed: () {
+                    FirebaseFirestore.instance
+                        .collection('Markets')
+                        .doc(widget.orderModel.marketID)
+                        .update({
+                      'totalRating': totalRatingMarket + ratingValMarket,
+                      'totalNumberOfUserRating':
+                          totalNumberOfUserRatingMarket + 1
+                    });
+                    FirebaseFirestore.instance
+                        .collection('Markets')
+                        .doc(widget.orderModel.marketID)
+                        .collection('Ratings')
+                        .add({
+                      'rating': ratingValMarket,
+                      'review': reviewMarket,
+                      'fullname': userFullname,
+                      'profilePicture': userProfilePic,
+                      'timeCreated': DateFormat.yMMMMEEEEd()
+                          .format(DateTime.now())
+                          .toString()
+                    }).then((value) => Navigator.of(context).pop());
+                  },
+                  child: const Text('Submit'),
+                )
+              ],
             ),
-          );
-        });
+          ),
+        );
+      },
+    );
   }
 
-  String? porterMaindOrderID = '';
+  // ---------------------------------------------------------------------------
+  // FIRESTORE / TRACK ORDER LOGIC (unchanged)
+  // ---------------------------------------------------------------------------
+
   getOrderDetails() async {
     FirebaseFirestore.instance
         .collection('Orders')
@@ -289,17 +363,6 @@ class _OrdersPreviewState extends State<OrdersPreview> {
       trackPorterOrderByID(value['porterMaindOrderID']);
     });
   }
-
-  num marketLat = 0;
-  num marketLong = 0;
-  String? ridersName = '';
-  String ridersPhone = '';
-  String status = '';
-  String vehicleNumber = '';
-  String vehicleType = '';
-  String ridersPhone2 = '';
-  num amount = 0;
-  dynamic partnerInfo;
 
   trackPorterOrderByID(String porterMaindOrderID) async {
     try {
@@ -330,38 +393,20 @@ class _OrdersPreviewState extends State<OrdersPreview> {
         status = jsonDecode(response.body.toString())["status"];
         amount = jsonDecode(response.body.toString())["fare_details"]
             ["estimated_fare_details"]['minor_amount'];
-        //  loadingServer = false;
       });
       print('Response status: ${response.statusCode}');
       print('Response body: ${response.body}');
       print('Rider name is ${jsonDecode(response.body.toString())['status']}');
     } catch (e) {
       return Fluttertoast.showToast(
-          msg:
-              'Order Sent to Porter with Order ID : ${jsonDecode(e.toString())["message"]}',
-          toastLength: Toast.LENGTH_LONG,
-          timeInSecForIosWeb: 4,
-          fontSize: 14.0);
+        msg:
+            'Order Sent to Porter with Order ID : ${jsonDecode(e.toString())["message"]}',
+        toastLength: Toast.LENGTH_LONG,
+        timeInSecForIosWeb: 4,
+        fontSize: 14.0,
+      );
     }
   }
-
-  // getMarketDetails() {
-  //   FirebaseFirestore.instance
-  //       .collection('Markets')
-  //       .doc(widget.orderModel.marketID)
-  //       .get()
-  //       .then((val) {
-  //     setState(() {
-  //       marketName = val['Market Name'];
-  //       marketAddress = val['Address'];
-  //       marketPhone = val['Phonenumber'];
-  //       totalRatingMarket = val['totalRating'];
-  //       totalNumberOfUserRatingMarket = val['totalNumberOfUserRating'];
-  //       marketLat = val['lat'];
-  //       marketLong = val['long'];
-  //     });
-  //   });
-  // }
 
   getRiderDetails(String deliveryBoyID) {
     if (deliveryBoyID != '') {
@@ -405,31 +450,6 @@ class _OrdersPreviewState extends State<OrdersPreview> {
         .update({'wallet': wallet + widget.orderModel.total});
   }
 
-  // initOneSignal() {
-  //   if (getOnesignalKey != '') {
-  //     OneSignal.shared.setLogLevel(OSLogLevel.verbose, OSLogLevel.none);
-  //     debugPrint('One singal app id is jjjjjj');
-  //     OneSignal.shared.setAppId(getOnesignalKey);
-  //     debugPrint('$getOnesignalKey is firebase oneSignal key');
-  //     OneSignal.shared
-  //         .promptUserForPushNotificationPermission()
-  //         .then((accepted) {
-  //       debugPrint("Accepted permission: $accepted");
-  //     });
-  //     oneSignalTimer!.cancel();
-  //   }
-  // }
-
-  // void _handleGetDeviceState() async {
-  //   debugPrint("Getting DeviceState");
-  //   var deviceState = await OneSignal.shared.getDeviceState();
-  //   setState(() {
-  //     playerId = deviceState!.userId!;
-  //   });
-
-  //   debugPrint('$playerId is your player ID');
-  // }
-
   getOneSignalDetails() {
     if (getOnesignalKey == '') {
       FirebaseFirestore.instance
@@ -456,11 +476,6 @@ class _OrdersPreviewState extends State<OrdersPreview> {
   void initState() {
     getOneSignalDetails();
     getOrderDetails();
-    // oneSignalTimer = Timer.periodic(
-    //     const Duration(milliseconds: 100), (Timer t) => initOneSignal());
-    // _handleGetDeviceState();
-
-    // getMarketDetails();
     _getUserDetails();
     super.initState();
   }
@@ -473,14 +488,6 @@ class _OrdersPreviewState extends State<OrdersPreview> {
         .add(historyModel.toMap());
   }
 
-  // Future<void> _callMarket(String phoneNumber) async {
-  //   final Uri launchUri = Uri(
-  //     scheme: 'tel',
-  //     path: phoneNumber,
-  //   );
-  //   await launchUrl(launchUri);
-  // }
-
   Future<void> _callRider(String phoneNumber) async {
     final Uri launchUri = Uri(
       scheme: 'tel',
@@ -489,18 +496,19 @@ class _OrdersPreviewState extends State<OrdersPreview> {
     await launchUrl(launchUri);
   }
 
-  bool pleaseWait = false;
   confirmFunc(bool status) async {
     setState(() {
       pleaseWait = true;
     });
-    //updateDriverWallet(riderWallet + widget.orderModel.deliveryFee);
-    updatedriverNotification(HistoryModel(
+    updatedriverNotification(
+      HistoryModel(
         message:
             'Congratulations, Your delivery has been confirmed. Order ID #${widget.orderModel.orderID}',
         timeCreated: DateFormat.yMMMMEEEEd().format(DateTime.now()).toString(),
         amount: '-${widget.currencySymbol}${widget.orderModel.deliveryFee}',
-        paymentSystem: ''));
+        paymentSystem: '',
+      ),
+    );
     FirebaseFirestore.instance
         .collection('Orders')
         .doc(widget.orderModel.uid)
@@ -519,9 +527,6 @@ class _OrdersPreviewState extends State<OrdersPreview> {
         .update({'wallet': wallet});
   }
 
-  double deliveryAddressLat = 0;
-  double deliveryAddressLong = 0;
-
   getDeliveryLocationLatAndLong() async {
     GeoCode geoCode = GeoCode();
     if (deliveryAddressLat == 0 && deliveryAddressLong == 0) {
@@ -533,14 +538,9 @@ class _OrdersPreviewState extends State<OrdersPreview> {
           deliveryAddressLat = coordinates.latitude!;
           deliveryAddressLong = coordinates.longitude!;
         });
-        // print(deliveryAddressLat);
       }
     }
   }
-
-  String currentAddress = '';
-  double addressLat = 0;
-  double addressLong = 0;
 
   getCurrentLocationLatAndLong() async {
     if (widget.orderModel.deliveryAddress == '' && currentAddress != '') {
@@ -595,712 +595,997 @@ class _OrdersPreviewState extends State<OrdersPreview> {
   Future<Future<bool>> openWhatsApp() async {
     return launchUrl(
       Uri.parse(
-        //'https://wa.me/1234567890' //you use this url also
-        'whatsapp://send?phone=+919328299680', //put your number here
+        'whatsapp://send?phone=+919328299680',
       ),
     );
   }
 
+  // ---------------------------------------------------------------------------
+  // STATUS HELPERS (for modern timeline UI)
+  // ---------------------------------------------------------------------------
+
+  bool get _isCancelled => orderStatus == 'Cancelled';
+
+  bool get _stepReceivedActive =>
+      orderStatus == 'Received' ||
+      orderStatus == 'Processing' ||
+      orderStatus == 'On the way' ||
+      orderStatus == 'Completed' ||
+      accepted;
+
+  bool get _stepAcceptedActive => accepted == true;
+
+  bool get _stepProcessingActive =>
+      (acceptDelivery == true &&
+          (orderStatus == 'Processing' || orderStatus == 'Completed')) ||
+      (accepted == true &&
+          deliveryAddress == '' &&
+          (orderStatus == 'Processing' || orderStatus == 'Completed'));
+
+  bool get _stepOnTheWayActive {
+    if (deliveryAddress != '') {
+      return acceptDelivery == true &&
+          (orderStatus == 'On the way' || orderStatus == 'Completed');
+    } else {
+      return accepted == true &&
+          deliveryAddress == '' &&
+          orderStatus == 'Completed';
+    }
+  }
+
+  bool get _stepCompletedActive =>
+      orderStatus == 'Completed' ||
+      (accepted == true && deliveryAddress == '' && orderStatus == 'Completed');
+
+  String get _statusLabel {
+    if (_isCancelled) return 'Cancelled'.tr();
+    return orderStatus.tr();
+  }
+
+  Color get _statusColor {
+    if (_isCancelled) return Colors.redAccent;
+    if (orderStatus == 'Completed') return Colors.greenAccent;
+    return kGold;
+  }
+
+  // ---------------------------------------------------------------------------
+  // BUILD UI
+  // ---------------------------------------------------------------------------
+
   @override
   Widget build(BuildContext context) {
+    // Still calling these like your original code
     getCurrentLocationLatAndLong();
     getDeliveryLocationLatAndLong();
     getLocation();
+
     return Scaffold(
-        appBar: AppBar(
-            iconTheme: Theme.of(context).iconTheme,
-            titleTextStyle: TextStyle(color: Theme.of(context).indicatorColor),
-            backgroundColor: Theme.of(context).colorScheme.surface,
-            centerTitle: true,
-            title: const Text(
-              'Order Preview',
-            ).tr(),
-            elevation: 0),
-        body: SingleChildScrollView(
+      extendBodyBehindAppBar: true,
+      backgroundColor: kDarkBg,
+      appBar: AppBar(
+        elevation: 0,
+        backgroundColor: Colors.transparent,
+        iconTheme: const IconThemeData(color: Colors.white),
+        centerTitle: true,
+        title: Text(
+          'Order #${widget.orderModel.orderID}',
+          style: const TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.w600,
+          ),
+        ).tr(),
+      ),
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              Color(0xFF1C1515),
+              Color(0xFF2F2525),
+              Color(0xFF1C1515),
+            ],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+          ),
+        ),
+        child: SafeArea(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
             child: Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.only(left: 12, top: 12),
-              child: Row(
-                children: [
-                  const Text('Order Tracking Update',
-                          style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 18,
-                              color: Colors.grey))
-                      .tr(),
-                ],
-              ),
-            ),
-            const SizedBox(height: 10),
-            Stack(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                deliveryAddressLat != 0 && deliveryAddressLong != 0
-                    ? SizedBox(
-                        width: double.infinity,
-                        height: MediaQuery.of(context).size.height / 1.9,
-                        child: MapScreen(
-                            zoom: 5,
-                            userLat: deliveryAddressLat,
-                            address: marketAddress,
-                            userLong: deliveryAddressLong,
-                            marketLong: marketLong,
-                            marketLat: marketLat),
-                      )
-                    : SizedBox(
-                        width: double.infinity,
-                        height: MediaQuery.of(context).size.height / 2,
+                _buildOrderSummaryCard(),
+                const Gap(16),
+                _buildTrackingCard(),
+                const Gap(16),
+                if (ridersName != null && ridersName!.isNotEmpty)
+                  _buildRiderCard(),
+                if (ridersName != null && ridersName!.isNotEmpty) const Gap(16),
+                _buildPaymentCard(),
+                const Gap(16),
+                _buildDeliveryCard(),
+                const Gap(16),
+                _buildProductsSection(),
+                const Gap(20),
+                _buildActionsSection(),
+                const Gap(20),
+                _buildWhatsAppCard(),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ---------------------------------------------------------------------------
+  // SECTION WIDGETS
+  // ---------------------------------------------------------------------------
+
+  Widget _buildOrderSummaryCard() {
+    final timeText = widget.orderModel.timeCreated?.toString() ?? '';
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.06),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: kGold.withOpacity(0.35), width: 1),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.25),
+            blurRadius: 18,
+            offset: const Offset(0, 10),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Top row: ID + status badge
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  'Order #${widget.orderModel.orderID}',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 0.3,
+                  ),
+                ),
+              ),
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                decoration: BoxDecoration(
+                  color: _statusColor.withOpacity(0.16),
+                  borderRadius: BorderRadius.circular(999),
+                  border: Border.all(color: _statusColor, width: 1),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      _isCancelled
+                          ? Icons.error_outline
+                          : orderStatus == 'Completed'
+                              ? Icons.check_circle_outline
+                              : Icons.local_shipping_outlined,
+                      size: 16,
+                      color: _statusColor,
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      _statusLabel,
+                      style: TextStyle(
+                        color: _statusColor,
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w600,
                       ),
-                Stepper(
-                  physics: const BouncingScrollPhysics(),
-                  onStepTapped: (step) {
-                    if (step > _index) {
-                      setState(() {
-                        _index = step;
-                      });
-                    }
-                  },
-                  type: StepperType.vertical,
-                  controlsBuilder:
-                      (BuildContext context, ControlsDetails controls) {
-                    return const SizedBox();
-                  },
-                  currentStep: _index,
-                  steps: <Step>[
-                    Step(
-                      isActive: orderStatus == 'Received'
-                          ? true
-                          : orderStatus == 'Cancelled'
-                              ? false
-                              : true,
-                      title: orderStatus == 'Cancelled'
-                          ? Container(
-                              height: 30,
-                              width: 100,
-                              decoration: BoxDecoration(
-                                  color: Colors.black.withOpacity(0.3),
-                                  shape: BoxShape.rectangle),
-                              child: Center(
-                                  child: const Text('Cancelled',
-                                          style: TextStyle(color: Colors.white))
-                                      .tr()))
-                          : Container(
-                              height: 30,
-                              width: 100,
-                              decoration: BoxDecoration(
-                                  color: Colors.black.withOpacity(0.3),
-                                  shape: BoxShape.rectangle),
-                              child: Center(
-                                  child: const Text('Received',
-                                          style: TextStyle(color: Colors.white))
-                                      .tr())),
-                      content: Container(),
                     ),
-                    Step(
-                      isActive: accepted == true ? true : false,
-                      title: Container(
-                          height: 30,
-                          width: 100,
-                          decoration: BoxDecoration(
-                              color: Colors.black.withOpacity(0.3),
-                              shape: BoxShape.rectangle),
-                          child: Center(
-                              child: const Text('Accepted',
-                                      style: TextStyle(color: Colors.white))
-                                  .tr())),
-                      content: Container(),
-                    ),
-                    Step(
-                      isActive: (acceptDelivery == true &&
-                              (orderStatus == 'Processing' ||
-                                  orderStatus == 'Completed'))
-                          ? true
-                          : false ||
-                              (accepted == true &&
-                                  deliveryAddress == '' &&
-                                  (orderStatus == 'Processing' ||
-                                      orderStatus == 'Completed')),
-                      title: Container(
-                          height: 30,
-                          width: 100,
-                          decoration: BoxDecoration(
-                              color: Colors.black.withOpacity(0.3),
-                              shape: BoxShape.rectangle),
-                          child: Center(
-                              child: const Text('Processing',
-                                      style: TextStyle(
-                                          color: Colors.white, fontSize: 12))
-                                  .tr())),
-                      content: Container(),
-                    ),
-                    deliveryAddress != ''
-                        ? Step(
-                            isActive: acceptDelivery == true &&
-                                    (orderStatus == 'On the way' ||
-                                        orderStatus == 'Completed')
-                                ? true
-                                : false,
-                            content: Container(),
-                            title: Container(
-                                height: 30,
-                                width: 100,
-                                decoration: BoxDecoration(
-                                    color: Colors.black.withOpacity(0.3),
-                                    shape: BoxShape.rectangle),
-                                child: Center(
-                                    child:
-                                        const Text('On the way', style: TextStyle(color: Colors.white, fontSize: 12))
-                                            .tr())))
-                        : Step(
-                            isActive: accepted == true &&
-                                    deliveryAddress == '' &&
-                                    orderStatus == 'Completed'
-                                ? true
-                                : false,
-                            content: Container(),
-                            title: Container(
-                                height: 30,
-                                width: 100,
-                                decoration: BoxDecoration(
-                                    color: Colors.black.withOpacity(0.3),
-                                    shape: BoxShape.rectangle),
-                                child: Center(child: const Text('Pick up', style: TextStyle(color: Colors.white)).tr()))),
-                    Step(
-                      isActive: orderStatus == 'Completed'
-                          ? true
-                          : false ||
-                              (accepted == true &&
-                                  deliveryAddress == '' &&
-                                  orderStatus == 'Completed'),
-                      title: Container(
-                          height: 30,
-                          width: 100,
-                          decoration: BoxDecoration(
-                              color: Colors.black.withOpacity(0.3),
-                              shape: BoxShape.rectangle),
-                          child: Center(
-                              child: const Text('Completed',
-                                      style: TextStyle(
-                                          color: Colors.white, fontSize: 12))
-                                  .tr())),
-                      content: Container(),
-                    )
                   ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            timeText,
+            style: TextStyle(
+              color: Colors.white.withOpacity(0.65),
+              fontSize: 12.5,
+            ),
+          ),
+          const SizedBox(height: 12),
+          const Divider(height: 1, color: Colors.white24),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              _buildSummaryItem(
+                icon: Icons.payment,
+                label: 'Payment type'.tr(),
+                value: widget.orderModel.paymentType == 'Wallet'
+                    ? 'Wallet'.tr()
+                    : 'Cash on delivery'.tr(),
+              ),
+              const SizedBox(width: 16),
+              _buildSummaryItem(
+                icon: Icons.receipt_long_outlined,
+                label: 'Total'.tr(),
+                value:
+                    '${widget.currencySymbol}${Formatter().converter(widget.orderModel.total.toDouble())}',
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSummaryItem({
+    required IconData icon,
+    required String label,
+    required String value,
+  }) {
+    return Expanded(
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.08),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(icon, size: 18, color: kGold),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: TextStyle(
+                    color: Colors.white.withOpacity(0.65),
+                    fontSize: 11.5,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  value,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 13.5,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ],
             ),
-            // Padding(
-            //   padding: const EdgeInsets.only(left: 12, top: 12),
-            //   child: Row(
-            //     mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            //     children: [
-            //       const Text('Market Detail',
-            //               style: TextStyle(
-            //                   fontWeight: FontWeight.bold,
-            //                   fontSize: 18,
-            //                   color: Colors.grey))
-            //           .tr(),
-            //       orderStatus == 'Completed'
-            //           ? Padding(
-            //               padding: const EdgeInsets.only(right: 10),
-            //               child: InkWell(
-            //                 onTap: () {
-            //                   ratingAndReviewMarket();
-            //                 },
-            //                 child: const Text("Rate Market",
-            //                         style: TextStyle(
-            //                             fontWeight: FontWeight.bold,
-            //                             fontSize: 18,
-            //                             color: Colors.grey))
-            //                     .tr(),
-            //               ),
-            //             )
-            //           : Container(),
-            //     ],
-            //   ),
-            // ),
-            // const SizedBox(height: 10),
-            // Padding(
-            //   padding: const EdgeInsets.only(left: 10, right: 10),
-            //   child: Card(
-            //     elevation: 0.1,
-            //     child: ListTile(
-            //       title: Text(marketName),
-            //       subtitle: const Text('Market name').tr(),
-            //       leading: const Icon(Icons.info),
-            //     ),
-            //   ),
-            // ),
-            // Padding(
-            //   padding: const EdgeInsets.only(left: 10, right: 10),
-            //   child: Card(
-            //     elevation: 0.1,
-            //     child: ListTile(
-            //       title: Text(marketAddress),
-            //       subtitle: const Text('Market address').tr(),
-            //       leading: const Icon(Icons.room),
-            //     ),
-            //   ),
-            // ),
-            // Padding(
-            //   padding: const EdgeInsets.only(left: 10, right: 10),
-            //   child: Card(
-            //     elevation: 0.1,
-            //     child: ListTile(
-            //       title: Text(marketPhone),
-            //       subtitle: const Text('Market phone').tr(),
-            //       leading: const Icon(Icons.phone),
-            //       trailing: OutlinedButton(
-            //           onPressed: () {
-            //             _callMarket(marketPhone);
-            //           },
-            //           child: const Text('Call Market').tr()),
-            //     ),
-            //   ),
-            // ),
-            const SizedBox(height: 10),
-            ridersName == ''
-                ? Container()
-                : Column(
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.only(left: 12, top: 12),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            const Text("Rider's Detail",
-                                    style: TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 18,
-                                        color: Colors.grey))
-                                .tr(),
-                            // orderStatus == 'Completed' && deliveryBoyID != ''
-                            //     ? InkWell(
-                            //         onTap: () {
-                            //           ratingAndReviewRider();
-                            //         },
-                            //         child: Padding(
-                            //           padding: const EdgeInsets.only(right: 10),
-                            //           child: const Text("Rate Rider",
-                            //                   style: TextStyle(
-                            //                       fontWeight: FontWeight.bold,
-                            //                       fontSize: 18,
-                            //                       color: Colors.grey))
-                            //               .tr(),
-                            //         ),
-                            //       )
-                            //     : Container(),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 10),
-                      Padding(
-                        padding: const EdgeInsets.only(left: 10, right: 10),
-                        child: Card(
-                          elevation: 0.1,
-                          child: ListTile(
-                            title: Text(ridersName!),
-                            subtitle: const Text("Rider's name").tr(),
-                            leading: const Icon(Icons.person),
-                          ),
-                        ),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.only(left: 10, right: 10),
-                        child: Card(
-                          elevation: 0.1,
-                          child: ListTile(
-                            title: Text(vehicleType),
-                            subtitle: const Text("Rider's Vehicle Type").tr(),
-                            leading: const Icon(Icons.delivery_dining),
-                          ),
-                        ),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.only(left: 10, right: 10),
-                        child: Card(
-                          elevation: 0.1,
-                          child: ListTile(
-                            title: Text(vehicleType),
-                            subtitle: const Text("Rider's Vehicle Number").tr(),
-                            leading: const Icon(Icons.numbers),
-                          ),
-                        ),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.only(left: 10, right: 10),
-                        child: Card(
-                          elevation: 0.1,
-                          child: ListTile(
-                            title: Text('+9$ridersPhone'),
-                            subtitle: const Text("Rider's phone").tr(),
-                            leading: const Icon(Icons.phone),
-                            trailing: OutlinedButton(
-                                onPressed: () {
-                                  _callRider('+9$ridersPhone');
-                                },
-                                child: const Text('Call Rider').tr()),
-                          ),
-                        ),
-                      ),
-                      // const SizedBox(height: 10),
-                      // OutlinedButton(
-                      //     onPressed: () {
-                      //       showDialog(
-                      //           context: context,
-                      //           builder: (context) {
-                      //             return AlertDialog(
-                      //               title: const Text('Tip Rider'),
-                      //               content: SizedBox(
-                      //                 height: 200,
-                      //                 width: 300,
-                      //                 child: Column(children: [
-                      //                   SizedBox(
-                      //                     width: MediaQuery.of(context)
-                      //                             .size
-                      //                             .width /
-                      //                         1.5,
-                      //                     child: TextField(
-                      //                       onChanged: (v) {
-                      //                         setState(() {
-                      //                           tip = int.parse(v);
-                      //                         });
-                      //                       },
-                      //                       keyboardType: TextInputType.number,
-                      //                       decoration: const InputDecoration(
-                      //                           helperText: 'Tip'),
-                      //                     ),
-                      //                   ),
-                      //                   const SizedBox(
-                      //                     height: 20,
-                      //                   ),
-                      //                   OutlinedButton(
-                      //                       onPressed: () {
-                      //                         if (tip == null || tip!.isNaN) {
-                      //                           Fluttertoast.showToast(
-                      //                               msg: "Required field".tr(),
-                      //                               toastLength:
-                      //                                   Toast.LENGTH_SHORT,
-                      //                               gravity: ToastGravity.TOP,
-                      //                               timeInSecForIosWeb: 1,
-                      //                               fontSize: 14.0);
-                      //                         } else {
-                      //                           FirebaseFirestore.instance
-                      //                               .collection('drivers')
-                      //                               .doc(deliveryBoyID)
-                      //                               .update({
-                      //                             'wallet': riderWallet + tip!
-                      //                           }).then((value) {
-                      //                             FirebaseFirestore.instance
-                      //                                 .collection('users')
-                      //                                 .doc(widget
-                      //                                     .orderModel.userID)
-                      //                                 .update({
-                      //                               'wallet': wallet - tip!
-                      //                             });
-                      //                             updateHistory(
-                      //                                 HistoryModel(
-                      //                                     message:
-                      //                                         'tipped rider $riderName',
-                      //                                     amount:
-                      //                                         tip.toString(),
-                      //                                     paymentSystem: '',
-                      //                                     timeCreated: DateFormat
-                      //                                             .yMMMMEEEEd()
-                      //                                         .format(DateTime
-                      //                                             .now())),
-                      //                                 'users',
-                      //                                 widget.orderModel.userID);
-                      //                             updateHistory(
-                      //                                 HistoryModel(
-                      //                                     message:
-                      //                                         'tip from $userFullname',
-                      //                                     amount:
-                      //                                         tip.toString(),
-                      //                                     paymentSystem: '',
-                      //                                     timeCreated: DateFormat
-                      //                                             .yMMMMEEEEd()
-                      //                                         .format(DateTime
-                      //                                             .now())),
-                      //                                 'drivers',
-                      //                                 deliveryBoyID);
-                      //                           });
-                      //                           Fluttertoast.showToast(
-                      //                                   msg:
-                      //                                       "Rider has been tipped"
-                      //                                           .tr(),
-                      //                                   toastLength:
-                      //                                       Toast.LENGTH_SHORT,
-                      //                                   gravity:
-                      //                                       ToastGravity.TOP,
-                      //                                   timeInSecForIosWeb: 1,
-                      //                                   fontSize: 14.0)
-                      //                               .then((value) {
-                      //                             Navigator.of(context).pop();
-                      //                           });
-                      //                         }
-                      //                       },
-                      //                       child: const Text('Tip Rider'))
-                      //                 ]),
-                      //               ),
-                      //             );
-                      //           });
-                      //     },
-                      //     child: const Text('Tip Rider'))
-                    ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTrackingCard() {
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: kGold.withOpacity(0.35), width: 1),
+        color: Colors.white.withOpacity(0.04),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.30),
+            blurRadius: 20,
+            offset: const Offset(0, 12),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          // Header
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 14, 16, 8),
+            child: Row(
+              children: [
+                Icon(Icons.route_outlined, color: kGold, size: 20),
+                const SizedBox(width: 8),
+                Text(
+                  'Order Tracking'.tr(),
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
                   ),
-            Padding(
-              padding: const EdgeInsets.only(left: 12, top: 12),
-              child: Row(
-                children: [
-                  const Text('Payment Detail',
-                          style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 18,
-                              color: Colors.grey))
-                      .tr(),
-                ],
-              ),
-            ),
-            const SizedBox(
-              height: 10,
-            ),
-            Padding(
-              padding: const EdgeInsets.only(left: 10, right: 10),
-              child: Card(
-                elevation: 0.1,
-                child: ListTile(
-                  title: widget.orderModel.paymentType == 'Wallet'
-                      ? const Text('Wallet').tr()
-                      : const Text('Cash on delivery').tr(),
-                  subtitle: const Text("Payment type").tr(),
-                  leading: const Icon(Icons.payment),
-                  trailing: Text(
-                      '${widget.currencySymbol}${Formatter().converter(widget.orderModel.total.toDouble())}'),
                 ),
-              ),
+              ],
             ),
-            Padding(
-              padding: const EdgeInsets.only(left: 12, top: 12),
-              child: Row(
-                children: [
-                  const Text('Delivery Detail',
+          ),
+          const SizedBox(height: 8),
+          // Map
+          ClipRRect(
+            borderRadius: BorderRadius.circular(18),
+            child: SizedBox(
+              height: 220,
+              width: double.infinity,
+              child: deliveryAddressLat != 0 && deliveryAddressLong != 0
+                  ? MapScreen(
+                      zoom: 5,
+                      userLat: deliveryAddressLat,
+                      address: marketAddress,
+                      userLong: deliveryAddressLong,
+                      marketLong: marketLong,
+                      marketLat: marketLat,
+                    )
+                  : Container(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            kPrimary.withOpacity(0.6),
+                            Colors.black.withOpacity(0.9),
+                          ],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                      ),
+                      child: Center(
+                        child: Text(
+                          'Map will appear once location is available'.tr(),
+                          textAlign: TextAlign.center,
                           style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 18,
-                              color: Colors.grey))
-                      .tr(),
-                ],
+                            color: Colors.white.withOpacity(0.8),
+                            fontSize: 13,
+                          ),
+                        ),
+                      ),
+                    ),
+            ),
+          ),
+          const SizedBox(height: 14),
+          // Timeline
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+            child: _buildStatusTimeline(),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStatusTimeline() {
+    final bool isPickupFlow = widget.orderModel.deliveryAddress.isEmpty;
+
+    final List<_StepConfig> steps = [
+      _StepConfig(label: 'Received'.tr(), active: _stepReceivedActive),
+      _StepConfig(label: 'Accepted'.tr(), active: _stepAcceptedActive),
+      _StepConfig(label: 'Processing'.tr(), active: _stepProcessingActive),
+      _StepConfig(
+        label: isPickupFlow ? 'Pick up'.tr() : 'On the way'.tr(),
+        active: _stepOnTheWayActive,
+      ),
+      _StepConfig(label: 'Completed'.tr(), active: _stepCompletedActive),
+    ];
+
+    // If cancelled, show compact cancelled UI
+    if (_isCancelled) {
+      return Row(
+        children: [
+          Icon(Icons.error_outline, color: Colors.redAccent),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              'This order was cancelled.'.tr(),
+              style: TextStyle(
+                color: Colors.white.withOpacity(0.85),
+                fontSize: 13,
               ),
             ),
-            const SizedBox(
-              height: 10,
-            ),
-            widget.orderModel.deliveryAddress != ''
-                ? Column(
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.only(left: 10, right: 10),
-                        child: Card(
-                          elevation: 0.1,
-                          child: ListTile(
-                            title: Text(widget.orderModel.deliveryAddress),
-                            subtitle: const Text("Delivery Address").tr(),
-                            leading: const Icon(Icons.room),
-                          ),
-                        ),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.only(left: 10, right: 10),
-                        child: Card(
-                          elevation: 0.1,
-                          child: ListTile(
-                            title: Text(widget.orderModel.houseNumber),
-                            subtitle: const Text("House number").tr(),
-                            leading: const Icon(Icons.home),
-                          ),
-                        ),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.only(left: 10, right: 10),
-                        child: Card(
-                          elevation: 0.1,
-                          child: ListTile(
-                            title: Text(widget.orderModel.closesBusStop),
-                            subtitle: const Text("Closest Bus stop").tr(),
-                            leading: const Icon(Icons.bus_alert),
-                          ),
-                        ),
-                      ),
-                    ],
-                  )
-                : Padding(
-                    padding: const EdgeInsets.only(left: 10, right: 10),
-                    child: Card(
-                      elevation: 0.1,
-                      child: ListTile(
-                        title: const Text('Pick Up').tr(),
-                        subtitle: Text(widget.orderModel.pickupAddress).tr(),
-                        leading: const Icon(Icons.room),
+          )
+        ],
+      );
+    }
+
+    return Column(
+      children: [
+        Row(
+          children: List.generate(steps.length * 2 - 1, (index) {
+            if (index.isOdd) {
+              // Connector
+              final prev = steps[(index - 1) ~/ 2];
+              final next = steps[(index + 1) ~/ 2];
+              final bool connectorActive = prev.active && next.active;
+              return Expanded(
+                child: Container(
+                  height: 2,
+                  color:
+                      connectorActive ? kGold : Colors.white.withOpacity(0.25),
+                ),
+              );
+            } else {
+              final step = steps[index ~/ 2];
+              return _buildStepDot(step);
+            }
+          }),
+        ),
+        const SizedBox(height: 8),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: steps
+              .map(
+                (s) => Expanded(
+                  child: Align(
+                    alignment: Alignment.center,
+                    child: Text(
+                      s.label,
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: s.active
+                            ? Colors.white
+                            : Colors.white.withOpacity(0.55),
+                        fontSize: 11,
+                        fontWeight:
+                            s.active ? FontWeight.w600 : FontWeight.w400,
                       ),
                     ),
                   ),
-            Padding(
-              padding: const EdgeInsets.only(left: 12, top: 12),
-              child: Row(
-                children: [
-                  const Text('Products',
-                          style: TextStyle(
+                ),
+              )
+              .toList(),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildStepDot(_StepConfig step) {
+    return Container(
+      width: 22,
+      height: 22,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        border: Border.all(
+          color: step.active ? kGold : Colors.white.withOpacity(0.5),
+          width: 2,
+        ),
+        color: step.active ? kGold.withOpacity(0.18) : Colors.transparent,
+      ),
+      child: Center(
+        child: Container(
+          width: 10,
+          height: 10,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: step.active ? kGold : Colors.white.withOpacity(0.5),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildRiderCard() {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(16, 14, 16, 10),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.06),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: kGold.withOpacity(0.35), width: 1),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.delivery_dining_rounded, color: kGold, size: 20),
+              const SizedBox(width: 8),
+              Text(
+                "Rider's Detail".tr(),
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 15,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          _buildInfoRow(Icons.person, "Rider's name".tr(), ridersName ?? ''),
+          const SizedBox(height: 6),
+          _buildInfoRow(
+              Icons.delivery_dining, "Rider's Vehicle Type".tr(), vehicleType),
+          const SizedBox(height: 6),
+          _buildInfoRow(
+              Icons.numbers, "Rider's Vehicle Number".tr(), vehicleNumber),
+          const SizedBox(height: 6),
+          Row(
+            children: [
+              Expanded(
+                child: _buildInfoRow(
+                  Icons.phone,
+                  "Rider's phone".tr(),
+                  '+9$ridersPhone',
+                  trailing: TextButton.icon(
+                    onPressed: () => _callRider('+9$ridersPhone'),
+                    style: TextButton.styleFrom(
+                      foregroundColor: kGold,
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 10, vertical: 4),
+                    ),
+                    icon: const Icon(Icons.call, size: 16),
+                    label: Text(
+                      'Call Rider'.tr(),
+                      style: const TextStyle(fontSize: 12.5),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInfoRow(IconData icon, String label, String value,
+      {Widget? trailing}) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(icon, color: Colors.white70, size: 18),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label,
+                style: TextStyle(
+                  color: Colors.white.withOpacity(0.65),
+                  fontSize: 11.5,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                value,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 13.5,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
+        ),
+        if (trailing != null) trailing,
+      ],
+    );
+  }
+
+  Widget _buildPaymentCard() {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(16, 14, 16, 10),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.06),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: Colors.white24, width: 1),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.payment, color: kGold, size: 20),
+              const SizedBox(width: 8),
+              Text(
+                'Payment Detail'.tr(),
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 15,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              Icon(Icons.account_balance_wallet_outlined,
+                  color: Colors.white70, size: 18),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      widget.orderModel.paymentType == 'Wallet'
+                          ? 'Wallet'.tr()
+                          : 'Cash on delivery'.tr(),
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 13.5,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      'Payment type'.tr(),
+                      style: TextStyle(
+                        color: Colors.white.withOpacity(0.65),
+                        fontSize: 11.5,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Text(
+                '${widget.currencySymbol}${Formatter().converter(widget.orderModel.total.toDouble())}',
+                style: TextStyle(
+                  color: kGold,
+                  fontSize: 15,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDeliveryCard() {
+    final bool isDelivery = widget.orderModel.deliveryAddress.isNotEmpty;
+
+    return Container(
+      padding: const EdgeInsets.fromLTRB(16, 14, 16, 12),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.06),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: Colors.white24, width: 1),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                isDelivery ? Icons.local_shipping_outlined : Icons.storefront,
+                color: kGold,
+                size: 20,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                'Delivery Detail'.tr(),
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 15,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          if (isDelivery) ...[
+            _buildInfoRow(
+              Icons.room,
+              'Delivery Address'.tr(),
+              widget.orderModel.deliveryAddress,
+            ),
+            const SizedBox(height: 6),
+            _buildInfoRow(
+              Icons.home,
+              'House number'.tr(),
+              widget.orderModel.houseNumber,
+            ),
+            const SizedBox(height: 6),
+            _buildInfoRow(
+              Icons.bus_alert,
+              'Closest Bus stop'.tr(),
+              widget.orderModel.closesBusStop,
+            ),
+          ] else
+            _buildInfoRow(
+              Icons.room,
+              'Pick Up'.tr(),
+              widget.orderModel.pickupAddress,
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildProductsSection() {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.06),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: Colors.white24, width: 1),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.shopping_bag_outlined, color: kGold, size: 20),
+              const SizedBox(width: 8),
+              Text(
+                'Products'.tr(),
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 15,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Column(
+            children: widget.orderModel.orders.map((e) {
+              return Container(
+                margin: const EdgeInsets.only(bottom: 10),
+                decoration: BoxDecoration(
+                  color: Colors.black.withOpacity(0.15),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: Colors.white.withOpacity(0.08)),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    ListTile(
+                      contentPadding: const EdgeInsets.fromLTRB(12, 4, 12, 4),
+                      leading: CircleAvatar(
+                        radius: 20,
+                        backgroundColor: Colors.white12,
+                        backgroundImage:
+                            e.image.isNotEmpty ? NetworkImage(e.image) : null,
+                        child: e.image.isEmpty
+                            ? Icon(Icons.image_not_supported_outlined,
+                                color: Colors.white70, size: 18)
+                            : null,
+                      ),
+                      title: Text(
+                        e.productName,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 14.5,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      subtitle: Text(
+                        e.selected,
+                        style: TextStyle(
+                          color: Colors.white.withOpacity(0.7),
+                          fontSize: 12,
+                        ),
+                      ),
+                      trailing: Column(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            '${widget.currencySymbol}${Formatter().converter(e.selectedPrice.toDouble())}',
+                            style: TextStyle(
+                              color: kGold,
+                              fontSize: 13.5,
                               fontWeight: FontWeight.bold,
-                              fontSize: 18,
-                              color: Colors.grey))
-                      .tr(),
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            'QTY: ${e.quantity}',
+                            style: TextStyle(
+                              color: Colors.white.withOpacity(0.7),
+                              fontSize: 11.5,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const Gap(6),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      child: ProductReturnDetail(
+                        productID: e.productID,
+                        orderModel: widget.orderModel,
+                        ordersList: e,
+                      ),
+                    ),
+                    if (orderStatus == 'Completed') ...[
+                      const Gap(8),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        child: OutlinedButton(
+                          onPressed: () {
+                            ratingAndReviewProduct(
+                              e.productID,
+                              e.totalRating,
+                              e.totalNumberOfUserRating,
+                            );
+                          },
+                          style: OutlinedButton.styleFrom(
+                            side: BorderSide(color: kGold),
+                            minimumSize: const Size.fromHeight(34),
+                          ),
+                          child: Text(
+                            'Rate Product'.tr(),
+                            style: TextStyle(
+                              color: kGold,
+                              fontSize: 12.5,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                    const Gap(10),
+                  ],
+                ),
+              );
+            }).toList(),
+          )
+        ],
+      ),
+    );
+  }
+
+  Widget _buildActionsSection() {
+    final bool canDelete = accepted == false;
+    final bool canConfirm = acceptDelivery == true &&
+        accepted == true &&
+        deliveryAddress != '' &&
+        orderStatus == 'Completed' &&
+        confirmationStatus == false;
+
+    if (!canDelete && !canConfirm) return const SizedBox.shrink();
+
+    return Column(
+      children: [
+        if (canDelete)
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: () {
+                if (widget.orderModel.paymentType == 'Wallet') {
+                  updateWallet();
+                }
+                FirebaseFirestore.instance
+                    .collection('Orders')
+                    .doc(widget.orderModel.uid)
+                    .delete()
+                    .then((value) {
+                  Navigator.of(context).pop();
+                });
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.redAccent.withOpacity(0.9),
+                foregroundColor: Colors.white,
+                minimumSize: const Size.fromHeight(44),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              child: const Text('Delete Order').tr(),
+            ),
+          ),
+        if (canDelete && canConfirm) const Gap(10),
+        if (canConfirm)
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: pleaseWait
+                  ? null
+                  : () {
+                      showDialog(
+                        context: context,
+                        builder: (builder) {
+                          return AlertDialog(
+                            backgroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            title: const Text(
+                              'Order Confirmation!!!',
+                              style: TextStyle(fontWeight: FontWeight.bold),
+                            ).tr(),
+                            content: const Text(
+                              'Are you sure you received all your order?',
+                            ).tr(),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.of(context).pop(),
+                                child: const Text('No').tr(),
+                              ),
+                              TextButton(
+                                onPressed: () async {
+                                  confirmFunc(true);
+                                },
+                                child: const Text('Yes').tr(),
+                              ),
+                            ],
+                          );
+                        },
+                      );
+                    },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: kGold,
+                foregroundColor: Colors.black,
+                minimumSize: const Size.fromHeight(44),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              child: Text(
+                pleaseWait
+                    ? 'Please wait...'.tr()
+                    : 'Confirm order has arrived'.tr(),
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+
+  Widget _buildWhatsAppCard() {
+    return InkWell(
+      onTap: () {
+        openWhatsApp();
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: Colors.greenAccent.withOpacity(0.7)),
+          color: Colors.white.withOpacity(0.03),
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.greenAccent.withOpacity(0.1),
+              ),
+              child: Image.asset(
+                'assets/image/whatsapp.png',
+                height: 24,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Get updates on WhatsApp'.tr(),
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 14.5,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    'Say hi and we\'ll keep you posted about this order.'.tr(),
+                    style: TextStyle(
+                      color: Colors.white.withOpacity(0.7),
+                      fontSize: 12,
+                    ),
+                  ),
                 ],
               ),
             ),
-            const SizedBox(
-              height: 10,
-            ),
-            Column(
-                children: widget.orderModel.orders
-                    .map((e) => Padding(
-                          padding: const EdgeInsets.only(left: 10, right: 10),
-                          child: Card(
-                            elevation: 0.1,
-                            child: Column(
-                              children: [
-                                ListTile(
-                                  subtitle: Text(e.selected),
-                                  leading: Text('QTY: ${e.quantity}'),
-                                  title: Text(e.productName),
-                                  trailing: Text(
-                                      '${widget.currencySymbol}${Formatter().converter(e.selectedPrice.toDouble())}'),
-                                ),
-                                const Gap(10),
-                                ProductReturnDetail(
-                                  productID: e.productID,
-                                  orderModel: widget.orderModel,
-                                  ordersList: e,
-                                ),
-                                orderStatus == 'Completed'
-                                    ? OutlinedButton(
-                                        onPressed: () {
-                                          ratingAndReviewProduct(
-                                              e.productID,
-                                              e.totalRating,
-                                              e.totalNumberOfUserRating);
-                                        },
-                                        child: const Text('Rate Product').tr())
-                                    : Container()
-                              ],
-                            ),
-                          ),
-                        ))
-                    .toList()),
-            const SizedBox(height: 20),
-            accepted == false
-                ? Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton(
-                            onPressed: () {
-                              if (widget.orderModel.paymentType == 'Wallet') {
-                                updateWallet();
-                              }
-                              FirebaseFirestore.instance
-                                  .collection('Orders')
-                                  .doc(widget.orderModel.uid)
-                                  .delete()
-                                  .then((value) {
-                                Navigator.of(context).pop();
-                              });
-                            },
-                            child: const Text('Delete Order').tr())),
-                  )
-                : Container(),
-            acceptDelivery == true &&
-                    accepted == true &&
-                    deliveryAddress != '' &&
-                    orderStatus == 'Completed' &&
-                    confirmationStatus == false
-                ? Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton(
-                            onPressed: pleaseWait == true
-                                ? null
-                                : () {
-                                    showDialog(
-                                        context: context,
-                                        builder: (builder) {
-                                          return AlertDialog(
-                                              actions: [
-                                                InkWell(
-                                                    onTap: () async {
-                                                      confirmFunc(true);
-                                                    },
-                                                    child:
-                                                        const Text('Yes').tr()),
-                                                const SizedBox(width: 10),
-                                                InkWell(
-                                                    onTap: () {
-                                                      Navigator.of(context)
-                                                          .pop();
-                                                    },
-                                                    child:
-                                                        const Text('No').tr()),
-                                              ],
-                                              title: const Text(
-                                                      'Order Confirmation!!!',
-                                                      style: TextStyle(
-                                                          fontWeight:
-                                                              FontWeight.bold))
-                                                  .tr(),
-                                              content: Container(
-                                                child: const Text(
-                                                        'Are you sure you received all your order?')
-                                                    .tr(),
-                                              ));
-                                        });
-                                  },
-                            child: pleaseWait == true
-                                ? const Text('Please wait...').tr()
-                                : const Text('Confirm order has arrived')
-                                    .tr())),
-                  )
-                : Container(),
-            const SizedBox(height: 20),
-            const Text("Say Hi to get order update on whatsapp"),
-            const SizedBox(height: 10),
-            InkWell(
-              onTap: () {
-                openWhatsApp();
-              },
-              child: Container(
-                height: 50,
-                decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.grey)),
-                child: Center(
-                    child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                      Image.asset(
-                        'assets/image/whatsapp.png',
-                        height: 30,
-                      ),
-                      const SizedBox(height: 5),
-                      const Text(
-                        'Whatsapp',
-                        style: TextStyle(fontSize: 18),
-                      )
-                    ])),
-              ),
-            ),
-            const SizedBox(height: 20),
+            const SizedBox(width: 8),
+            Icon(Icons.chevron_right_rounded,
+                color: Colors.white.withOpacity(0.9)),
           ],
-        )));
+        ),
+      ),
+    );
   }
+}
+
+// Small helper model for timeline steps
+class _StepConfig {
+  final String label;
+  final bool active;
+
+  _StepConfig({required this.label, required this.active});
 }
