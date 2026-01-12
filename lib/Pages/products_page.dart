@@ -119,46 +119,211 @@ class _ProductsPageState extends State<ProductsPage> {
   }
 
   String search = "Search For Products On".tr();
+  void _openBoutiqueDetails(BuildContext context, ProductsModel productModel) {
+    // 🔹 Trigger premium tactile feedback
+    HapticFeedback.lightImpact();
+
+    if (MediaQuery.of(context).size.width >= 1100) {
+      // 🔹 Desktop / Tablet Boutique Dialog
+      showDialog(
+        context: context,
+        builder: (context) {
+          return AlertDialog(
+            backgroundColor: const Color(0xFF1C1515), // Theme Charcoal
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+            content: SizedBox(
+              width: MediaQuery.of(context).size.width / 1.5,
+              child: ProductDetailsPage(
+                currency: currencySymbol,
+                marketID: productModel.marketID,
+                productsModel: productModel,
+              ),
+            ),
+          );
+        },
+      );
+    } else {
+      // 🔹 Mobile Boutique Modal Bottom Sheet
+      showMaterialModalBottomSheet(
+        bounce: true,
+        expand: true,
+        context: context,
+        backgroundColor:
+            Colors.transparent, // Ensures the Glassmorphism blur works
+        builder: (context) => Container(
+          decoration: const BoxDecoration(
+            color: Color(0xFF1C1515), // Theme Charcoal
+            borderRadius: BorderRadius.only(
+              topLeft: Radius.circular(30),
+              topRight: Radius.circular(30),
+            ),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.only(top: 10),
+            child: ProductDetailsPage(
+              currency: currencySymbol,
+              marketID: productModel.marketID,
+              productsModel: productModel,
+            ),
+          ),
+        ),
+      );
+    }
+  }
+
+  Widget _buildRatingRow(ProductsModel productModel) {
+    // Calculate rating safely
+    final double rating =
+        (productModel.totalRating / productModel.totalNumberOfUserRating);
+
+    return Row(
+      children: [
+        // Premium star indicator with theme color
+        RatingBarIndicator(
+          rating: rating.toDouble(),
+          itemBuilder: (context, index) => const Icon(
+            Icons.star_rounded,
+            color: Color(0xFFC9A86A), // Boutique Gold
+          ),
+          itemCount: 5,
+          itemSize: 14, // Slightly smaller for professional look
+          direction: Axis.horizontal,
+        ),
+        const SizedBox(width: 6),
+        // Numeric rating text
+        Text(
+          rating.toStringAsFixed(1),
+          style: const TextStyle(
+            color: Color(0xFFC9A86A),
+            fontSize: 11,
+            fontWeight: FontWeight.w900,
+            letterSpacing: 0.5,
+          ),
+        ),
+        const SizedBox(width: 4),
+        // Subtle indicator of total reviews
+        Text(
+          '(${productModel.totalNumberOfUserRating})',
+          style: TextStyle(
+            color: Colors.white.withOpacity(0.2),
+            fontSize: 10,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPriceRow(ProductsModel productModel) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: [
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // 🔹 Original Price (Strikethrough) - only shows if discount exists
+            if (productModel.percantageDiscount != 0)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 2),
+                child: Text(
+                  '$currencySymbol${Formatter().converter(productModel.unitOldPrice1.toDouble())}',
+                  style: TextStyle(
+                    color: Colors.white.withOpacity(0.15),
+                    fontSize: 10,
+                    decoration: TextDecoration.lineThrough,
+                    letterSpacing: 0.5,
+                  ),
+                ),
+              ),
+            // 🔹 Current Boutique Price
+            Text(
+              '$currencySymbol${Formatter().converter(productModel.unitPrice1.toDouble())}',
+              style: const TextStyle(
+                color: Color(0xFFC9A86A), // Boutique Gold
+                fontSize: 16,
+                fontWeight: FontWeight.w900,
+                letterSpacing: -0.5,
+              ),
+            ),
+          ],
+        ),
+        // 🔹 Subtle Action Indicator
+        Icon(
+          Icons.arrow_forward_ios_rounded,
+          color: Colors.white.withOpacity(0.1),
+          size: 12,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildDiscountBadge(num percentage) {
+    return Positioned(
+      top: 14,
+      right: 14,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        decoration: BoxDecoration(
+          color: const Color(0xFFC9A86A), // Boutique Gold
+          borderRadius: BorderRadius.circular(8),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.3),
+              blurRadius: 8,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Text(
+          '-$percentage% OFF',
+          style: const TextStyle(
+            color: Colors.black, // Dark text for high contrast on Gold
+            fontSize: 10,
+            fontWeight: FontWeight.w900,
+            letterSpacing: 0.5,
+          ),
+        ),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        iconTheme: Theme.of(context).iconTheme,
-        titleTextStyle: TextStyle(color: Theme.of(context).indicatorColor),
-        backgroundColor: Theme.of(context).colorScheme.background,
+        backgroundColor: const Color(0xFF1C1515), // Elite Boutique Charcoal
         elevation: 0,
-        centerTitle: true,
-        title: SizedBox(
-            width: MediaQuery.of(context).size.width / 1.2,
-            height: 40,
-            child: TextField(
-              readOnly: true,
-              onTap: () {
-                Navigator.of(context).push(MaterialPageRoute(
-                    builder: (context) => const SearchProductPage(
-                          marketID: '',
-                          category: '',
-                        )));
-              },
-              decoration: InputDecoration(
-                filled: true,
-                fillColor: const Color.fromARGB(255, 236, 230, 230),
-                hintText: '$search Khakhra, Mathiya',
-                hintStyle: const TextStyle(color: Colors.black),
-                focusedBorder: OutlineInputBorder(
-                  borderSide: const BorderSide(color: Colors.white),
-                  borderRadius: BorderRadius.circular(15),
-                ),
-                enabledBorder: UnderlineInputBorder(
-                  borderSide: const BorderSide(color: Colors.white),
-                  borderRadius: BorderRadius.circular(15),
-                ),
+        centerTitle: false, // Left-aligned for a high-end modern look
+        iconTheme: const IconThemeData(color: Colors.white),
+        // 🔹 HEADER: BRANDED TITLE (LOGIC PRESERVED)
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              "SHOP BY".tr().toUpperCase(),
+              style: const TextStyle(
+                color: Color(0xFFC9A86A), // Boutique Gold
+                fontSize: 9,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 2,
               ),
-            )),
+            ),
+            Text(
+              "COLLECTIONS".toUpperCase(),
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 18,
+                fontWeight: FontWeight.w900,
+                letterSpacing: 1,
+              ),
+            ),
+          ],
+        ),
         actions: [
+          // 🔹 REFINED PREMIUM CART BADGE (LOGIC PRESERVED)
           Padding(
-            padding: const EdgeInsets.only(right: 10),
+            padding: const EdgeInsets.only(right: 15),
             child: InkWell(
               onTap: () {
                 if (userRef == null) {
@@ -167,35 +332,92 @@ class _ProductsPageState extends State<ProductsPage> {
                   Navigator.of(context).pushNamed('/cart');
                 }
               },
-              child: Container(
-                height: 40,
-                width: 40,
-                decoration: const BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: Color.fromARGB(255, 236, 230, 230)),
-                child: Center(
-                  child: Badge(
-                    badgeStyle: const BadgeStyle(
-                      badgeColor: Color.fromARGB(255, 47, 37, 37),
-                    ),
-                    badgeContent: Text(cartQuantity.toString(),
-                        style: const TextStyle(color: Colors.white)),
-                    child: const Icon(
-                      Icons.shopping_cart,
+              child: Center(
+                child: Badge(
+                  badgeStyle: const BadgeStyle(
+                    badgeColor: Color(0xFFC9A86A), // Gold badge
+                    padding: EdgeInsets.all(5),
+                  ),
+                  badgeContent: Text(
+                    cartQuantity.toString(),
+                    style: const TextStyle(
                       color: Colors.black,
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
                     ),
+                  ),
+                  child: const Icon(
+                    Icons.shopping_bag_outlined, // Luxury retail icon
+                    color: Colors.white,
+                    size: 26,
                   ),
                 ),
               ),
             ),
-          )
+          ),
         ],
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(60),
+          child: Column(
+            children: [
+              // 🔹 RICH THEMED SEARCH BAR (LOGIC & VARS PRESERVED)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+                child: InkWell(
+                  onTap: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (context) => const SearchProductPage(
+                          marketID: '',
+                          category: '',
+                        ),
+                      ),
+                    );
+                  },
+                  child: Container(
+                    height: 42,
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.05),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(
+                          color: const Color(0xFFC9A86A).withOpacity(0.15)),
+                    ),
+                    child: Row(
+                      children: [
+                        const SizedBox(width: 15),
+                        const Icon(Icons.search_rounded,
+                            color: Color(0xFFC9A86A), size: 18),
+                        const SizedBox(width: 10),
+                        Text(
+                          "$search Khakhra, Mathiya", // Variables preserved
+                          style: TextStyle(
+                            color: Colors.white.withOpacity(0.3),
+                            fontSize: 13,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
-      body: Padding(
-        padding: MediaQuery.of(context).size.width >= 1100
-            ? const EdgeInsets.only(left: 200, right: 200)
-            : const EdgeInsets.only(left: 8, right: 8),
-        child: FutureBuilder<List<ProductsModel>>(
+      body: Container(
+        // 🔹 Elite Boutique Gradient Background
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [Color(0xFF1C1515), Color(0xFF0D0D0D)],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+          ),
+        ),
+        child: Padding(
+          padding: MediaQuery.of(context).size.width >= 1100
+              ? const EdgeInsets.symmetric(horizontal: 200)
+              : const EdgeInsets.symmetric(horizontal: 8),
+          child: FutureBuilder<List<ProductsModel>>(
             future: getMyProducts(),
             builder: (context, snapshot) {
               if (snapshot.hasData) {
@@ -206,87 +428,42 @@ class _ProductsPageState extends State<ProductsPage> {
                   child: GridView.builder(
                     controller: _scrollController,
                     gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                        mainAxisSpacing:
-                            MediaQuery.of(context).size.width >= 1100
-                                ? 10
-                                : MediaQuery.of(context).size.width > 600 &&
-                                        MediaQuery.of(context).size.width < 1200
-                                    ? 5
-                                    : 0,
-                        crossAxisSpacing:
-                            MediaQuery.of(context).size.width >= 1100
-                                ? 10
-                                : MediaQuery.of(context).size.width > 600 &&
-                                        MediaQuery.of(context).size.width < 1200
-                                    ? 5
-                                    : 0,
-                        crossAxisCount:
-                            MediaQuery.of(context).size.width >= 1100
-                                ? 4
-                                : MediaQuery.of(context).size.width > 600 &&
-                                        MediaQuery.of(context).size.width < 1200
-                                    ? 3
-                                    : 2,
-                        childAspectRatio:
-                            MediaQuery.of(context).size.width >= 1100
-                                ? 1
-                                : MediaQuery.of(context).size.width > 600 &&
-                                        MediaQuery.of(context).size.width < 1200
-                                    ? 0.9
-                                    : 0.8),
+                      mainAxisSpacing:
+                          MediaQuery.of(context).size.width >= 1100 ? 12 : 8,
+                      crossAxisSpacing:
+                          MediaQuery.of(context).size.width >= 1100 ? 12 : 8,
+                      crossAxisCount: MediaQuery.of(context).size.width >= 1100
+                          ? 4
+                          : MediaQuery.of(context).size.width > 600 &&
+                                  MediaQuery.of(context).size.width < 1200
+                              ? 3
+                              : 2,
+                      childAspectRatio:
+                          MediaQuery.of(context).size.width >= 1100
+                              ? 0.75
+                              : 0.7,
+                    ),
                     itemCount: snapshot.data!.length,
                     physics: const BouncingScrollPhysics(),
                     shrinkWrap: true,
                     itemBuilder: (BuildContext buildContext, int index) {
                       ProductsModel productModel = snapshot.data![index];
                       return Padding(
-                        padding: const EdgeInsets.all(8.0),
+                        padding: const EdgeInsets.all(4.0),
                         child: InkWell(
                           onTap: () {
                             Analytics().trackProductView(
                                 productModel.productID, productModel.name);
-                            if (MediaQuery.of(context).size.width >= 1100) {
-                              showDialog(
-                                  context: context,
-                                  builder: (context) {
-                                    return AlertDialog(
-                                        content: SizedBox(
-                                      width: MediaQuery.of(context).size.width /
-                                          1.5,
-                                      child: ProductDetailsPage(
-                                        currency: currencySymbol,
-                                        marketID: productModel.marketID,
-                                        productsModel: productModel,
-                                      ),
-                                    ));
-                                  });
-                            } else {
-                              showMaterialModalBottomSheet(
-                                bounce: true,
-                                expand: true,
-                                context: context,
-                                backgroundColor: Colors.transparent,
-                                builder: (context) => Padding(
-                                  padding:
-                                      MediaQuery.of(context).size.width >= 1100
-                                          ? const EdgeInsets.only(
-                                              left: 200, right: 200)
-                                          : const EdgeInsets.only(
-                                              left: 0, right: 0),
-                                  child: ProductDetailsPage(
-                                    currency: currencySymbol,
-                                    marketID: productModel.marketID,
-                                    productsModel: productModel,
-                                  ),
-                                ),
-                              );
-                            }
+                            _openBoutiqueDetails(context,
+                                productModel); // Logic helper provided earlier
                           },
-                          child: Card(
-                            elevation: 4,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(
-                                  16.0), // Rounded corners for the card
+                          child: Container(
+                            // 🔹 Boutique Glassmorphism Decoration
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.04),
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(
+                                  color: Colors.white.withOpacity(0.08)),
                             ),
                             child: Stack(
                               children: [
@@ -294,200 +471,74 @@ class _ProductsPageState extends State<ProductsPage> {
                                   crossAxisAlignment:
                                       CrossAxisAlignment.stretch,
                                   children: [
-                                    AspectRatio(
-                                      aspectRatio: 16 / 9,
+                                    // 🔹 Adaptive Boutique Image Fit
+                                    Expanded(
+                                      flex: 3,
                                       child: ClipRRect(
                                         borderRadius:
                                             const BorderRadius.vertical(
-                                          top: Radius.circular(16.0),
-                                        ),
+                                                top: Radius.circular(20)),
                                         child: Image.network(
                                           productModel.image1,
-                                          height: MediaQuery.of(context)
-                                                      .size
-                                                      .width >=
-                                                  1100
-                                              ? 160
-                                              : MediaQuery.of(context)
-                                                              .size
-                                                              .width >
-                                                          600 &&
-                                                      MediaQuery.of(context)
-                                                              .size
-                                                              .width <
-                                                          1200
-                                                  ? 140
-                                                  : 120,
-                                          width: double.infinity,
                                           fit: BoxFit.cover,
-                                          errorBuilder:
-                                              (context, error, stackTrace) =>
-                                                  Container(
-                                            height: 120,
-                                            color: Colors.grey.shade200,
-                                            child: const Icon(
-                                              Icons.broken_image,
-                                              color: Colors.grey,
-                                              size: 40,
-                                            ),
-                                          ),
+                                          errorBuilder: (context, error,
+                                                  stackTrace) =>
+                                              Container(
+                                                  color: Colors.white10,
+                                                  child: const Icon(
+                                                      Icons.broken_image,
+                                                      color: Colors.white24)),
                                         ),
                                       ),
                                     ),
+                                    // 🔹 Rich Content Area
                                     Expanded(
+                                      flex: 2,
                                       child: Padding(
-                                        padding: const EdgeInsets.all(
-                                            16.0), // Increased padding for better spacing
+                                        padding: const EdgeInsets.all(12.0),
                                         child: Column(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.spaceBetween,
                                           crossAxisAlignment:
                                               CrossAxisAlignment.start,
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.spaceEvenly,
                                           children: [
-                                            Row(
-                                              mainAxisAlignment:
-                                                  MainAxisAlignment
-                                                      .spaceBetween,
-                                              children: [
-                                                Flexible(
-                                                  flex: 5,
-                                                  child: Text(
-                                                    productModel.name,
-                                                    overflow:
-                                                        TextOverflow.ellipsis,
-                                                    style: TextStyle(
-                                                      fontSize:
-                                                          MediaQuery.of(context)
-                                                                      .size
-                                                                      .width >=
-                                                                  1100
-                                                              ? 16
-                                                              : 14,
-                                                      fontWeight:
-                                                          FontWeight.w600,
-                                                    ),
-                                                  ),
-                                                ),
-                                                if (productModel
-                                                            .totalNumberOfUserRating !=
-                                                        0 &&
-                                                    productModel.totalRating !=
-                                                        0)
-                                                  Flexible(
-                                                    flex: 5,
-                                                    child: Row(
-                                                      mainAxisAlignment:
-                                                          MainAxisAlignment.end,
-                                                      children: [
-                                                        RatingBarIndicator(
-                                                          rating: (productModel
-                                                                      .totalRating /
-                                                                  productModel
-                                                                      .totalNumberOfUserRating)
-                                                              .toDouble(),
-                                                          itemBuilder: (context,
-                                                                  index) =>
-                                                              const Icon(
-                                                            Icons.star,
-                                                            color: Colors.amber,
-                                                          ),
-                                                          itemCount: 5,
-                                                          itemSize: 16,
-                                                          direction:
-                                                              Axis.horizontal,
-                                                        ),
-                                                        const SizedBox(
-                                                            width: 4),
-                                                        Text(
-                                                          '${(productModel.totalRating / productModel.totalNumberOfUserRating).toStringAsFixed(1)}',
-                                                          style: TextStyle(
-                                                            fontSize: MediaQuery.of(
-                                                                            context)
-                                                                        .size
-                                                                        .width >=
-                                                                    1100
-                                                                ? 12
-                                                                : 10,
-                                                            fontWeight:
-                                                                FontWeight.bold,
-                                                          ),
-                                                        ),
-                                                      ],
-                                                    ),
-                                                  ),
-                                              ],
-                                            ),
-                                            const SizedBox(height: 6),
                                             Text(
-                                              productModel.description,
-                                              maxLines: 2,
+                                              productModel.name.toUpperCase(),
+                                              maxLines: 1,
                                               overflow: TextOverflow.ellipsis,
                                               style: const TextStyle(
-                                                fontSize: 12,
-                                                color: Colors.grey,
+                                                color: Colors.white,
+                                                fontSize: 13,
+                                                fontWeight: FontWeight.bold,
+                                                letterSpacing: 0.5,
                                               ),
                                             ),
-                                            const SizedBox(height: 8),
-                                            Row(
-                                              mainAxisAlignment:
-                                                  MainAxisAlignment
-                                                      .spaceBetween,
-                                              children: [
-                                                Text(
-                                                  '$currencySymbol${Formatter().converter(productModel.unitPrice1.toDouble())}',
-                                                  style: TextStyle(
-                                                    fontSize:
-                                                        MediaQuery.of(context)
-                                                                    .size
-                                                                    .width >=
-                                                                1100
-                                                            ? 16
-                                                            : 14,
-                                                    fontWeight: FontWeight.bold,
-                                                    color: Colors.black87,
-                                                  ),
-                                                ),
-                                                if (productModel
-                                                        .percantageDiscount !=
-                                                    0)
-                                                  Text(
-                                                    '$currencySymbol${Formatter().converter(productModel.unitOldPrice1.toDouble())}',
-                                                    style: const TextStyle(
-                                                      fontSize: 12,
-                                                      decoration: TextDecoration
-                                                          .lineThrough,
-                                                      color: Colors.red,
-                                                    ),
-                                                  ),
-                                              ],
+                                            if (productModel
+                                                    .totalNumberOfUserRating !=
+                                                0)
+                                              _buildRatingRow(
+                                                  productModel), // UI helper provided earlier
+                                            Text(
+                                              productModel.description,
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                              style: TextStyle(
+                                                  fontSize: 10,
+                                                  color: Colors.white
+                                                      .withOpacity(0.3)),
                                             ),
+                                            _buildPriceRow(
+                                                productModel), // UI helper provided earlier
                                           ],
                                         ),
                                       ),
                                     ),
                                   ],
                                 ),
+                                // 🔹 Themed Discount Badge
                                 if (productModel.percantageDiscount != 0)
-                                  Positioned(
-                                    top: 10,
-                                    right: 10,
-                                    child: Container(
-                                      padding: const EdgeInsets.symmetric(
-                                          horizontal: 8, vertical: 4),
-                                      decoration: BoxDecoration(
-                                        color: Colors.redAccent,
-                                        borderRadius: BorderRadius.circular(8),
-                                      ),
-                                      child: Text(
-                                        '-${productModel.percantageDiscount}% OFF',
-                                        style: const TextStyle(
-                                          fontSize: 12,
-                                          color: Colors.white,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
+                                  _buildDiscountBadge(
+                                      productModel.percantageDiscount),
                               ],
                             ),
                           ),
@@ -498,12 +549,12 @@ class _ProductsPageState extends State<ProductsPage> {
                 );
               } else {
                 return const Center(
-                  child: SpinKitCircle(
-                    color: Color.fromARGB(255, 47, 37, 37),
-                  ),
+                  child: SpinKitCircle(color: Color(0xFFC9A86A), size: 50),
                 );
               }
-            }),
+            },
+          ),
+        ),
       ),
     );
   }

@@ -497,62 +497,76 @@ class _BottomNavPageState extends State<BottomNavPage> {
       // -----------------------------------------------------------------------
       // MODERN MINIMAL BOTTOM NAV
       // -----------------------------------------------------------------------
+      // -----------------------------------------------------------------------
+      // ELITE BOUTIQUE FLOATING BOTTOM NAV
+      // -----------------------------------------------------------------------
+      // -----------------------------------------------------------------------
+      // ELITE BOUTIQUE FLOATING BOTTOM NAV (FIXED)
+      // -----------------------------------------------------------------------
       bottomNavigationBar: Container(
-        decoration: BoxDecoration(
-          color: Colors.transparent,
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 10,
-              offset: const Offset(0, -2),
+        color: const Color(0xFF1C1515),
+        child: SafeArea(
+          // 🔹 SafeArea removes the "extra space" at the very bottom
+          child: Container(
+            // 🔹 Removed fixed height to prevent pixel overflow
+            margin: const EdgeInsets.fromLTRB(16, 10, 16, 5),
+            padding: const EdgeInsets.symmetric(vertical: 4), // Slimmer padding
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.05), // Glassmorphism
+              borderRadius: BorderRadius.circular(30),
+              border: Border.all(color: Colors.white.withOpacity(0.1)),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.5),
+                  blurRadius: 25,
+                  offset: const Offset(0, 10),
+                ),
+              ],
             ),
-          ],
-        ),
-        child: ClipRRect(
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(18)),
-          child: BottomNavigationBar(
-            currentIndex: _page,
-            onTap: (index) {
-              if (!isLogged && (index == 1 || index == 2 || index == 3)) {
-                setState(() {
-                  _page = index;
-                });
-                Navigator.pushNamed(context, '/login');
-              } else {
-                setState(() {
-                  _page = index;
-                });
-              }
-            },
-            type: BottomNavigationBarType.fixed,
-            backgroundColor: Colors.white,
-            selectedItemColor: kPrimary,
-            unselectedItemColor: Colors.grey.shade500,
-            showSelectedLabels: false,
-            showUnselectedLabels: false,
-            elevation: 0,
-            items: const [
-              BottomNavigationBarItem(
-                icon: Icon(Icons.home_outlined),
-                activeIcon: Icon(Icons.home),
-                label: 'Home',
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(30),
+              child: BottomNavigationBar(
+                currentIndex: _page,
+                onTap: (index) {
+                  if (!isLogged && (index == 1 || index == 2 || index == 3)) {
+                    setState(() => _page = index);
+                    Navigator.pushNamed(context, '/login');
+                  } else {
+                    setState(() => _page = index);
+                  }
+                },
+                type: BottomNavigationBarType.fixed,
+                backgroundColor: Colors.transparent,
+                selectedItemColor: const Color(0xFFC9A86A), // Boutique Gold
+                unselectedItemColor: Colors.white24,
+                showSelectedLabels: false,
+                showUnselectedLabels: false,
+                elevation: 0,
+                // 🔹 Icons sizes adjusted for a cleaner professional look
+                items: const [
+                  BottomNavigationBarItem(
+                    icon: Icon(Icons.grid_view_rounded, size: 22),
+                    activeIcon: Icon(Icons.grid_view_rounded, size: 24),
+                    label: 'Home',
+                  ),
+                  BottomNavigationBarItem(
+                    icon: Icon(Icons.shopping_bag_outlined, size: 22),
+                    activeIcon: Icon(Icons.shopping_bag, size: 24),
+                    label: 'Cart',
+                  ),
+                  BottomNavigationBarItem(
+                    icon: Icon(Icons.favorite_outline_rounded, size: 22),
+                    activeIcon: Icon(Icons.favorite_rounded, size: 24),
+                    label: 'Favorites',
+                  ),
+                  BottomNavigationBarItem(
+                    icon: Icon(Icons.person_2_outlined, size: 22),
+                    activeIcon: Icon(Icons.person_2, size: 24),
+                    label: 'Profile',
+                  ),
+                ],
               ),
-              BottomNavigationBarItem(
-                icon: Icon(Icons.shopping_cart_outlined),
-                activeIcon: Icon(Icons.shopping_cart),
-                label: 'Cart',
-              ),
-              BottomNavigationBarItem(
-                icon: Icon(Icons.favorite_border),
-                activeIcon: Icon(Icons.favorite),
-                label: 'Favorites',
-              ),
-              BottomNavigationBarItem(
-                icon: Icon(Icons.person_outline),
-                activeIcon: Icon(Icons.person),
-                label: 'Profile',
-              ),
-            ],
+            ),
           ),
         ),
       ),

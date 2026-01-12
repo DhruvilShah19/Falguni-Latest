@@ -18,7 +18,7 @@ class ProductReviewsSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (!ratingStatus) return SizedBox.shrink();
+    if (!ratingStatus) return const SizedBox.shrink();
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 18.0, vertical: 6),
@@ -37,7 +37,7 @@ class ProductReviewsSection extends StatelessWidget {
             BoxShadow(
               color: Colors.black.withOpacity(0.35),
               blurRadius: 18,
-              offset: Offset(0, 8),
+              offset: const Offset(0, 8),
             ),
           ],
         ),

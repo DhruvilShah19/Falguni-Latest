@@ -4,7 +4,9 @@ import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:gap/gap.dart';
 import '../Providers/auth.dart';
 
 class ProfileHome extends StatefulWidget {
@@ -16,7 +18,9 @@ class ProfileHome extends StatefulWidget {
 }
 
 class _ProfileHomeState extends State<ProfileHome> {
-  static const Color kPrimary = Color(0xFF2F2525);
+  // Theme Palette
+  static const Color kGold = Color(0xFFC9A86A);
+  static const Color kBgTop = Color(0xFF1C1515);
 
   DocumentReference? userRef;
 
@@ -30,9 +34,6 @@ class _ProfileHomeState extends State<ProfileHome> {
   bool isLogged = false;
   bool referralStatus = false;
 
-  // ---------------------------------------------------------
-  // INIT
-  // ---------------------------------------------------------
   @override
   void initState() {
     super.initState();
@@ -42,6 +43,9 @@ class _ProfileHomeState extends State<ProfileHome> {
     _loadUserDetails();
   }
 
+  // ---------------------------------------------------------
+  // LOGIC (PRESERVED)
+  // ---------------------------------------------------------
   void _listenAuth() {
     FirebaseAuth.instance.authStateChanges().listen((user) {
       if (!mounted) return;
@@ -87,73 +91,13 @@ class _ProfileHomeState extends State<ProfileHome> {
     });
   }
 
-  // ---------------------------------------------------------
-  // UI HELPERS
-  // ---------------------------------------------------------
-
   String _initials() {
     if (fullname.isEmpty) {
       return email.isNotEmpty ? email[0].toUpperCase() : "U";
     }
-    final parts = fullname.split(" ");
+    final parts = fullname.trim().split(" ");
     if (parts.length == 1) return parts.first[0].toUpperCase();
-    return (parts.first[0] + parts[1][0]).toUpperCase();
-  }
-
-  Widget _buildAvatar() {
-    if (userPic.isNotEmpty) {
-      return CircleAvatar(
-        radius: 34,
-        backgroundImage: NetworkImage(userPic),
-      );
-    }
-    return CircleAvatar(
-      radius: 34,
-      backgroundColor: Colors.grey.shade300,
-      child: Text(
-        _initials(),
-        style: const TextStyle(
-          color: kPrimary,
-          fontSize: 22,
-          fontWeight: FontWeight.w600,
-        ),
-      ),
-    );
-  }
-
-  Widget _tile({
-    required IconData icon,
-    required String label,
-    required VoidCallback onTap,
-  }) {
-    return ListTile(
-      leading: Icon(icon, color: Colors.grey.shade700, size: 22),
-      title: Text(
-        label,
-        style: const TextStyle(
-          fontSize: 16,
-          fontWeight: FontWeight.w500,
-        ),
-      ).tr(),
-      trailing:
-          Icon(Icons.chevron_right, color: Colors.grey.shade400, size: 20),
-      visualDensity: VisualDensity.compact,
-      onTap: onTap,
-    );
-  }
-
-  Widget _sectionHeader(String text) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 18, 16, 6),
-      child: Text(
-        text.tr(),
-        style: TextStyle(
-          fontSize: 14,
-          fontWeight: FontWeight.w600,
-          color: Colors.grey.shade600,
-        ),
-      ),
-    );
+    return (parts.first[0] + parts.last[0]).toUpperCase();
   }
 
   // ---------------------------------------------------------
@@ -162,225 +106,253 @@ class _ProfileHomeState extends State<ProfileHome> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        automaticallyImplyLeading: widget.isbottomNav ? false : true,
-        backgroundColor: Colors.white,
-        elevation: 0,
-        centerTitle: true,
-        title: Text(
-          'Profile'.tr(),
-          style: const TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.w600,
-            color: kPrimary,
+      backgroundColor: Colors.black,
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [kBgTop, Color(0xFF0D0D0D)],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
           ),
         ),
-      ),
-      body: ListView(
-        padding: const EdgeInsets.only(bottom: 40),
-        children: [
-          // -----------------------------------------------------------
-          // HEADER CARD
-          // -----------------------------------------------------------
-          Container(
-            margin: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-            padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(18),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(.05),
-                  blurRadius: 10,
-                  offset: const Offset(0, 2),
-                )
-              ],
+        child: CustomScrollView(
+          physics: const BouncingScrollPhysics(),
+          slivers: [
+            // 🔹 Elite AppBar without Back Button
+            SliverAppBar(
+              automaticallyImplyLeading: false, // Back button removed
+              backgroundColor: Colors.transparent,
+              elevation: 0,
+              pinned: true,
+              centerTitle: true,
+              title: Text(
+                'Profile'.tr().toUpperCase(),
+                style: const TextStyle(
+                  color: kGold,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: 2,
+                ),
+              ),
             ),
-            child: Row(
+
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildMembershipCard(),
+                    const Gap(25),
+                    _sectionHeader("Account Settings"),
+                    _buildMenuCard([
+                      _menuItem(
+                          Icons.shopping_bag_outlined, "Orders", '/orders'),
+                      _menuItem(Icons.delivery_dining_outlined, "Logistics",
+                          '/courier'),
+                      _menuItem(Icons.person_outline_rounded, "Profile Details",
+                          '/profile'),
+                      _menuItem(Icons.map_outlined, "Delivery Address",
+                          '/delivery-address'),
+                      _menuItem(Icons.account_balance_wallet_outlined, "Wallet",
+                          '/wallet'),
+                      _menuItem(Icons.favorite_outline_rounded, "Favorites",
+                          '/favorites'),
+                    ]),
+                    const Gap(20),
+                    _sectionHeader("Promotions & Support"),
+                    _buildMenuCard([
+                      if (referralStatus)
+                        _menuItem(Icons.card_giftcard_rounded, "Share & Earn",
+                            '/referral-page'),
+                      _menuItem(Icons.confirmation_number_outlined,
+                          "Promo Codes", '/coupon'),
+                      _menuItem(Icons.help_outline_rounded, "F.A.Q.", '/faq'),
+                      _menuItem(Icons.notifications_none_rounded,
+                          "Notifications", '/notifications'),
+                    ]),
+                    const Gap(30),
+                    _buildLogoutButton(),
+                    const Gap(120), // Spacer for Floating Bottom Nav
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ---------------------------------------------------------
+  // UI COMPONENTS
+  // ---------------------------------------------------------
+
+  Widget _buildMembershipCard() {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.05),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: Colors.white.withOpacity(0.1)),
+      ),
+      child: Row(
+        children: [
+          _buildAvatar(),
+          const Gap(16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _buildAvatar(),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          fullname.isNotEmpty ? fullname : "Guest".tr(),
-                          style: const TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w600,
-                            color: kPrimary,
+                Text(
+                  fullname.isNotEmpty ? fullname : "Guest Member".tr(),
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                Text(
+                  email.isNotEmpty ? email : "Login to sync data".tr(),
+                  style: TextStyle(
+                    color: Colors.white.withOpacity(0.4),
+                    fontSize: 13,
+                  ),
+                ),
+                if (addressMain.isNotEmpty) ...[
+                  const Gap(8),
+                  Row(
+                    children: [
+                      const Icon(Icons.location_on, color: kGold, size: 14),
+                      const Gap(4),
+                      Expanded(
+                        child: Text(
+                          addressMain,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            color: Colors.white.withOpacity(0.6),
+                            fontSize: 12,
                           ),
                         ),
-                        const SizedBox(height: 4),
-                        if (email.isNotEmpty)
-                          Text(
-                            email,
-                            style: TextStyle(
-                                fontSize: 14, color: Colors.grey.shade600),
-                          ),
-                        if (addressMain.isNotEmpty) ...[
-                          const SizedBox(height: 4),
-                          Row(
-                            children: [
-                              Icon(Icons.location_on_outlined,
-                                  size: 14, color: Colors.grey.shade600),
-                              const SizedBox(width: 4),
-                              Expanded(
-                                child: Text(
-                                  addressMain,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: TextStyle(
-                                      fontSize: 13,
-                                      color: Colors.grey.shade600),
-                                ),
-                              ),
-                            ],
-                          )
-                        ]
-                      ]),
-                ),
+                      ),
+                    ],
+                  )
+                ]
               ],
             ),
           ),
-
-          // -----------------------------------------------------------
-          // ACCOUNT SECTION
-          // -----------------------------------------------------------
-          _sectionHeader("Account"),
-
-          _tile(
-            icon: Icons.shopping_bag_outlined,
-            label: "Orders",
-            onTap: () {
-              if (!isLogged) {
-                Navigator.pushNamed(context, '/login');
-              } else {
-                Navigator.pushNamed(context, '/orders');
-              }
-            },
-          ),
-          _tile(
-            icon: Icons.delivery_dining,
-            label: "Logistics/Courier",
-            onTap: () {
-              if (!isLogged) {
-                Navigator.pushNamed(context, '/login');
-              } else {
-                Navigator.pushNamed(context, '/courier');
-              }
-            },
-          ),
-          _tile(
-            icon: Icons.person_outline,
-            label: "Profile",
-            onTap: () {
-              if (!isLogged) {
-                Navigator.pushNamed(context, '/login');
-              } else {
-                Navigator.pushNamed(context, '/profile');
-              }
-            },
-          ),
-          _tile(
-            icon: Icons.room_outlined,
-            label: "Delivery Address",
-            onTap: () {
-              if (!isLogged) {
-                Navigator.pushNamed(context, '/login');
-              } else {
-                Navigator.pushNamed(context, '/delivery-address');
-              }
-            },
-          ),
-          _tile(
-            icon: Icons.wallet_outlined,
-            label: "Wallet",
-            onTap: () {
-              if (!isLogged) {
-                Navigator.pushNamed(context, '/login');
-              } else {
-                Navigator.pushNamed(context, '/wallet');
-              }
-            },
-          ),
-          _tile(
-            icon: Icons.favorite_border,
-            label: "Favorites",
-            onTap: () {
-              if (!isLogged) {
-                Navigator.pushNamed(context, '/login');
-              } else {
-                Navigator.pushNamed(context, '/favorites');
-              }
-            },
-          ),
-
-          const Divider(indent: 16, endIndent: 16),
-
-          // -----------------------------------------------------------
-          // OTHER SECTION
-          // -----------------------------------------------------------
-          if (referralStatus)
-            _tile(
-              icon: Icons.wallet_giftcard_outlined,
-              label: "Share and earn",
-              onTap: () {
-                if (!isLogged) {
-                  Navigator.pushNamed(context, '/login');
-                } else {
-                  Navigator.pushNamed(context, '/referral-page');
-                }
-              },
-            ),
-
-          _tile(
-            icon: Icons.card_giftcard_outlined,
-            label: "Promo Code",
-            onTap: () => Navigator.pushNamed(context, '/coupon'),
-          ),
-
-          _tile(
-            icon: Icons.help_center_outlined,
-            label: "F.A.Q.",
-            onTap: () => Navigator.pushNamed(context, '/faq'),
-          ),
-
-          _tile(
-            icon: Icons.notifications_outlined,
-            label: "Notifications",
-            onTap: () {
-              if (!isLogged) {
-                Navigator.pushNamed(context, '/login');
-              } else {
-                Navigator.pushNamed(context, '/notifications');
-              }
-            },
-          ),
-
-          const Divider(indent: 16, endIndent: 16),
-
-          // -----------------------------------------------------------
-          // AUTH SECTION
-          // -----------------------------------------------------------
-          if (isLogged)
-            _tile(
-              icon: Icons.logout,
-              label: "Log Out",
-              onTap: () {
-                AuthService().signOut(context);
-              },
-            )
-          else
-            _tile(
-              icon: Icons.login,
-              label: "Log In",
-              onTap: () {
-                Navigator.pushNamed(context, '/login');
-              },
-            ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildAvatar() {
+    return Container(
+      padding: const EdgeInsets.all(3),
+      decoration: const BoxDecoration(shape: BoxShape.circle, color: kGold),
+      child: CircleAvatar(
+        radius: 35,
+        backgroundColor: const Color(0xFF2F2525),
+        backgroundImage: userPic.isNotEmpty ? NetworkImage(userPic) : null,
+        child: userPic.isEmpty
+            ? Text(
+                _initials(),
+                style: const TextStyle(
+                  color: kGold,
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                ),
+              )
+            : null,
+      ),
+    );
+  }
+
+  Widget _buildMenuCard(List<Widget> children) {
+    return Container(
+      clipBehavior: Clip.antiAlias,
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.03),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: Colors.white.withOpacity(0.05)),
+      ),
+      child: Column(children: children),
+    );
+  }
+
+  Widget _menuItem(IconData icon, String label, String route) {
+    return ListTile(
+      leading: Icon(icon, color: kGold.withOpacity(0.8), size: 22),
+      title: Text(
+        label.tr(),
+        style: const TextStyle(
+          color: Colors.white,
+          fontSize: 14,
+          fontWeight: FontWeight.w500,
+        ),
+      ),
+      trailing: const Icon(
+        Icons.chevron_right_rounded,
+        color: Colors.white24,
+        size: 20,
+      ),
+      onTap: () {
+        HapticFeedback.lightImpact();
+        if (!isLogged && route != '/faq' && route != '/coupon') {
+          Navigator.pushNamed(context, '/login');
+        } else {
+          Navigator.pushNamed(context, route);
+        }
+      },
+    );
+  }
+
+  Widget _sectionHeader(String text) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 4, bottom: 12),
+      child: Text(
+        text.toUpperCase(),
+        style: const TextStyle(
+          color: kGold,
+          fontSize: 10,
+          fontWeight: FontWeight.w900,
+          letterSpacing: 1.5,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLogoutButton() {
+    return InkWell(
+      onTap: () {
+        HapticFeedback.mediumImpact();
+        isLogged
+            ? AuthService().signOut(context)
+            : Navigator.pushNamed(context, '/login');
+      },
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: isLogged
+                ? Colors.redAccent.withOpacity(0.3)
+                : kGold.withOpacity(0.3),
+          ),
+        ),
+        child: Center(
+          child: Text(
+            isLogged ? "Sign Out".toUpperCase() : "Sign In".toUpperCase(),
+            style: TextStyle(
+              color: isLogged ? Colors.redAccent : kGold,
+              fontSize: 12,
+              fontWeight: FontWeight.w900,
+              letterSpacing: 2,
+            ),
+          ),
+        ),
       ),
     );
   }

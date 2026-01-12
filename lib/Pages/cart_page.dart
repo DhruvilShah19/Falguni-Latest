@@ -59,7 +59,14 @@ class _CartPageState extends State<CartPage> {
 
   getSubTotal() {
     userRef!.collection('Cart').snapshots().listen((val) {
-      num tempTotal = val.docs.fold(0, (tot, doc) => tot + doc.data()['price']);
+      num tempTotal = val.docs.fold(
+        0,
+        (tot, doc) {
+          final quantity = doc.data()['quantity'] as num? ?? 1;
+          final selectedPrice = doc.data()['selectedPrice'] as num? ?? 0;
+          return tot + (quantity * selectedPrice);
+        },
+      );
 
       setState(() {
         subTotal = tempTotal -

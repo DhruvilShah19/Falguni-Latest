@@ -26,12 +26,28 @@ class CartService {
     required ProductsModel product,
     required String selectedUnit,
   }) async {
-    await _firestore
+    final cartRef = _firestore
         .collection("users")
         .doc(userID)
         .collection("Cart")
-        .doc("${product.vendorId}${product.name}$selectedUnit")
-        .set(product.toMap());
+        .doc("${product.vendorId}${product.name}$selectedUnit");
+
+    final existing = await cartRef.get();
+
+    num newQuantity = 1;
+
+    if (existing.exists) {
+      // Increase quantity instead of overwriting
+      final data = existing.data()!;
+      final oldQty = data["quantity"] as num? ?? 0;
+      newQuantity = oldQty + 1;
+    }
+
+    await cartRef.set({
+      ...product.toMap(),
+      "quantity": newQuantity,
+      "unit": selectedUnit,
+    }, SetOptions(merge: true));
 
     await _firestore.collection("users").doc(userID).update({
       "CurrentMarketID": marketID,

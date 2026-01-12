@@ -14,7 +14,7 @@ class TopToast {
     final overlay = Overlay.of(context);
     if (overlay == null) return;
 
-    final topPadding = MediaQuery.of(context).padding.top + 10;
+    final topPadding = MediaQuery.of(context).padding.top + 80;
 
     _entry = OverlayEntry(
       builder: (context) => Positioned(

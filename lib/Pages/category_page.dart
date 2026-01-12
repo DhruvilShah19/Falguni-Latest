@@ -2,10 +2,13 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import 'package:falguni_app/Pages/products_by_categories.dart';
+import 'package:cached_network_image/cached_network_image.dart'; // Added this
+import 'dart:ui';
 import '../Model/categories.dart';
 
 class CategoriesPage extends StatefulWidget {
@@ -16,6 +19,22 @@ class CategoriesPage extends StatefulWidget {
 }
 
 class _CategoriesPageState extends State<CategoriesPage> {
+  static const Color kGold = Color(0xFFC9A86A);
+  static const Color kBgTop = Color(0xFF1C1515);
+  static const Color kBgMid = Color(0xFF2F2525);
+
+  String _searchQuery = "";
+  final TextEditingController _searchController = TextEditingController();
+
+  // Optimization: Store the future to prevent re-fetching on rebuilds
+  late Future<List<CategoriesModel>> _categoriesFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _categoriesFuture = getCategories();
+  }
+
   Future<List<CategoriesModel>> getCategories() {
     return FirebaseFirestore.instance.collection('Categories').get().then(
         (event) => event.docs
@@ -23,266 +42,212 @@ class _CategoriesPageState extends State<CategoriesPage> {
             .toList());
   }
 
-  final CarouselController controller = CarouselController();
-
-//   @override
-//   Widget build(BuildContext context) {
-//     return Scaffold(
-//       appBar: AppBar(
-//         iconTheme: Theme.of(context).iconTheme,
-//         titleTextStyle: TextStyle(color: Theme.of(context).indicatorColor),
-//         backgroundColor: Theme.of(context).colorScheme.background,
-//         centerTitle: true,
-//         elevation: 2,
-//         title: const Text('CATEGORIES').tr(),
-//       ),
-//       body: FutureBuilder<List<CategoriesModel>>(
-//           future: getCategories(),
-//           builder: (context, snapshot) {
-//             if (snapshot.data?.isEmpty ?? true) {
-//               return const Center(
-//                 child: SpinKitCircle(
-//                   color: Color.fromARGB(255, 47, 37, 37),
-//                 ),
-//               );
-//             } else if (snapshot.hasData) {
-//               return AlignedGridView.count(
-//                 physics: const BouncingScrollPhysics(),
-//                 crossAxisCount:
-//                     MediaQuery.of(context).size.width >= 1100 ? 4 : 3,
-//                 mainAxisSpacing: 5,
-//                 crossAxisSpacing: 5,
-//                 itemCount: snapshot.data!.length,
-//                 itemBuilder: (
-//                   BuildContext buildContext,
-//                   int index,
-//                 ) {
-//                   CategoriesModel marketModel = snapshot.data![index];
-//                   return AnimationConfiguration.staggeredGrid(
-//                     position: index,
-//                     duration: const Duration(milliseconds: 500),
-//                     columnCount:
-//                         MediaQuery.of(context).size.width >= 1100 ? 4 : 3,
-//                     child: ScaleAnimation(
-//                       child: FadeInAnimation(
-//                         child: SizedBox(
-//                           width: MediaQuery.of(context).size.width >= 1100
-//                               ? MediaQuery.of(context).size.width / 9
-//                               : MediaQuery.of(context).size.width / 1.2,
-//                           height: MediaQuery.of(context).size.width >= 1100
-//                               ? MediaQuery.of(context).size.width / 9
-//                               : MediaQuery.of(context).size.width / 4,
-//                           child: InkWell(
-//                             onTap: () async {
-//                               Navigator.of(context)
-//                                   .push(MaterialPageRoute(builder: ((context) {
-//                                 return ProductsByCategories(
-//                                   collection: marketModel.category);
-//                               })));
-//                             },
-//                             child: Card(
-//                                 elevation: 2, // Increase elevation for a more pronounced shadow/3D effect
-//                                 color: Colors.white,
-//                                 shape: const RoundedRectangleBorder(
-//                                   borderRadius: BorderRadius.all(
-//                                     Radius.circular(5),
-//                                   ),
-//                                   side: BorderSide(
-//                                     color: Colors.white12, // Color of the border
-//                                     width: 0.5, // Thickness of the border
-//                                   ),
-//                                 ),
-//                                 child: Column(
-//                                   mainAxisAlignment: MainAxisAlignment.center,
-//                                   children: [
-//                                     Center(
-//                                       child: Image.network(
-//                                         marketModel.image,
-//                                         width: 50,
-//                                         height: 50,
-//                                       ),
-//                                     ),
-//                                     const SizedBox(
-//                                       height: 5,
-//                                     ),
-//                                     SizedBox(
-//                                       width: double.infinity,
-//                                       child: Center(
-//                                         child: Text(
-//                                           marketModel.category,
-//                                           overflow: TextOverflow.ellipsis,
-//                                           style: TextStyle(
-//                                               color: Colors.black,
-//                                               fontSize: MediaQuery.of(context)
-//                                                           .size
-//                                                           .width >=
-//                                                       1100
-//                                                   ? 15
-//                                                   : 12),
-//                                         ),
-//                                       ),
-//                                     )
-//                                   ],
-//                                 )),
-//                           ),
-//                         ),
-//                       ),
-//                     ),
-//                   );
-//                 },
-//               );
-//             } else {
-//               return const Center(
-//                 child: SpinKitCircle(
-//                   color: Color.fromARGB(255, 47, 37, 37),
-//                 ),
-//               );
-//             }
-//           }),
-//     );
-//   }
-// }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      extendBodyBehindAppBar: true,
+      backgroundColor: Colors.black,
       appBar: AppBar(
-        iconTheme: Theme.of(context).iconTheme,
-        titleTextStyle: TextStyle(color: Theme.of(context).indicatorColor),
-        backgroundColor: Theme.of(context).colorScheme.background,
+        elevation: 0,
         centerTitle: true,
-        elevation: 4,
-        title: const Text(
-          'CATEGORIES',
-          style: TextStyle(
-            fontSize: 24,
-            fontWeight: FontWeight.bold,
-            letterSpacing: 1.0,
+        backgroundColor: Colors.black.withOpacity(0.2),
+        flexibleSpace: ClipRect(
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+            child: Container(color: Colors.transparent),
           ),
-        ).tr(),
+        ),
+        iconTheme: const IconThemeData(color: Colors.white),
+        title: Text(
+          'CATEGORIES'.tr(),
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 20,
+            fontWeight: FontWeight.w800,
+            letterSpacing: 1.5,
+          ),
+        ),
       ),
-      body: FutureBuilder<List<CategoriesModel>>(
-        future: getCategories(),
-        builder: (context, snapshot) {
-          if (snapshot.data?.isEmpty ?? true) {
-            return const Center(
-              child: SpinKitCircle(
-                color: Color.fromARGB(255, 47, 37, 37),
-                size: 70,
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [kBgTop, kBgMid, kBgTop],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+          ),
+        ),
+        child: SafeArea(
+          child: Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+                child: Container(
+                  height: 52,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.06),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: Colors.white.withOpacity(0.12)),
+                  ),
+                  child: TextField(
+                    controller: _searchController,
+                    onChanged: (value) =>
+                        setState(() => _searchQuery = value.toLowerCase()),
+                    style: const TextStyle(color: Colors.white),
+                    decoration: InputDecoration(
+                      hintText: "Search categories...".tr(),
+                      hintStyle: const TextStyle(color: Colors.white30),
+                      prefixIcon: const Icon(Icons.search_rounded,
+                          color: kGold, size: 22),
+                      border: InputBorder.none,
+                      contentPadding: const EdgeInsets.symmetric(vertical: 15),
+                    ),
+                  ),
+                ),
               ),
-            );
-          } else if (snapshot.hasData) {
-            return Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-              child: AlignedGridView.count(
-                physics: const BouncingScrollPhysics(),
-                crossAxisCount:
-                    MediaQuery.of(context).size.width >= 1100 ? 4 : 2,
-                mainAxisSpacing:
-                    16, // Increased spacing for more breathing room
-                crossAxisSpacing: 16,
-                itemCount: snapshot.data!.length,
-                itemBuilder: (BuildContext buildContext, int index) {
-                  CategoriesModel marketModel = snapshot.data![index];
-                  return AnimationConfiguration.staggeredGrid(
-                    position: index,
-                    duration: const Duration(milliseconds: 500),
-                    columnCount:
-                        MediaQuery.of(context).size.width >= 1100 ? 4 : 2,
-                    child: ScaleAnimation(
-                      child: FadeInAnimation(
-                        child: InkWell(
-                          onTap: () async {
-                            Navigator.of(context).push(
-                              MaterialPageRoute(
-                                builder: (context) {
-                                  return ProductsByCategories(
-                                    collection: marketModel.category,
-                                  );
-                                },
-                              ),
-                            );
-                          },
-                          child: Card(
-                            elevation:
-                                8, // Higher elevation for floating effect
-                            shadowColor: Colors.grey.shade300,
-                            color: Colors.white,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(
-                                  16), // Smooth rounded corners
-                            ),
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 16, vertical: 20),
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  ClipRRect(
-                                    borderRadius: BorderRadius.circular(10),
-                                    child: Image.network(
-                                      marketModel.image,
-                                      width: 70,
-                                      height: 70,
-                                      fit: BoxFit.cover,
-                                      errorBuilder:
-                                          (context, error, stackTrace) => Icon(
-                                        Icons.broken_image,
-                                        size: 50,
-                                        color: Colors.grey.shade400,
-                                      ),
-                                    ),
-                                  ),
-                                  const SizedBox(height: 12),
-                                  Text(
-                                    marketModel.category,
-                                    textAlign: TextAlign.center,
-                                    overflow: TextOverflow.ellipsis,
-                                    maxLines: 2,
-                                    style: const TextStyle(
-                                      color: Colors.black87,
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 8),
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 10, vertical: 4),
-                                    decoration: BoxDecoration(
-                                      color:
-                                          const Color.fromARGB(15, 47, 37, 37),
-                                      borderRadius: BorderRadius.circular(12),
-                                    ),
-                                    child: const Text(
-                                      'Explore Products',
-                                      style: TextStyle(
-                                        color: Color.fromARGB(255, 47, 37, 37),
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
+              Expanded(
+                child: FutureBuilder<List<CategoriesModel>>(
+                  future: _categoriesFuture,
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const Center(
+                          child: SpinKitFadingCube(color: kGold, size: 35));
+                    }
+
+                    final items = snapshot.data
+                            ?.where((cat) => cat.category
+                                .toLowerCase()
+                                .contains(_searchQuery))
+                            .toList() ??
+                        [];
+
+                    return AnimationLimiter(
+                      child: AlignedGridView.count(
+                        padding: const EdgeInsets.fromLTRB(14, 10, 14, 40),
+                        physics: const BouncingScrollPhysics(),
+                        crossAxisCount:
+                            MediaQuery.of(context).size.width >= 1100 ? 6 : 3,
+                        mainAxisSpacing: 12,
+                        crossAxisSpacing: 12,
+                        itemCount: items.length,
+                        itemBuilder: (context, index) {
+                          // Performance: Using a dedicated Stateless widget for each tile
+                          return CategoryTile(model: items[index]);
+                        },
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// 🔹 Optimized Tile Component with KeepAlive and Local Caching
+class CategoryTile extends StatefulWidget {
+  final CategoriesModel model;
+  const CategoryTile({super.key, required this.model});
+
+  @override
+  State<CategoryTile> createState() => _CategoryTileState();
+}
+
+class _CategoryTileState extends State<CategoryTile>
+    with AutomaticKeepAliveClientMixin {
+  // This prevents the tile from being disposed when scrolled off-screen
+  @override
+  bool get wantKeepAlive => true;
+
+  @override
+  Widget build(BuildContext context) {
+    super.build(context); // Required for AutomaticKeepAlive
+
+    return AnimationConfiguration.staggeredGrid(
+      position: 0,
+      duration: const Duration(milliseconds: 450),
+      columnCount: 3,
+      child: ScaleAnimation(
+        scale: 0.9,
+        child: FadeInAnimation(
+          child: InkWell(
+            onTap: () {
+              HapticFeedback.lightImpact();
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) =>
+                      ProductsByCategories(collection: widget.model.category),
+                ),
+              );
+            },
+            child: Container(
+              padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.04),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: Colors.white.withOpacity(0.08)),
+              ),
+              child: Column(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(2),
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                            color: const Color(0xFFC9A86A).withOpacity(0.15),
+                            blurRadius: 12,
+                            spreadRadius: 2)
+                      ],
+                    ),
+                    child: Container(
+                      padding: const EdgeInsets.all(2),
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                            color: const Color(0xFFC9A86A).withOpacity(0.4),
+                            width: 1.5),
+                      ),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(50),
+                        child: CachedNetworkImage(
+                          imageUrl: widget.model.image,
+                          width: 52,
+                          height: 52,
+                          fit: BoxFit.cover,
+                          // Memory Optimization: Decode at display size
+                          memCacheWidth: 150,
+                          memCacheHeight: 150,
+                          placeholder: (context, url) => Container(
+                            color: Colors.white10,
+                            child: const SpinKitPulse(
+                                color: Color(0xFFC9A86A), size: 20),
                           ),
+                          errorWidget: (context, url, error) => const Icon(
+                              Icons.error_outline,
+                              color: Colors.white24,
+                              size: 20),
                         ),
                       ),
                     ),
-                  );
-                },
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    widget.model.category.toUpperCase(),
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 10,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: 0.8),
+                  ),
+                ],
               ),
-            );
-          } else {
-            return const Center(
-              child: SpinKitCircle(
-                color: Color.fromARGB(255, 47, 37, 37),
-                size: 70,
-              ),
-            );
-          }
-        },
+            ),
+          ),
+        ),
       ),
     );
   }
