@@ -305,7 +305,7 @@ class _AddCourierState extends State<AddCourier> {
         amount: '',
         paymentSystem: '',
         message: 'Hello, You have a logistics order please preview.',
-        timeCreated: DateFormat.yMMMMEEEEd().format(DateTime.now()).toString(),
+        timeCreated: DateTime.now(),
       ),
     );
   }

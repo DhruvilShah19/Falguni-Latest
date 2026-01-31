@@ -1,4 +1,4 @@
-// ignore_for_file: avoid_print, use_build_context_synchronously, duplicate_ignore, deprecated_member_use
+// ignore_for_file: avoid_print, use_build_context_synchronously, duplicate_ignore, deprecated_member_use, prefer_const_constructors
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:falguni_app/Model/order_model.dart';
@@ -96,6 +96,8 @@ class _CashFreePageDirectState extends State<CashFreePageDirect> {
   String id = '';
   bool isLoading = true;
   dynamic orderID = 0;
+
+  static const Color kGold = Color(0xFFC9A86A);
 
   getUserName() {
     final FirebaseAuth auth = FirebaseAuth.instance;
@@ -247,16 +249,6 @@ class _CashFreePageDirectState extends State<CashFreePageDirect> {
     deleteVendorsID();
     updateVendorOrderID();
 
-    // if (walletBool == true) {
-    //   // updateWallet();
-    //   updateHistory(HistoryModel(
-    //       timeCreated:
-    //           DateFormat.yMMMMEEEEd().format(DateTime.now()).toString(),
-    //       message: 'Placed an order'.tr(),
-    //       amount:
-    //           '-$currencySymbol${subTotal + (deliveryBool == false ? 0 : deliveryFee)}',
-    //       paymentSystem: ''));
-    // }
     DateTime now = DateTime.now();
     int currentMonth = now.month;
     int currentYear = now.year;
@@ -298,8 +290,7 @@ class _CashFreePageDirectState extends State<CashFreePageDirect> {
         amount:
             '$currencySymbol ${widget.subTotal + (widget.deliveryBool == false ? 0 : widget.deliveryFee)}',
         paymentSystem: '',
-        timeCreated:
-            DateFormat.yMMMMEEEEd().format(DateTime.now()).toString()));
+        timeCreated: DateTime.now()));
   }
 
   getVendorID() {
@@ -379,43 +370,69 @@ class _CashFreePageDirectState extends State<CashFreePageDirect> {
 
   @override
   Widget build(BuildContext context) {
-    // Convert the JSON string to a Map
-    // Map<String, dynamic> responseData = jsonDecode(widget.response);
-    // cashFreeOrderId = responseData['order_id'];
-    // paymentSessionId = responseData["payment_session_id"];
-    // print('Payment Session is ${responseData['payment_session_id']}');
     return Scaffold(
+      backgroundColor: const Color(0xFF1D1A1A),
       appBar: AppBar(
-        title: const Text('CashFree Payment Gateway'),
+        iconTheme: const IconThemeData(color: Colors.white),
+        backgroundColor: const Color(0xFF2F2525),
+        title: const Text(
+          'Final Step',
+          style: TextStyle(color: Colors.white),
+        ),
+        elevation: 0,
       ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          // crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            // Container(
-            //   height: 500,
-            //   width: 500,
-            //   child: WebViewWidget(controller: controller),
-            // )
-            // TextButton(onPressed: pay, child: const Text("Pay")),
-            ElevatedButton(
-                onPressed: webCheckout, child: const Text("Contnue")),
-            //  cfCardWidget!,
-            // TextButton(onPressed: cardPay, child: const Text("Card Pay")),
-            // TextButton(
-            //     onPressed: upiCollectPay, child: const Text("UPI Collect Pay")),
-            // TextButton(
-            //     onPressed: upiIntentPay, child: const Text("UPI Intent Pay")),
-            // TextButton(
-            //     onPressed: netbankingPay, child: const Text("Netbanking Pay")),
-          ],
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Icon(Icons.security, color: kGold, size: 64),
+              const SizedBox(height: 24),
+              const Text(
+                'Complete Your Payment',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                'You will be redirected to our secure payment partner, CashFree, to complete your transaction.',
+                textAlign: TextAlign.center,
+                style: TextStyle(color: Colors.white70, fontSize: 16),
+              ),
+              const SizedBox(height: 40),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: webCheckout,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: kGold,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                  ),
+                  child: const Text(
+                    'Continue to Secure Payment',
+                    style: TextStyle(
+                      color: Colors.black,
+                      fontSize: 17,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
-
-  // "var cardNumber = document.createElement('div');\ncardNumber.id = \"cardNumber\";\nvar cardCvv = document.createElement('div');\ncardCvv.id = \"cardCvv\";\nvar cardExpiry = document.createElement('div');\ncardExpiry.id = \"cardExpiry\";\nvar cardHolder = document.createElement('div');\ncardHolder.id = \"cardHolder\";\nvar payButton = document.createElement('button');\npayButton.id = \"payButton\";\n\n\nconst cashfree = await load({ \n      mode: \"sandbox\", //or production\n    });\n\n    const cardComponent = cashfree.create(\"cardNumber\", {});\n    cardComponent.mount(\"#cardNumber\");\n\n    const cardCvv = cashfree.create(\"cardCvv\", {});\n    cardCvv.mount(\"#cardCvv\");\n\n    const cardExpiry = cashfree.create(\"cardExpiry\", {});\n    cardExpiry.mount(\"#cardExpiry\");\n\n    const cardHolder = cashfree.create(\"cardHolder\", {});\n    cardHolder.mount(\"#cardHolder\");\n\n    const showError = function(e){\n      alert(e.message)\n    }\n\n    document.querySelector(\"#payBtn\").addEventListener(\"click\", async () => {\n      cashfree.pay({\n        paymentMethod: cardComponent,\n        paymentSessionId: \"yourPaymentSession\",\n        returnUrl: \"https://merchantsite.com/return?order_id={order_id}\",\n      }).then(function (data) {\n        if (data != null && data.error) {\n          return showError(data.error)\n        }\n      });\n    })"
 
   void verifyPayment(String cashFreeOrderId) {
     print("Verify Payment");
@@ -431,21 +448,13 @@ class _CashFreePageDirectState extends State<CashFreePageDirect> {
     print("Card Listener triggered");
     print(cardListener.getNumberOfCharacters());
     print(cardListener.getType());
-    // print(cardListener.getMetaData());
   }
 
-  // String cashFreeOrderId = "";
-  // String paymentSessionId = "";
   void receivedEvent(String eventName, Map<dynamic, dynamic> metaData) {
     print(eventName);
     print(metaData);
   }
 
-  // String cashFreeOrderId = "order_18482TC1GWfnEYW3gheFhy4mArfynXh";
-  // String paymentSessionId = "session_gMej8P4gvNUKLbd3fGWVw7Njg5fj3KK4We0HjCg6Tkzy5yZ8mkghdv7vKels1CJ8fBz9_aVpSoU8n5rqufVQrexzhLW0g0dzgdiTJwmrkZYn";
-
-  // String cashFreeOrderId = "order_18482OupTxSofcClBAlgqyYxUVceHo8";
-  // String paymentSessionId = "session_oeYlKCusKyW5pND4Swzn1rE2-gwnoM8MOC2nck9RjIiUQwXcPLWB3U1xHaaItb-uA9H1k6Fwziq9O63DWcfYGy_3B7rl1nDFo3MMeVqiYrBr";
   CFEnvironment environment = CFEnvironment.PRODUCTION;
   String selectedId = "";
 
@@ -635,6 +644,9 @@ class _CashFreeAmountWidgetDirectState
   bool isLoading = false;
   String fullname = '';
   String email = '';
+
+  static const Color kGold = Color(0xFFC9A86A);
+
   getUserDetail() {
     final FirebaseAuth auth = FirebaseAuth.instance;
     final FirebaseFirestore firestore = FirebaseFirestore.instance;
@@ -742,77 +754,189 @@ class _CashFreeAmountWidgetDirectState
     super.initState();
   }
 
+  Widget _buildPaymentMethodIcon(IconData icon, String label) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
+      decoration: BoxDecoration(
+        color: Color(0xFF2F2525),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: kGold.withOpacity(0.5), width: 1.2),
+        boxShadow: [
+          BoxShadow(
+            color: kGold.withOpacity(0.18),
+            blurRadius: 5,
+            offset: const Offset(0, 4),
+          )
+        ],
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 16, color: kGold.withOpacity(0.85)),
+          const SizedBox(width: 8),
+          Text(
+            label,
+            style: TextStyle(
+                color: kGold.withOpacity(0.9),
+                fontWeight: FontWeight.w600,
+                fontSize: 12),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFF1D1A1A),
       appBar: AppBar(
-        iconTheme: Theme.of(context).iconTheme,
-        backgroundColor: Theme.of(context).cardColor,
-        title: Text(
-          'Order amount',
-          style: TextStyle(color: Theme.of(context).iconTheme.color),
+        iconTheme: const IconThemeData(color: Colors.white),
+        backgroundColor: const Color(0xFF2F2525),
+        title: const Text(
+          'Confirm Order',
+          style: TextStyle(color: Colors.white),
         ),
         elevation: 0,
       ),
       body: SingleChildScrollView(
+        padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const SizedBox(height: 20),
-            const Padding(
-              padding: EdgeInsets.all(8.0),
-              child: Row(
-                children: [
-                  Text('Order Amount'),
-                ],
+            const Text(
+              "Order Amount",
+              style: TextStyle(color: Colors.white70, fontSize: 14),
+            ),
+            const SizedBox(height: 10),
+            TextFormField(
+              initialValue: widget.subTotal.toString(),
+              readOnly: true,
+              style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold),
+              decoration: InputDecoration(
+                hintStyle: const TextStyle(color: Colors.white38),
+                filled: true,
+                fillColor: Colors.white.withOpacity(0.07),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(color: Colors.white24),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(color: Colors.white24),
+                ),
               ),
             ),
-            // const SizedBox(height: 10),
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: TextFormField(
-                initialValue: widget.subTotal.toString(),
-                readOnly: true,
-                onChanged: (v) {
-                  setState(() {
-                    amount = int.parse(v);
-                  });
-                },
-                decoration: const InputDecoration(
-                    hintText: 'Enter Amount', border: OutlineInputBorder()),
+            const SizedBox(height: 30),
+            const Text(
+              "Phone Number",
+              style: TextStyle(color: Colors.white70, fontSize: 14),
+            ),
+            const SizedBox(height: 8),
+            TextFormField(
+              style: const TextStyle(color: Colors.white),
+              maxLength: 10,
+              keyboardType: TextInputType.phone,
+              onChanged: (v) => setState(() => phone = v),
+              decoration: InputDecoration(
+                counterText: "",
+                hintText: "Enter your 10-digit phone number",
+                hintStyle: const TextStyle(color: Colors.white38),
+                filled: true,
+                fillColor: Colors.white.withOpacity(0.07),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(color: Colors.white24),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(color: Colors.white24),
+                ),
               ),
             ),
-            const Padding(
-              padding: EdgeInsets.all(8.0),
-              child: Row(
-                children: [
-                  Text('Phone'),
-                ],
-              ),
-            ),
-            // const SizedBox(height: 10),
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: TextFormField(
-                maxLength: 10,
-                onChanged: (v) {
-                  setState(() {
-                    phone = v;
-                  });
-                },
-                decoration: const InputDecoration(
-                    counterText: '',
-                    hintText: 'XXX XXX XXXX',
-                    border: OutlineInputBorder()),
-              ),
-            ),
-            const SizedBox(height: 20),
-            ElevatedButton(
-                onPressed: phone.length < 10 || isLoading == true
+            const SizedBox(height: 30),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: (phone.length < 10 || isLoading)
                     ? null
-                    : () {
-                        makeHttpPostRequest();
-                      },
-                child: const Text('Pay'))
+                    : () => makeHttpPostRequest(),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: kGold,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  disabledForegroundColor: Colors.black.withOpacity(0.5),
+                  disabledBackgroundColor: kGold.withOpacity(0.4),
+                ),
+                child: isLoading
+                    ? const SizedBox(
+                        height: 24,
+                        width: 24,
+                        child: CircularProgressIndicator(
+                          color: Colors.black,
+                          strokeWidth: 3,
+                        ),
+                      )
+                    : const Text(
+                        "Proceed to Pay",
+                        style: TextStyle(
+                          color: Colors.black,
+                          fontSize: 17,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+              ),
+            ),
+            const SizedBox(height: 25),
+            Column(
+              children: [
+                const SizedBox(height: 28),
+                Divider(
+                  color: kGold.withOpacity(0.35),
+                  thickness: 1.2,
+                  indent: 40,
+                  endIndent: 40,
+                ),
+                const SizedBox(height: 14),
+                Text(
+                  "Payments secured by CashFree",
+                  style: TextStyle(
+                    color: kGold.withOpacity(0.85),
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Wrap(
+                  alignment: WrapAlignment.center,
+                  spacing: 14,
+                  runSpacing: 10,
+                  children: [
+                    _buildPaymentMethodIcon(Icons.qr_code_2_rounded, "UPI"),
+                    _buildPaymentMethodIcon(
+                        Icons.credit_card_rounded, "Credit / Debit Cards"),
+                    _buildPaymentMethodIcon(
+                        Icons.account_balance_rounded, "Netbanking"),
+                    _buildPaymentMethodIcon(
+                        Icons.account_balance_wallet_rounded, "Wallets"),
+                  ],
+                ),
+                const SizedBox(height: 24),
+                const Text(
+                  "Fast • Secure • 256-bit Encrypted",
+                  style: TextStyle(
+                    color: Colors.white60,
+                    fontSize: 12,
+                  ),
+                ),
+                const SizedBox(height: 10),
+              ],
+            )
           ],
         ),
       ),

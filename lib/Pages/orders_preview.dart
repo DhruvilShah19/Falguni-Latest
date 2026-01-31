@@ -504,7 +504,7 @@ class _OrdersPreviewState extends State<OrdersPreview> {
       HistoryModel(
         message:
             'Congratulations, Your delivery has been confirmed. Order ID #${widget.orderModel.orderID}',
-        timeCreated: DateFormat.yMMMMEEEEd().format(DateTime.now()).toString(),
+        timeCreated: DateTime.now(),
         amount: '-${widget.currencySymbol}${widget.orderModel.deliveryFee}',
         paymentSystem: '',
       ),

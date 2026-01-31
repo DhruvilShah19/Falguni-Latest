@@ -4,7 +4,6 @@ import 'dart:convert';
 import 'dart:math';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:crypto/crypto.dart';
-import 'package:easy_localization/easy_localization.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
@@ -70,7 +69,6 @@ class _PluralOnlineState extends State<PluralOnline> {
   getWallet() {
     final FirebaseAuth auth = FirebaseAuth.instance;
 
-
     User? user = auth.currentUser;
     FirebaseFirestore.instance
         .collection('users')
@@ -86,7 +84,6 @@ class _PluralOnlineState extends State<PluralOnline> {
 
   updateHistory(HistoryModel historyModel) {
     final FirebaseAuth auth = FirebaseAuth.instance;
-
 
     User? user = auth.currentUser;
     FirebaseFirestore.instance
@@ -104,8 +101,7 @@ class _PluralOnlineState extends State<PluralOnline> {
         .doc(user!.uid)
         .update({'wallet': wallet + amount}).then((value) {
       updateHistory(HistoryModel(
-          timeCreated:
-              DateFormat.yMMMMEEEEd().format(DateTime.now()).toString(),
+          timeCreated: DateTime.now(),
           message: 'Wallet Upload.',
           amount: '+$currencySymbol$amount',
           paymentSystem: 'Plural'));
@@ -161,8 +157,7 @@ class _PluralOnlineState extends State<PluralOnline> {
       return hash.toString();
     }
 
-    String txnId =
-        generateHash("98765432${Random().nextInt(9876543)}");
+    String txnId = generateHash("98765432${Random().nextInt(9876543)}");
 
     const String merchantId = "325629";
     const String merchantAccessCode = "649ac8de-8c47-4ea5-b470-bdc4e24732be";

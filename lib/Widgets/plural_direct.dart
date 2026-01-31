@@ -270,8 +270,7 @@ class _PluralOnlineDirectState extends State<PluralOnlineDirect> {
         amount:
             '$currencySymbol ${widget.subTotal + (widget.deliveryBool == false ? 0 : widget.deliveryFee)}',
         paymentSystem: '',
-        timeCreated:
-            DateFormat.yMMMMEEEEd().format(DateTime.now()).toString()));
+        timeCreated: DateTime.now()));
   }
 
   @override

@@ -1,66 +1,3 @@
-// // import 'dart:typed_data';
-
-// import 'package:flutter/material.dart';
-// import 'package:google_maps_flutter/google_maps_flutter.dart';
-
-// class SnapshotBody extends StatefulWidget {
-//   final num lat;
-//   final num long;
-//   const SnapshotBody({super.key, required this.lat, required this.long});
-
-//   @override
-//   SnapshotBodyState createState() => SnapshotBodyState();
-// }
-
-// class SnapshotBodyState extends State<SnapshotBody> {
-//   GoogleMapController? mapController;
-//   // Uint8List? _imageBytes;
-
-//   @override
-//   Widget build(BuildContext context) {
-//     return Padding(
-//       padding: const EdgeInsets.all(16),
-//       child: Column(
-//         crossAxisAlignment: CrossAxisAlignment.stretch,
-//         children: <Widget>[
-//           SizedBox(
-//             height: 180,
-//             child: GoogleMap(
-//               onMapCreated: onMapCreated,
-//               initialCameraPosition: CameraPosition(
-//                   target: LatLng(widget.lat.toDouble(), widget.long.toDouble()),
-//                   zoom: 11.0),
-//             ),
-//           ),
-//           // TextButton(
-//           //   child: const Text('Take a snapshot'),
-//           //   onPressed: () async {
-//           //     final Uint8List? imageBytes =
-//           //         await _mapController?.takeSnapshot();
-//           //     setState(() {
-//           //       _imageBytes = imageBytes;
-//           //     });
-//           //   },
-//           // ),
-//           // Container(
-//           //   decoration: BoxDecoration(color: Colors.blueGrey[50]),
-//           //   height: 180,
-//           //   width: double.infinity,
-//           //   child: _imageBytes != null ? Image.memory(_imageBytes!) : null,
-//           // ),
-//         ],
-//       ),
-//     );
-//   }
-
-//   // ignore: use_setters_to_change_properties
-//   void onMapCreated(GoogleMapController controller) {
-//     mapController = controller;
-//   }
-// }
-
-import 'package:flutter/foundation.dart'; // 🔹 Required for Factory
-import 'package:flutter/gestures.dart'; // 🔹 Required for EagerGestureRecognizer
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
@@ -74,39 +11,67 @@ class SnapshotBody extends StatefulWidget {
 }
 
 class SnapshotBodyState extends State<SnapshotBody> {
+  // Design constants - Premium theme matching app
+  static const Color kGold = Color(0xFFC9A86A);
+  static const Color kBgDark = Color(0xFF1C1515);
+
   GoogleMapController? mapController;
+  Map<MarkerId, Marker> markers = {};
+
+  @override
+  void initState() {
+    super.initState();
+    // Add marker for delivery location
+    _addMarker(
+      LatLng(widget.lat.toDouble(), widget.long.toDouble()),
+      "delivery",
+      BitmapDescriptor.defaultMarkerWithHue(45), // Gold-ish Hue matching theme
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: <Widget>[
           Container(
-            height: 180,
-            // 🔹 Boutique Styling: Rounded and Bordered
+            height: 200,
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: Colors.white.withOpacity(0.1)),
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(
+                color: kGold.withOpacity(0.2),
+                width: 1.2,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.3),
+                  blurRadius: 16,
+                  offset: const Offset(0, 6),
+                ),
+              ],
             ),
             child: ClipRRect(
-              borderRadius: BorderRadius.circular(20),
+              borderRadius: BorderRadius.circular(18),
               child: GoogleMap(
                 onMapCreated: onMapCreated,
-                // 🔹 FIX: This allows the user to scroll the map even inside a scrollable list
-                gestureRecognizers: <Factory<OneSequenceGestureRecognizer>>{
-                  Factory<OneSequenceGestureRecognizer>(
-                      () => EagerGestureRecognizer()),
-                },
+                // FIX: Disable gestures to prevent list scroll lag
+                scrollGesturesEnabled: false,
+                zoomGesturesEnabled: false,
+                tiltGesturesEnabled: false,
+                rotateGesturesEnabled: false,
+                liteModeEnabled: true, // Better performance for snapshots
                 initialCameraPosition: CameraPosition(
                   target: LatLng(widget.lat.toDouble(), widget.long.toDouble()),
-                  zoom: 11.0,
+                  zoom: 15.0,
                 ),
-                // 🔹 Clean UI: Disable unwanted UI clutter
+                // Clean premium UI
                 zoomControlsEnabled: false,
                 myLocationButtonEnabled: false,
                 mapToolbarEnabled: false,
+                compassEnabled: false,
+                markers: Set<Marker>.of(markers.values),
               ),
             ),
           ),
@@ -117,5 +82,20 @@ class SnapshotBodyState extends State<SnapshotBody> {
 
   void onMapCreated(GoogleMapController controller) {
     mapController = controller;
+  }
+
+  _addMarker(LatLng position, String id, BitmapDescriptor descriptor) {
+    MarkerId markerId = MarkerId(id);
+    Marker marker = Marker(
+      markerId: markerId,
+      icon: descriptor,
+      position: position,
+      // ignore: prefer_const_constructors
+      infoWindow: InfoWindow(
+        title: "Delivery Location",
+        snippet: "Your delivery address",
+      ),
+    );
+    markers[markerId] = marker;
   }
 }

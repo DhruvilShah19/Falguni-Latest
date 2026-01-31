@@ -1,4 +1,4 @@
-// ignore_for_file: avoid_print, deprecated_member_use, unused_import
+// ignore_for_file: avoid_print, deprecated_member_use, unused_import, prefer_const_constructors
 
 import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -25,6 +25,9 @@ import '../Widgets/map_snapshot.dart';
 import 'cash_free_page_direct.dart';
 import 'delivery_addresses.dart';
 import 'wallet_page.dart';
+import 'checkout_step1_delivery.dart';
+import 'checkout_step2_payment.dart';
+import 'checkout_step3_completed.dart';
 
 class CheckoutPage extends StatefulWidget {
   const CheckoutPage({super.key});
@@ -72,24 +75,6 @@ class _CheckoutPageState extends State<CheckoutPage>
   String fullname = '';
   String phone = '';
 
-  // initOneSignal() {
-  //   if (getOnesignalKey != '') {
-  //     OneSignal.shared.setLogLevel(OSLogLevel.verbose, OSLogLevel.none);
-  //     OneSignal.shared.setAppId(getOnesignalKey);
-  //     OneSignal.shared
-  //         .promptUserForPushNotificationPermission()
-  //         .then((accepted) {});
-  //     oneSignalTimer!.cancel();
-  //   }
-  // }
-
-  // void _handleGetDeviceState() async {
-  //   var deviceState = await OneSignal.shared.getDeviceState();
-  //   setState(() {
-  //     playerId = deviceState!.userId!;
-  //   });
-  // }
-
   getOneSignalDetails() {
     FirebaseFirestore.instance
         .collection('Push notification Settings')
@@ -101,33 +86,6 @@ class _CheckoutPageState extends State<CheckoutPage>
       });
     });
   }
-
-  // void _handleSendNotification(
-  //     String playerId, String content, String heading) async {
-  //   // var imgUrlString =
-  //   //     "http://cdn1-www.dogtime.com/assets/uploads/gallery/30-impossibly-cute-puppies/impossibly-cute-puppy-2.jpg";
-
-  //   var notification = OSCreateNotification(
-  //     playerIds: [playerId],
-  //     content: content,
-  //     heading: heading,
-  //     // iosAttachments: {"id1": imgUrlString},
-  //     // bigPicture: imgUrlString,
-  //     // buttons: [
-  //     //   OSActionButton(text: "test1", id: "id1"),
-  //     //   OSActionButton(text: "test2", id: "id2")
-  //     // ]
-  //   );
-
-  //   await OneSignal.shared.postNotification(notification).then((value) {
-  //     Fluttertoast.showToast(
-  //         msg: "$value",
-  //         toastLength: Toast.LENGTH_LONG,
-  //         gravity: ToastGravity.CENTER,
-  //         timeInSecForIosWeb: 1,
-  //         fontSize: 16.0);
-  //   });
-  // }
 
   Future<List<ProductsModel>> getMyCart() {
     return userRef!.collection('Cart').get().then((snapshot) {
@@ -284,9 +242,102 @@ class _CheckoutPageState extends State<CheckoutPage>
   }
 
   updateWallet() {
-    userRef!.update({
-      'wallet': wallet - (subTotal + (deliveryBool == false ? 0 : deliveryFee))
-    });
+    num totalAmount = subTotal + (deliveryBool == false ? 0 : deliveryFee);
+    // Deduct only the available balance (partial or full)
+    num amountToDeduct = wallet >= totalAmount ? totalAmount : wallet;
+    userRef!.update({'wallet': wallet - amountToDeduct});
+  }
+
+  // Helper method to show professional alert dialogs
+  void _showAlertDialog({
+    required String title,
+    required String message,
+    required String buttonText,
+    required Color accentColor,
+    required IconData icon,
+    VoidCallback? onButtonPressed,
+  }) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext dialogContext) {
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          child: Container(
+            decoration: BoxDecoration(
+              color: const Color(0xFF2F2525),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: accentColor.withOpacity(0.3), width: 1),
+            ),
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  decoration: BoxDecoration(
+                    color: accentColor.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  padding: const EdgeInsets.all(12),
+                  child: Icon(
+                    icon,
+                    color: accentColor,
+                    size: 32,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  title,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ).tr(),
+                const SizedBox(height: 12),
+                Text(
+                  message,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: Colors.white70,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w400,
+                    height: 1.5,
+                  ),
+                ),
+                const SizedBox(height: 24),
+                SizedBox(
+                  width: double.infinity,
+                  height: 48,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: accentColor,
+                      foregroundColor: const Color(0xFF2F2525),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                    onPressed: () {
+                      Navigator.of(dialogContext).pop();
+                      onButtonPressed?.call();
+                    },
+                    child: Text(
+                      buttonText,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 14,
+                      ),
+                    ).tr(),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
   }
 
   @override
@@ -303,10 +354,6 @@ class _CheckoutPageState extends State<CheckoutPage>
 
     _animation = Tween<double>(begin: 0, end: 1).animate(CurvedAnimation(
         parent: _animationController!, curve: Curves.easeInOutCirc));
-
-    // oneSignalTimer = Timer.periodic(
-    //     const Duration(milliseconds: 100), (Timer t) => initOneSignal());
-    //  _handleGetDeviceState();
     getOneSignalDetails();
     super.initState();
   }
@@ -453,23 +500,6 @@ class _CheckoutPageState extends State<CheckoutPage>
     });
   }
 
-  // double userLat = 0;
-  // double userLong = 0;
-  // getUserLatLong() async {
-  //   try {
-  //     GeoData data = await Geocoder2.getDataFromAddress(
-  //         address:deliveryAddress,
-  //         googleMapApiKey: 'AIzaSyCIG4hrwrTleFvlUvNuf9fD3PEqUH3Q2dI');
-  //     setState(() {
-  //       userLat = data.latitude;
-  //       userLong = data.longitude;
-  //     });
-  //     print("Latitude: ${data.latitude}");
-  //     print("Longitude: ${data.longitude}");
-  //   } catch (e) {
-  //     print(e);
-  //   }
-  // }
   @override
   Widget build(BuildContext context) {
     //  getDeliveryLocationLatAndLong();
@@ -513,278 +543,98 @@ class _CheckoutPageState extends State<CheckoutPage>
               Step(
                   isActive: selectedStepper1,
                   title: const Text('Delivery').tr(),
-                  content: SingleChildScrollView(
-                    child: Column(
-                      children: [
-                        if (deliveryBool == true)
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              const Text("Delivery Address",
-                                      style: TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 15))
-                                  .tr(),
-                              InkWell(
-                                  onTap: () {
-                                    Navigator.of(context)
-                                        .pushNamed('/delivery-address')
-                                        .then((value) {
-                                      getDeliveryLocationLatAndLong();
-                                    });
-                                    setState(() {
-                                      // deliveryAddressLat = 0;
-                                      // deliveryAddressLong = 0;
-                                    });
-                                  },
-                                  child: Container(
-                                      decoration: const BoxDecoration(
-                                        color: Color.fromARGB(255, 47, 37, 37),
-                                        shape: BoxShape.circle,
-                                      ),
-                                      child: const Icon(
-                                        Icons.chevron_right_rounded,
-                                        color: Colors.white,
-                                      )))
-                            ],
-                          ),
-                        CheckboxListTile(
-                            value: deliveryBool,
-                            title: const Text('Delivery').tr(),
-                            onChanged: (value) {
-                              if (isAddressEmpty == true) {
-                                Navigator.of(context).push(MaterialPageRoute(
-                                    builder: (context) =>
-                                        const DeliveryAddressesPage()));
-                              } else {
-                                setState(() {
-                                  deliveryBool = true;
-                                  pickupBool = false;
-                                });
-                              }
-                              getDeliveryLocationLatAndLong();
-                            }),
-                        deliveryBool == false
-                            ? Container()
-                            : Column(
-                                children: [
-                                  deliveryAddressLat != 0 &&
-                                          deliveryAddressLong != 0
-                                      ? SnapshotBody(
-                                          lat: deliveryAddressLat,
-                                          long: deliveryAddressLong,
-                                        )
-                                      : const SizedBox(),
-                                  Text(deliveryAddress)
-                                ],
-                              ),
-                        const SizedBox(
-                          height: 10,
-                        ),
-                        CheckboxListTile(
-                            subtitle: Text(pickupAddress),
-                            value: pickupBool,
-                            title: const Text('Pick Up').tr(),
-                            onChanged: (value) {
-                              setState(() {
-                                getPickupAddress();
-                              });
-                            }),
-                        const SizedBox(
-                          width: double.infinity,
-                          child: Divider(
-                            color: Colors.grey,
-                          ),
-                        ),
-                        const Row(
-                          children: [
-                            Text("Order Summary",
-                                style: TextStyle(
-                                    fontWeight: FontWeight.bold, fontSize: 15)),
-                          ],
-                        ),
-                        const SizedBox(
-                          height: 10,
-                        ),
-                        FutureBuilder<List<ProductsModel>>(
-                            future: getMyCart(),
-                            builder: (context, snapshot) {
-                              if (snapshot.hasData) {
-                                return ListView.builder(
-                                  physics: const BouncingScrollPhysics(),
-                                  shrinkWrap: true,
-                                  itemCount: snapshot.data?.length,
-                                  itemBuilder: (context, index) {
-                                    ProductsModel productsModel =
-                                        snapshot.data![index];
-                                    return Card(
-                                      elevation: 0,
-                                      child: ListTile(
-                                        subtitle: Text(productsModel.selected!),
-                                        leading: Text(
-                                            'QTY: ${productsModel.quantity}'),
-                                        title: Text(productsModel.name),
-                                        trailing: Text(
-                                            '$currencySymbol${Formatter().converter(productsModel.price!.toDouble())}'),
-                                      ),
-                                    );
-                                  },
-                                );
-                              } else {
-                                return Container(
-                                  width: double.infinity,
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 16.0, vertical: 16.0),
-                                  child: Shimmer.fromColors(
-                                    baseColor: Colors.grey[300]!,
-                                    highlightColor: Colors.grey[100]!,
-                                    enabled: true,
-                                    child: ListView.builder(
-                                      shrinkWrap: true,
-                                      itemBuilder: (_, __) => SizedBox(
-                                          height: 100,
-                                          width: 300,
-                                          child: Card(
-                                            shape: RoundedRectangleBorder(
-                                              borderRadius:
-                                                  BorderRadius.circular(20.0),
-                                            ),
-                                          )),
-                                      itemCount: 10,
-                                    ),
-                                  ),
-                                );
-                              }
-                            }),
-                        Container(height: 120)
-                      ],
-                    ),
+                  content: CheckoutStep1Delivery(
+                    deliveryBool: deliveryBool,
+                    pickupBool: pickupBool,
+                    deliveryAddress: deliveryAddress,
+                    pickupAddress: pickupAddress,
+                    currencySymbol: currencySymbol,
+                    deliveryAddressLat: deliveryAddressLat,
+                    deliveryAddressLong: deliveryAddressLong,
+                    isAddressEmpty: isAddressEmpty,
+                    getMyCart: getMyCart,
+                    onDeliveryAddressTap: () {
+                      Navigator.of(context)
+                          .pushNamed('/delivery-address')
+                          .then((value) {
+                        getDeliveryLocationLatAndLong();
+                      });
+                      setState(() {});
+                    },
+                    onDeliveryChanged: (value) {
+                      if (isAddressEmpty == true) {
+                        Navigator.of(context).push(MaterialPageRoute(
+                            builder: (context) =>
+                                const DeliveryAddressesPage()));
+                      } else {
+                        setState(() {
+                          deliveryBool = true;
+                          pickupBool = false;
+                        });
+                      }
+                      getDeliveryLocationLatAndLong();
+                    },
+                    onPickupChanged: (value) {
+                      setState(() {
+                        getPickupAddress();
+                      });
+                    },
                   )),
               Step(
-                isActive: selectedStepper2,
-                title: const Text('Payment').tr(),
-                content: SingleChildScrollView(
-                  child: Column(
-                    children: [
-                      Row(children: [
-                        const Text("Payment Method",
-                                style: TextStyle(
-                                    fontWeight: FontWeight.bold, fontSize: 18))
-                            .tr(),
-                      ]),
-                      const SizedBox(height: 20),
-                      Card(
-                        elevation: 0,
-                        child: CheckboxListTile(
-                            title: const Text('Wallet').tr(),
-                            subtitle: Text(
-                                '$currencySymbol${Formatter().converter(wallet.toDouble())}'),
-                            value: walletBool,
-                            onChanged: (val) {
-                              if (wallet <
-                                  subTotal +
-                                      (deliveryBool == false
-                                          ? 0
-                                          : deliveryFee)) {
-                                Navigator.of(context)
-                                    .push(MaterialPageRoute(
-                                        builder: (context) =>
-                                            const WalletPage()))
-                                    .then((value) {
-                                  Fluttertoast.showToast(
-                                      msg:
-                                          "Please upload more money to continue"
-                                              .tr(),
-                                      toastLength: Toast.LENGTH_SHORT,
-                                      gravity: ToastGravity.TOP,
-                                      timeInSecForIosWeb: 1,
-                                      fontSize: 14.0);
-                                });
-                              } else {
-                                if (orders.isEmpty) {
-                                  getMyCartToOrders();
-                                }
-
-                                setState(() {
-                                  walletBool = true;
-                                  cashOnDeliveryBool = false;
-                                  payWithCard = false;
-                                });
-                              }
-                            }),
-                      ),
-                      const SizedBox(height: 20),
-                      Card(
-                        elevation: 0,
-                        child: CheckboxListTile(
-                            title: const Text('Online Payment').tr(),
-                            subtitle: Text(
-                                '$currencySymbol${Formatter().converter(wallet.toDouble())}'),
-                            value: payWithCard,
-                            onChanged: (val) {
-                              if (orders.isEmpty) {
-                                getMyCartToOrders();
-                              }
-
-                              setState(() {
-                                walletBool = false;
-                                payWithCard = true;
-                                cashOnDeliveryBool = false;
-                              });
-                            }),
-                      ),
-                      cashDatabase == false
-                          ? Container()
-                          : Card(
-                              elevation: 0,
-                              child: CheckboxListTile(
-                                  title: const Text('Cash on delivery').tr(),
-                                  subtitle: const Text(
-                                          'Cash payment after product is delivered')
-                                      .tr(),
-                                  value: cashOnDeliveryBool,
-                                  onChanged: (val) {
-                                    if (orders.isEmpty) {
-                                      getMyCartToOrders();
-                                    }
-                                    setState(() {
-                                      walletBool = false;
-                                      cashOnDeliveryBool = true;
-                                      payWithCard = false;
-                                    });
-                                  }),
-                            )
-                    ],
-                  ),
-                ),
-              ),
+                  isActive: selectedStepper2,
+                  title: const Text('Payment').tr(),
+                  content: CheckoutStep2Payment(
+                    walletBool: walletBool,
+                    payWithCard: payWithCard,
+                    cashOnDeliveryBool: cashOnDeliveryBool,
+                    cashDatabase: cashDatabase,
+                    wallet: wallet,
+                    subTotal: subTotal,
+                    deliveryFee: deliveryFee,
+                    deliveryBool: deliveryBool,
+                    currencySymbol: currencySymbol,
+                    onWalletChanged: (val) {
+                      setState(() {
+                        walletBool = true;
+                        cashOnDeliveryBool = false;
+                        payWithCard = false;
+                      });
+                    },
+                    onOnlinePaymentChanged: (val) {
+                      setState(() {
+                        walletBool = false;
+                        payWithCard = true;
+                        cashOnDeliveryBool = false;
+                      });
+                    },
+                    onCashOnDeliveryChanged: (val) {
+                      setState(() {
+                        walletBool = false;
+                        cashOnDeliveryBool = true;
+                        payWithCard = false;
+                      });
+                    },
+                    onWalletTap: () {
+                      Navigator.of(context)
+                          .push(MaterialPageRoute(
+                              builder: (context) => const WalletPage()))
+                          .then((value) {
+                        Fluttertoast.showToast(
+                            msg: "Please upload more money to continue".tr(),
+                            toastLength: Toast.LENGTH_SHORT,
+                            gravity: ToastGravity.TOP,
+                            timeInSecForIosWeb: 1,
+                            fontSize: 14.0);
+                      });
+                    },
+                    orders: orders,
+                    getMyCartToOrders: getMyCartToOrders,
+                  )),
               Step(
                 isActive: selectedStepper3,
                 title: const Text('Completed').tr(),
-                content: SingleChildScrollView(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      AnimatedCheck(
-                        color: Colors.green,
-                        progress: _animation!,
-                        size: 200,
-                      ),
-                      ElevatedButton(
-                          onPressed: () {
-                            Navigator.pushNamed(context, '/orders');
-                          },
-                          child: const Text('View in orders page').tr()),
-                      ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                              backgroundColor:
-                                  const Color.fromARGB(255, 47, 37, 37)),
-                          onPressed: () {
-                            Navigator.pushNamed(context, '/bottomNav');
-                          },
-                          child: const Text('Go back home').tr())
-                    ],
-                  ),
+                content: CheckoutStep3Completed(
+                  animation: _animation,
                 ),
               )
             ],
@@ -831,26 +681,63 @@ class _CheckoutPageState extends State<CheckoutPage>
                                           setState(() {
                                             _index = 0;
                                           });
-                                          Fluttertoast.showToast(
-                                              msg:
-                                                  "Please select or add an address"
-                                                      .tr(),
-                                              toastLength: Toast.LENGTH_SHORT,
-                                              gravity: ToastGravity.TOP,
-                                              timeInSecForIosWeb: 1,
-                                              fontSize: 14.0);
+                                          _showAlertDialog(
+                                            title: 'Delivery Address Required',
+                                            message:
+                                                'Please select or add a delivery address to proceed with your order.',
+                                            buttonText: 'Add Address',
+                                            accentColor:
+                                                const Color(0xFFC9A86A),
+                                            icon: Icons.location_on_outlined,
+                                          );
                                         } else {
-                                          if (walletBool == false &&
+                                          // First check if wallet has negative balance
+                                          if (wallet < 0) {
+                                            _showAlertDialog(
+                                              title: 'Account Balance Negative',
+                                              message:
+                                                  'Your wallet has a negative balance of $currencySymbol${Formatter().converter(wallet.abs().toDouble())}.\n\nYou must settle this amount before placing new orders.\n\nPlease contact support for payment options.',
+                                              buttonText: 'Close',
+                                              accentColor:
+                                                  const Color(0xFFE74C3C),
+                                              icon: Icons.error_outline,
+                                            );
+                                          } else if (walletBool == false &&
                                               cashOnDeliveryBool == false &&
                                               payWithCard == false) {
-                                            Fluttertoast.showToast(
-                                                msg:
-                                                    "Please select a payment method"
-                                                        .tr(),
-                                                toastLength: Toast.LENGTH_SHORT,
-                                                gravity: ToastGravity.TOP,
-                                                timeInSecForIosWeb: 1,
-                                                fontSize: 14.0);
+                                            _showAlertDialog(
+                                              title: 'Payment Method Required',
+                                              message:
+                                                  'Please select a payment method to proceed with your order.',
+                                              buttonText: 'Got It',
+                                              accentColor:
+                                                  const Color(0xFFC9A86A),
+                                              icon: Icons.payment_outlined,
+                                            );
+                                          } else if (walletBool == true &&
+                                              wallet <
+                                                  (subTotal +
+                                                      (deliveryBool == false
+                                                          ? 0
+                                                          : deliveryFee)) &&
+                                              payWithCard == false &&
+                                              cashOnDeliveryBool == false) {
+                                            // Wallet selected but insufficient balance and no other payment method
+                                            num shortfall = (subTotal +
+                                                    (deliveryBool == false
+                                                        ? 0
+                                                        : deliveryFee)) -
+                                                wallet;
+                                            _showAlertDialog(
+                                              title:
+                                                  'Insufficient Wallet Balance',
+                                              message:
+                                                  'Your wallet has $currencySymbol${Formatter().converter(wallet.toDouble())}, but you need $currencySymbol${Formatter().converter(shortfall.toDouble())} more.\n\nYou can:\n• Add funds to your wallet\n• Select another payment method (Online Payment or Cash on Delivery)',
+                                              buttonText: 'Understood',
+                                              accentColor:
+                                                  const Color(0xFFE74C3C),
+                                              icon: Icons.warning_outlined,
+                                            );
                                           } else if (payWithCard == true) {
                                             print('PaywithCard is selected');
                                             Navigator.of(context).push(
@@ -897,17 +784,21 @@ class _CheckoutPageState extends State<CheckoutPage>
                                             updateVendorOrderID();
 
                                             if (walletBool == true) {
+                                              num totalAmount = subTotal +
+                                                  (deliveryBool == false
+                                                      ? 0
+                                                      : deliveryFee);
+                                              num amountDeducted =
+                                                  wallet >= totalAmount
+                                                      ? totalAmount
+                                                      : wallet;
                                               updateWallet();
                                               updateHistory(HistoryModel(
-                                                  timeCreated:
-                                                      DateFormat.yMMMMEEEEd()
-                                                          .format(
-                                                              DateTime.now())
-                                                          .toString(),
+                                                  timeCreated: DateTime.now(),
                                                   message:
                                                       'Placed an order'.tr(),
                                                   amount:
-                                                      '-$currencySymbol${subTotal + (deliveryBool == false ? 0 : deliveryFee)}',
+                                                      '-$currencySymbol${Formatter().converter(amountDeducted.toDouble())}',
                                                   paymentSystem: ''));
                                             }
                                             DateTime now = DateTime.now();
@@ -976,10 +867,7 @@ class _CheckoutPageState extends State<CheckoutPage>
                                                 amount:
                                                     '$currencySymbol ${subTotal + (deliveryBool == false ? 0 : deliveryFee)}',
                                                 paymentSystem: '',
-                                                timeCreated:
-                                                    DateFormat.yMMMMEEEEd()
-                                                        .format(DateTime.now())
-                                                        .toString()));
+                                                timeCreated: DateTime.now()));
                                             // _handleSendNotification(
                                             //     vendorToken,
                                             //     'New order alert Order ID #${orderID + 1}',

@@ -148,12 +148,21 @@ class _ProductListState extends State<ProductList> {
     ProductsModel productsModel,
   ) {
     if (currentMarketID == widget.marketID || currentMarketID == '') {
+      num unitPrice = productsModel.unitPrice1;
+      num qty = 1; // Use quantity 1 for quick add from list
+      num totalPrice = qty * unitPrice;
+
       userRef!
           .collection('Cart')
           .doc(
               '${widget.marketID}${productsModel.vendorId}${productsModel.name}unit1')
-          .set(productsModel.toMap())
-          .then((val) {
+          .set({
+        ...productsModel.toMap(),
+        'quantity': quantity,
+        'selectedPrice': unitPrice,
+        'price': totalPrice,
+        'unit': 'unit1',
+      }, SetOptions(merge: true)).then((val) {
         Fluttertoast.showToast(
             msg: "Product has been added to your cart".tr(),
             toastLength: Toast.LENGTH_SHORT,

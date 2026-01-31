@@ -296,11 +296,20 @@ class _MapScreenState extends State<MapScreen> {
     LatLng market =
         LatLng(widget.marketLat.toDouble(), widget.marketLong.toDouble());
 
-    if (user.latitude > market.latitude) {
-      bounds = LatLngBounds(southwest: market, northeast: user);
-    } else {
-      bounds = LatLngBounds(southwest: user, northeast: market);
-    }
+    // FIX: Calculate bounds correctly for all directions
+    double minLat =
+        (user.latitude < market.latitude) ? user.latitude : market.latitude;
+    double maxLat =
+        (user.latitude > market.latitude) ? user.latitude : market.latitude;
+    double minLong =
+        (user.longitude < market.longitude) ? user.longitude : market.longitude;
+    double maxLong =
+        (user.longitude > market.longitude) ? user.longitude : market.longitude;
+
+    bounds = LatLngBounds(
+      southwest: LatLng(minLat, minLong),
+      northeast: LatLng(maxLat, maxLong),
+    );
 
     mapController!.animateCamera(CameraUpdate.newLatLngBounds(bounds, 100));
   }
