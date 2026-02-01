@@ -19,8 +19,10 @@ class ProfileHome extends StatefulWidget {
 
 class _ProfileHomeState extends State<ProfileHome> {
   // Theme Palette
-  static const Color kGold = Color(0xFFC9A86A);
-  static const Color kBgTop = Color(0xFF1C1515);
+  static const Color kGold =
+      Color(0xFFD4AF37); // Richer, traditional honey-gold
+  static const Color kBgTop = Color(0xFF2B1B17); // Deep "Roasted Bean" brown
+  static const Color kBgMid = Color(0xFF5C4033); // Warm "Earth/Clay" brown
 
   DocumentReference? userRef;
 
@@ -110,7 +112,7 @@ class _ProfileHomeState extends State<ProfileHome> {
       body: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
-            colors: [kBgTop, Color(0xFF0D0D0D)],
+            colors: [kBgTop, kBgMid, kBgTop],
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
           ),

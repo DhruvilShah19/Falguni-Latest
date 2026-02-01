@@ -18,8 +18,10 @@ class OrdersPage extends StatefulWidget {
 
 class _OrdersPageState extends State<OrdersPage>
     with SingleTickerProviderStateMixin {
-  static const Color kPrimary = Color(0xFF2F2525);
-  static const Color kGold = Color(0xFFC9A86A);
+  static const Color kPrimary =
+      Color(0xFFD4AF37); // Richer, traditional honey-gold
+  static const Color kDarkBg = Color(0xFF2B1B17); // Deep "Roasted Bean" brown
+  static const Color kGold = Color(0xFF5C4033); // Warm "Earth/Clay" brown
 
   @override
   Widget build(BuildContext context) {
@@ -76,7 +78,7 @@ class _OrdersPageState extends State<OrdersPage>
                       physics: const BouncingScrollPhysics(),
                       labelPadding: const EdgeInsets.symmetric(horizontal: 18),
 
-                      labelColor: kGold,
+                      labelColor: kPrimary,
                       unselectedLabelColor: Colors.white70,
 
                       labelStyle: const TextStyle(
@@ -91,7 +93,7 @@ class _OrdersPageState extends State<OrdersPage>
 
                       // 🌟 GOLD CAPSULE INDICATOR
                       indicator: RectangularIndicator(
-                        color: kGold.withOpacity(0.20),
+                        color: kPrimary.withOpacity(0.20),
                         topLeftRadius: 12,
                         topRightRadius: 12,
                         bottomLeftRadius: 12,
@@ -120,11 +122,7 @@ class _OrdersPageState extends State<OrdersPage>
         body: Container(
           decoration: const BoxDecoration(
             gradient: LinearGradient(
-              colors: [
-                Color(0xFF1C1515),
-                Color(0xFF2F2525),
-                Color(0xFF1C1515),
-              ],
+              colors: [kDarkBg, kGold, kDarkBg],
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
             ),

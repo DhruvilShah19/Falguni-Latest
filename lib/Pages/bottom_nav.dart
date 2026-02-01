@@ -28,7 +28,11 @@ class BottomNavPage extends StatefulWidget {
 
 class _BottomNavPageState extends State<BottomNavPage> {
   /// Brand accent (brown) – used only as highlight, not full backgrounds
-  static const Color kPrimary = Color(0xFF2F2525);
+  static const Color kGold =
+      Color(0xFFD4AF37); // Richer, traditional honey-gold
+  static const Color kBgTop =
+      Color.fromARGB(255, 45, 31, 28); // Deep "Roasted Bean" brown
+  static const Color kBgMid = Color(0xFF5C4033); // Warm "Earth/Clay" brown
 
   int _page = 0;
 
@@ -169,7 +173,7 @@ class _BottomNavPageState extends State<BottomNavPage> {
         style: const TextStyle(
           fontWeight: FontWeight.w600,
           fontSize: 18,
-          color: kPrimary,
+          color: kBgTop,
         ),
       ),
     );
@@ -184,17 +188,17 @@ class _BottomNavPageState extends State<BottomNavPage> {
   }) {
     return ListTile(
       dense: false,
-      leading: Icon(icon, color: iconColor ?? Colors.grey.shade800, size: 22),
+      leading: Icon(icon, color: iconColor ?? kGold, size: 22),
       title: Text(
         title,
         style: TextStyle(
           fontSize: 15,
           fontWeight: FontWeight.w500,
-          color: textColor ?? Colors.grey.shade900,
+          color: textColor ?? Colors.white,
         ),
       ),
       trailing:
-          Icon(Icons.chevron_right, color: Colors.grey.shade400, size: 20),
+          const Icon(Icons.chevron_right, color: Colors.white24, size: 20),
       onTap: onTap,
       contentPadding: const EdgeInsets.symmetric(horizontal: 12),
     );
@@ -218,6 +222,7 @@ class _BottomNavPageState extends State<BottomNavPage> {
       drawer: SizedBox(
         width: MediaQuery.of(context).size.width * 0.82,
         child: Drawer(
+          backgroundColor: kBgTop,
           child: SafeArea(
             child: Column(
               children: [
@@ -228,7 +233,7 @@ class _BottomNavPageState extends State<BottomNavPage> {
                   child: ClipPath(
                     clipper: CustomClipPath(),
                     child: Container(
-                      color: Colors.white,
+                      color: kBgMid,
                       child: Padding(
                         padding: const EdgeInsets.fromLTRB(16, 10, 16, 12),
                         child: Column(
@@ -240,16 +245,16 @@ class _BottomNavPageState extends State<BottomNavPage> {
                               children: [
                                 IconButton(
                                   onPressed: () => Navigator.pop(context),
-                                  icon: Icon(
+                                  icon: const Icon(
                                     Icons.arrow_back,
-                                    color: Colors.grey.shade800,
+                                    color: Colors.white,
                                   ),
                                 ),
                                 Icon(
                                   isLight
                                       ? Icons.light_mode_outlined
                                       : Icons.dark_mode_outlined,
-                                  color: Colors.grey.shade600,
+                                  color: kGold,
                                   size: 20,
                                 ),
                               ],
@@ -273,6 +278,7 @@ class _BottomNavPageState extends State<BottomNavPage> {
                                         style: const TextStyle(
                                           fontSize: 18,
                                           fontWeight: FontWeight.w600,
+                                          color: Colors.white,
                                         ),
                                       ),
                                       if (isLogged && email.isNotEmpty) ...[
@@ -281,9 +287,9 @@ class _BottomNavPageState extends State<BottomNavPage> {
                                           email,
                                           maxLines: 1,
                                           overflow: TextOverflow.ellipsis,
-                                          style: TextStyle(
+                                          style: const TextStyle(
                                             fontSize: 13,
-                                            color: Colors.grey.shade600,
+                                            color: Colors.white70,
                                           ),
                                         ),
                                       ],
@@ -292,10 +298,10 @@ class _BottomNavPageState extends State<BottomNavPage> {
                                         const SizedBox(height: 4),
                                         Row(
                                           children: [
-                                            Icon(
+                                            const Icon(
                                               Icons.location_on_outlined,
                                               size: 14,
-                                              color: Colors.grey.shade500,
+                                              color: kGold,
                                             ),
                                             const SizedBox(width: 4),
                                             Expanded(
@@ -303,9 +309,9 @@ class _BottomNavPageState extends State<BottomNavPage> {
                                                 deliveryAddress,
                                                 maxLines: 1,
                                                 overflow: TextOverflow.ellipsis,
-                                                style: TextStyle(
+                                                style: const TextStyle(
                                                   fontSize: 12,
-                                                  color: Colors.grey.shade600,
+                                                  color: Colors.white70,
                                                 ),
                                               ),
                                             ),
@@ -333,10 +339,10 @@ class _BottomNavPageState extends State<BottomNavPage> {
                             left: 16.0, bottom: 6, top: 4),
                         child: Text(
                           "Account".tr(),
-                          style: TextStyle(
+                          style: const TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.w600,
-                            color: Colors.grey.shade600,
+                            color: kGold,
                           ),
                         ),
                       ),
@@ -408,7 +414,8 @@ class _BottomNavPageState extends State<BottomNavPage> {
                         },
                       ),
 
-                      const Divider(indent: 16, endIndent: 16),
+                      const Divider(
+                          indent: 16, endIndent: 16, color: Colors.white24),
 
                       if (referralStatus)
                         _drawerItem(
@@ -448,10 +455,11 @@ class _BottomNavPageState extends State<BottomNavPage> {
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 8.0),
                         child: ListTileSwitch(
-                          leading: const Icon(Icons.color_lens_outlined),
+                          leading: const Icon(Icons.color_lens_outlined,
+                              color: kGold),
                           title: const Text(
                             'Theme Mode',
-                            style: TextStyle(fontSize: 15),
+                            style: TextStyle(fontSize: 15, color: Colors.white),
                           ).tr(),
                           value: themeMode == null ? true : themeMode,
                           onChanged: (val) {
@@ -504,7 +512,7 @@ class _BottomNavPageState extends State<BottomNavPage> {
       // ELITE BOUTIQUE FLOATING BOTTOM NAV (FIXED)
       // -----------------------------------------------------------------------
       bottomNavigationBar: Container(
-        color: const Color(0xFF1C1515),
+        color: kBgTop,
         child: SafeArea(
           // 🔹 SafeArea removes the "extra space" at the very bottom
           child: Container(
@@ -537,7 +545,7 @@ class _BottomNavPageState extends State<BottomNavPage> {
                 },
                 type: BottomNavigationBarType.fixed,
                 backgroundColor: Colors.transparent,
-                selectedItemColor: const Color(0xFFC9A86A), // Boutique Gold
+                selectedItemColor: kGold, // Boutique Gold
                 unselectedItemColor: Colors.white24,
                 showSelectedLabels: false,
                 showUnselectedLabels: false,

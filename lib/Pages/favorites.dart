@@ -26,9 +26,11 @@ class _FavoritesPageState extends State<FavoritesPage> {
   DocumentReference? userRef;
 
   static const Color kPrimary = Color(0xFF2F2525);
-  static const Color kGold = Color(0xFFC9A86A);
-  static const Color kBgTop = Color(0xFF1C1515);
-  static const Color kBgMid = Color(0xFF2F2525);
+  static const Color kGold =
+      Color(0xFFD4AF37); // Richer, traditional honey-gold
+  static const Color kBgTop =
+      Color.fromARGB(255, 45, 31, 28); // Deep "Roasted Bean" brown
+  static const Color kBgMid = Color(0xFF5C4033); // Warm "Earth/Clay" brown
 
   String currencySymbol = '';
   String? currentMarketID;

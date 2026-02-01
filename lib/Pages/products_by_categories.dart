@@ -26,6 +26,11 @@ class ProductsByCategories extends StatefulWidget {
 }
 
 class _ProductsByCategoriesState extends State<ProductsByCategories> {
+  static const Color kGold =
+      Color(0xFFD4AF37); // Richer, traditional honey-gold
+  static const Color kBgTop = Color(0xFF2B1B17); // Deep "Roasted Bean" brown
+  static const Color kBgMid = Color(0xFF5C4033); // Warm "Earth/Clay" brown
+
   Future<List<ProductsModel>> getMyProducts() {
     return FirebaseFirestore.instance
         .collection('Products')
@@ -167,7 +172,7 @@ class _ProductsByCategoriesState extends State<ProductsByCategories> {
         context: context,
         builder: (context) {
           return AlertDialog(
-            backgroundColor: const Color(0xFF1C1515), // Theme Charcoal
+            backgroundColor: kBgTop, // Theme Charcoal
             shape:
                 RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
             content: SizedBox(
@@ -191,7 +196,7 @@ class _ProductsByCategoriesState extends State<ProductsByCategories> {
             Colors.transparent, // Ensures the Glassmorphism blur works
         builder: (context) => Container(
           decoration: const BoxDecoration(
-            color: Color(0xFF1C1515), // Theme Charcoal
+            color: kBgTop, // Theme Charcoal
             borderRadius: BorderRadius.only(
               topLeft: Radius.circular(30),
               topRight: Radius.circular(30),
@@ -222,7 +227,7 @@ class _ProductsByCategoriesState extends State<ProductsByCategories> {
           rating: rating.toDouble(),
           itemBuilder: (context, index) => const Icon(
             Icons.star_rounded,
-            color: Color(0xFFC9A86A), // Boutique Gold
+            color: kGold, // Boutique Gold
           ),
           itemCount: 5,
           itemSize: 14, // Slightly smaller for professional look
@@ -233,7 +238,7 @@ class _ProductsByCategoriesState extends State<ProductsByCategories> {
         Text(
           rating.toStringAsFixed(1),
           style: const TextStyle(
-            color: Color(0xFFC9A86A),
+            color: kGold,
             fontSize: 11,
             fontWeight: FontWeight.w900,
             letterSpacing: 0.5,
@@ -278,7 +283,7 @@ class _ProductsByCategoriesState extends State<ProductsByCategories> {
             Text(
               '$currencySymbol${Formatter().converter(productModel.unitPrice1.toDouble())}',
               style: const TextStyle(
-                color: Color(0xFFC9A86A), // Boutique Gold
+                color: kGold, // Boutique Gold
                 fontSize: 16,
                 fontWeight: FontWeight.w900,
                 letterSpacing: -0.5,
@@ -303,7 +308,7 @@ class _ProductsByCategoriesState extends State<ProductsByCategories> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
         decoration: BoxDecoration(
-          color: const Color(0xFFC9A86A), // Boutique Gold
+          color: kGold, // Boutique Gold
           borderRadius: BorderRadius.circular(8),
           boxShadow: [
             BoxShadow(
@@ -331,10 +336,10 @@ class _ProductsByCategoriesState extends State<ProductsByCategories> {
   Widget build(BuildContext context) {
     return isLoading == true
         ? const Scaffold(
+            backgroundColor: kBgTop,
             body: Center(
               child: SpinKitCircle(
-                color: Color.fromARGB(
-                    255, 47, 37, 37), // Slightly brighter accent color
+                color: kGold, // Slightly brighter accent color
                 size: 60, // Increased size for better visibility
               ),
             ),
@@ -343,8 +348,7 @@ class _ProductsByCategoriesState extends State<ProductsByCategories> {
             length: data.length,
             child: Scaffold(
               appBar: AppBar(
-                backgroundColor:
-                    const Color(0xFF1C1515), // Elite Boutique Charcoal
+                backgroundColor: kBgTop, // Elite Boutique Charcoal
                 elevation: 0,
                 centerTitle: false,
                 iconTheme: const IconThemeData(color: Colors.white),
@@ -355,7 +359,7 @@ class _ProductsByCategoriesState extends State<ProductsByCategories> {
                     Text(
                       "EXPLORE".tr().toUpperCase(),
                       style: const TextStyle(
-                        color: Color(0xFFC9A86A), // Boutique Gold
+                        color: kGold, // Boutique Gold
                         fontSize: 9,
                         fontWeight: FontWeight.bold,
                         letterSpacing: 2,
@@ -386,7 +390,7 @@ class _ProductsByCategoriesState extends State<ProductsByCategories> {
                       child: Center(
                         child: Badge(
                           badgeStyle: const BadgeStyle(
-                            badgeColor: Color(0xFFC9A86A),
+                            badgeColor: kGold,
                             padding: EdgeInsets.all(5),
                           ),
                           badgeContent: Text(
@@ -431,15 +435,14 @@ class _ProductsByCategoriesState extends State<ProductsByCategories> {
                             decoration: BoxDecoration(
                               color: Colors.white.withOpacity(0.05),
                               borderRadius: BorderRadius.circular(10),
-                              border: Border.all(
-                                  color: const Color(0xFFC9A86A)
-                                      .withOpacity(0.15)),
+                              border:
+                                  Border.all(color: kGold.withOpacity(0.15)),
                             ),
                             child: Row(
                               children: [
                                 const Gap(15),
                                 const Icon(Icons.search_rounded,
-                                    color: Color(0xFFC9A86A), size: 18),
+                                    color: kGold, size: 18),
                                 const Gap(10),
                                 Text(
                                   "Search in ${widget.collection}...".tr(),
@@ -456,7 +459,7 @@ class _ProductsByCategoriesState extends State<ProductsByCategories> {
                       // 🔹 REFINED LINE INDICATOR TABBAR
                       TabBar(
                         isScrollable: true,
-                        labelColor: const Color(0xFFC9A86A),
+                        labelColor: kGold,
                         unselectedLabelColor: Colors.white24,
                         labelStyle: const TextStyle(
                             fontSize: 12,
@@ -465,7 +468,7 @@ class _ProductsByCategoriesState extends State<ProductsByCategories> {
                         // 🔹 LUXURY LINE INDICATOR
                         indicator: const UnderlineTabIndicator(
                           borderSide: BorderSide(
-                            color: Color(0xFFC9A86A),
+                            color: kGold,
                             width: 3,
                           ),
                         ),
@@ -489,7 +492,7 @@ class _ProductsByCategoriesState extends State<ProductsByCategories> {
                   return Container(
                     decoration: const BoxDecoration(
                       gradient: LinearGradient(
-                        colors: [Color(0xFF1C1515), Color(0xFF0D0D0D)],
+                        colors: [kBgTop, kBgMid, kBgTop],
                         begin: Alignment.topCenter,
                         end: Alignment.bottomCenter,
                       ),
@@ -577,8 +580,7 @@ class _ProductsByCategoriesState extends State<ProductsByCategories> {
                                                                 .circular(16),
                                                         boxShadow: [
                                                           BoxShadow(
-                                                            color: const Color(
-                                                                    0xFFC9A86A)
+                                                            color: kGold
                                                                 .withOpacity(
                                                                     0.05),
                                                             blurRadius: 10,
@@ -664,8 +666,8 @@ class _ProductsByCategoriesState extends State<ProductsByCategories> {
                               );
                             } else {
                               return const Center(
-                                  child: CircularProgressIndicator(
-                                      color: Color(0xFFC9A86A)));
+                                  child:
+                                      CircularProgressIndicator(color: kGold));
                             }
                           }),
                     ),

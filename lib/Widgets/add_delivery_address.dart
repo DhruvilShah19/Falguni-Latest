@@ -25,8 +25,9 @@ class AddDeliveryAddress extends StatefulWidget {
 
 class _AddDeliveryAddressState extends State<AddDeliveryAddress> {
   // Theme Palette
-  static const Color kGold = Color(0xFFC9A86A);
-  static const Color kBgTop = Color(0xFF1C1515);
+  static const Color kGold =
+      Color(0xFFD4AF37); // Richer, traditional honey-gold
+  static const Color kBgTop = Color(0xFF5C4033); // Deep "Roasted Bean" brown
 
   final _formKey = GlobalKey<FormState>();
   String address = '';

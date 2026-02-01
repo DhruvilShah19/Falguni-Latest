@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:falguni_app/Model/order_model.dart';
 import 'package:falguni_app/Pages/bottom_nav.dart';
 import 'package:falguni_app/Providers/analytics.dart';
+import 'package:falguni_app/Model/formatter.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_cashfree_pg_sdk/api/cfcard/cfcardlistener.dart';
@@ -609,6 +610,7 @@ class CashFreeAmountWidgetDirect extends StatefulWidget {
   final String vendorToken;
   final String pickupAddress;
   final num subTotal;
+  final String currencySymbol;
   const CashFreeAmountWidgetDirect({
     super.key,
     required this.deliveryFee,
@@ -627,6 +629,7 @@ class CashFreeAmountWidgetDirect extends StatefulWidget {
     required this.vendorToken,
     required this.pickupAddress,
     required this.subTotal,
+    required this.currencySymbol,
   });
 
   @override
@@ -675,7 +678,9 @@ class _CashFreeAmountWidgetDirectState
     };
 
     Map<String, dynamic> requestBody = {
-      "order_amount": widget.subTotal.toDouble(),
+      "order_amount": (widget.subTotal +
+              (widget.deliveryBool == false ? 0 : widget.deliveryFee))
+          .toDouble(),
       "order_id": uuid.v1(),
       "order_currency": "INR",
       "customer_details": {
@@ -726,7 +731,8 @@ class _CashFreeAmountWidgetDirectState
               vendorToken: widget.vendorToken,
               pickupAddress: widget.pickupAddress,
               subTotal: widget.subTotal,
-              amount: widget.subTotal,
+              amount: widget.subTotal +
+                  (widget.deliveryBool == false ? 0 : widget.deliveryFee),
               response: responseData,
               cashFreeOrderID: responseDataRequest['order_id'],
               paymentSessionId: responseDataRequest["payment_session_id"],
@@ -810,7 +816,8 @@ class _CashFreeAmountWidgetDirectState
             ),
             const SizedBox(height: 10),
             TextFormField(
-              initialValue: widget.subTotal.toString(),
+              initialValue:
+                  '${widget.currencySymbol}${Formatter().converter((widget.subTotal + (widget.deliveryBool == false ? 0 : widget.deliveryFee)).toDouble())}',
               readOnly: true,
               style: const TextStyle(
                   color: Colors.white,

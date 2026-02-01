@@ -18,6 +18,11 @@ class CourierOverview extends StatefulWidget {
 }
 
 class _CourierOverviewState extends State<CourierOverview> {
+  static const Color kGold =
+      Color(0xFFD4AF37); // Richer, traditional honey-gold
+  static const Color kBgTop = Color(0xFF2B1B17); // Deep "Roasted Bean" brown
+  static const Color kBgMid = Color(0xFF5C4033); // Warm "Earth/Clay" brown
+
   String getcurrencyName = '';
   String getcurrencyCode = '';
   String getcurrencySymbol = '';
@@ -103,19 +108,29 @@ class _CourierOverviewState extends State<CourierOverview> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+        backgroundColor: kBgTop,
         appBar: AppBar(
-          iconTheme: Theme.of(context).iconTheme,
-          titleTextStyle: TextStyle(color: Theme.of(context).indicatorColor),
-          backgroundColor: Theme.of(context).colorScheme.background,
+          iconTheme: const IconThemeData(color: Colors.white),
+          backgroundColor: kBgTop,
           centerTitle: true,
           elevation: 0,
-          title: const Text(
-            'Courier details',
-          ).tr(),
+          title: Text(
+            'Courier details'.tr(),
+            style: const TextStyle(
+                color: kGold, fontSize: 20, fontWeight: FontWeight.bold),
+          ),
         ),
-        body: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.all(8.0),
+        body: Container(
+          height: MediaQuery.of(context).size.height,
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              colors: [kBgTop, kBgMid, kBgTop],
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+            ),
+          ),
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(16.0),
             child: Column(
               children: [
                 const SizedBox(height: 20),
@@ -125,17 +140,21 @@ class _CourierOverviewState extends State<CourierOverview> {
                 ),
                 Padding(
                   padding: const EdgeInsets.all(8.0),
-                  child: const Text(
-                    'Parcel Details',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ).tr(),
+                  child: Text(
+                    'Parcel Details'.tr(),
+                    style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: kGold,
+                        fontSize: 16),
+                  ),
                 ),
                 Row(
                   children: [
-                    const Text('Parcel Image',
-                            style: TextStyle(
-                                fontWeight: FontWeight.bold, fontSize: 12))
-                        .tr(),
+                    Text('Parcel Image'.tr(),
+                        style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 12,
+                            color: Colors.white)),
                   ],
                 ),
                 const SizedBox(
@@ -144,8 +163,8 @@ class _CourierOverviewState extends State<CourierOverview> {
                 SizedBox(
                   height: MediaQuery.of(context).size.height / 3,
                   width: double.infinity,
-                  child: Padding(
-                    padding: const EdgeInsets.all(8.0),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
                     child: Image.network(
                       widget.courierModel.parcelImage,
                       fit: BoxFit.cover,
@@ -155,70 +174,73 @@ class _CourierOverviewState extends State<CourierOverview> {
                 const SizedBox(
                   height: 20,
                 ),
-                SizedBox(
-                  height: 75,
+                Container(
                   width: double.infinity,
-                  child: Card(
-                    elevation: 0,
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.start,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const SizedBox(height: 5),
-                        Padding(
-                          padding: const EdgeInsets.only(left: 10.0),
-                          child: Text(
-                            'Parcel ID: #${widget.courierModel.parcelID}',
-                            style: const TextStyle(
-                                fontWeight: FontWeight.bold, fontSize: 12),
-                          ),
-                        ),
-                        const SizedBox(height: 5),
-                        Padding(
-                          padding: const EdgeInsets.only(left: 10.0),
-                          child: Text(
-                            'Date: ${widget.courierModel.deliveryDate}',
-                          ),
-                        ),
-                        const SizedBox(height: 5),
-                        Padding(
-                          padding: const EdgeInsets.only(left: 10.0),
-                          child: Row(
-                            children: [
-                              const Text('Parcel Name:',
-                                      style: TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 12))
-                                  .tr(),
-                              const SizedBox(width: 10),
-                              Text(
-                                widget.courierModel.parcelName,
-                              )
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.05),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.white10),
+                  ),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const SizedBox(height: 5),
+                      Text(
+                        'Parcel ID: #${widget.courierModel.parcelID}',
+                        style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 12,
+                            color: Colors.white),
+                      ),
+                      const SizedBox(height: 5),
+                      Text(
+                        'Date: ${widget.courierModel.deliveryDate}',
+                        style: const TextStyle(color: Colors.white70),
+                      ),
+                      const SizedBox(height: 5),
+                      Row(
+                        children: [
+                          Text('Parcel Name:'.tr(),
+                              style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 12,
+                                  color: Colors.white)),
+                          const SizedBox(width: 10),
+                          Text(
+                            widget.courierModel.parcelName,
+                            style: const TextStyle(color: Colors.white70),
+                          )
+                        ],
+                      ),
+                    ],
                   ),
                 ),
                 const SizedBox(
                   height: 20,
                 ),
-                Card(
-                  elevation: 0,
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.05),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.white10),
+                  ),
                   child: Column(
                     children: [
                       const SizedBox(height: 5),
                       Row(
                         children: [
-                          const Text("Sender's Name:",
-                                  style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 12))
-                              .tr(),
+                          Text("Sender's Name:".tr(),
+                              style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 12,
+                                  color: Colors.white)),
                           const SizedBox(width: 10),
                           Text(
                             widget.courierModel.sendersName,
+                            style: const TextStyle(color: Colors.white70),
                           )
                         ],
                       ),
@@ -227,27 +249,33 @@ class _CourierOverviewState extends State<CourierOverview> {
                       ),
                       Row(
                         children: [
-                          const Text("Sender's Address:",
-                                  style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 12))
-                              .tr(),
+                          Text("Sender's Address:".tr(),
+                              style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 12,
+                                  color: Colors.white)),
                           const SizedBox(width: 10),
-                          Text(widget.courierModel.sendersAddress,
-                              style: const TextStyle(fontSize: 12))
+                          Expanded(
+                            child: Text(widget.courierModel.sendersAddress,
+                                style: const TextStyle(
+                                    fontSize: 12, color: Colors.white70)),
+                          )
                         ],
                       ),
                       const SizedBox(height: 5),
                       Row(
                         children: [
-                          const Text('Pick Up Address:',
-                                  style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 12))
-                              .tr(),
+                          Text('Pick Up Address:'.tr(),
+                              style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 12,
+                                  color: Colors.white)),
                           const SizedBox(width: 10),
-                          Text(widget.courierModel.sendersAddress,
-                              style: const TextStyle(fontSize: 12))
+                          Expanded(
+                            child: Text(widget.courierModel.sendersAddress,
+                                style: const TextStyle(
+                                    fontSize: 12, color: Colors.white70)),
+                          )
                         ],
                       ),
                       const SizedBox(height: 5),
@@ -257,20 +285,26 @@ class _CourierOverviewState extends State<CourierOverview> {
                 const SizedBox(
                   height: 20,
                 ),
-                Card(
-                  elevation: 0,
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.05),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.white10),
+                  ),
                   child: Column(
                     children: [
                       Row(
                         children: [
-                          const Text('Recipient Name:',
-                                  style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 12))
-                              .tr(),
+                          Text('Recipient Name:'.tr(),
+                              style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 12,
+                                  color: Colors.white)),
                           const SizedBox(width: 10),
                           Text(
                             widget.courierModel.recipientName,
+                            style: const TextStyle(color: Colors.white70),
                           ),
                         ],
                       ),
@@ -279,14 +313,17 @@ class _CourierOverviewState extends State<CourierOverview> {
                       ),
                       Row(
                         children: [
-                          const Text('Recipient Address:',
-                                  style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 12))
-                              .tr(),
+                          Text('Recipient Address:'.tr(),
+                              style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 12,
+                                  color: Colors.white)),
                           const SizedBox(width: 10),
-                          Text(widget.courierModel.recipientAddress,
-                              style: const TextStyle(fontSize: 12)),
+                          Expanded(
+                            child: Text(widget.courierModel.recipientAddress,
+                                style: const TextStyle(
+                                    fontSize: 12, color: Colors.white70)),
+                          ),
                         ],
                       ),
                       const SizedBox(
@@ -294,14 +331,17 @@ class _CourierOverviewState extends State<CourierOverview> {
                       ),
                       Row(
                         children: [
-                          const Text('Pick Up Address:',
-                                  style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 12))
-                              .tr(),
+                          Text('Pick Up Address:'.tr(),
+                              style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 12,
+                                  color: Colors.white)),
                           const SizedBox(width: 10),
-                          Text(widget.courierModel.recipientAddress,
-                              style: const TextStyle(fontSize: 12)),
+                          Expanded(
+                            child: Text(widget.courierModel.recipientAddress,
+                                style: const TextStyle(
+                                    fontSize: 12, color: Colors.white70)),
+                          ),
                         ],
                       ),
                     ],
@@ -310,30 +350,42 @@ class _CourierOverviewState extends State<CourierOverview> {
                 const SizedBox(
                   height: 20,
                 ),
-                Card(
-                  elevation: 0,
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.05),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.white10),
+                  ),
                   child: Column(
                     children: [
                       Row(
                         children: [
-                          const Text('Rider name:',
-                                  style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 12))
-                              .tr(),
+                          Text('Rider name:'.tr(),
+                              style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 12,
+                                  color: Colors.white)),
                           const SizedBox(
                             width: 10,
                           ),
-                          widget.courierModel.deliveryBoysName == ''
-                              ? const Text(
-                                      'Rider is yet to accept delivery please wait after 2 minutes',
-                                      style: TextStyle(fontSize: 10))
-                                  .tr()
-                              : deliveryBoysName != ''
-                                  ? Text(deliveryBoysName)
-                                  : Text(
-                                      widget.courierModel.deliveryBoysName,
-                                    ),
+                          Expanded(
+                            child: widget.courierModel.deliveryBoysName == ''
+                                ? Text(
+                                    'Rider is yet to accept delivery please wait after 2 minutes'
+                                        .tr(),
+                                    style: const TextStyle(
+                                        fontSize: 10, color: Colors.white54))
+                                : deliveryBoysName != ''
+                                    ? Text(deliveryBoysName,
+                                        style: const TextStyle(
+                                            color: Colors.white70))
+                                    : Text(
+                                        widget.courierModel.deliveryBoysName,
+                                        style: const TextStyle(
+                                            color: Colors.white70),
+                                      ),
+                          ),
                         ],
                       ),
                       const SizedBox(
@@ -341,21 +393,25 @@ class _CourierOverviewState extends State<CourierOverview> {
                       ),
                       Row(
                         children: [
-                          const Text('Rider phone:',
-                                  style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 12))
-                              .tr(),
+                          Text('Rider phone:'.tr(),
+                              style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 12,
+                                  color: Colors.white)),
                           const SizedBox(
                             width: 10,
                           ),
-                          widget.courierModel.deliveryBoysPhone == ''
-                              ? const Text('Rider is yet to accept delivery',
-                                      style: TextStyle(fontSize: 10))
-                                  .tr()
-                              : Text(
-                                  widget.courierModel.deliveryBoysPhone,
-                                ),
+                          Expanded(
+                            child: widget.courierModel.deliveryBoysPhone == ''
+                                ? Text('Rider is yet to accept delivery'.tr(),
+                                    style: const TextStyle(
+                                        fontSize: 10, color: Colors.white54))
+                                : Text(
+                                    widget.courierModel.deliveryBoysPhone,
+                                    style:
+                                        const TextStyle(color: Colors.white70),
+                                  ),
+                          ),
                         ],
                       ),
                       const SizedBox(
@@ -364,6 +420,10 @@ class _CourierOverviewState extends State<CourierOverview> {
                       widget.courierModel.deliveryBoysPhone == ''
                           ? Container()
                           : ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: kGold,
+                                foregroundColor: kBgTop,
+                              ),
                               onPressed: () async {
                                 final Uri launchUri = Uri(
                                   scheme: 'tel',
@@ -371,11 +431,10 @@ class _CourierOverviewState extends State<CourierOverview> {
                                 );
                                 await launchUrl(launchUri);
                               },
-                              child: const Text('Call Rider',
-                                      style: TextStyle(
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.bold))
-                                  .tr(),
+                              child: Text('Call Rider'.tr(),
+                                  style: const TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.bold)),
                             ),
                     ],
                   ),
@@ -383,22 +442,28 @@ class _CourierOverviewState extends State<CourierOverview> {
                 const SizedBox(
                   height: 20,
                 ),
-                Card(
-                  elevation: 0,
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.05),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.white10),
+                  ),
                   child: Column(
                     children: [
                       Row(
                         children: [
-                          const Text('Price:',
-                                  style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 12))
-                              .tr(),
+                          Text('Price:'.tr(),
+                              style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 12,
+                                  color: Colors.white)),
                           const SizedBox(
                             width: 10,
                           ),
                           Text(
                             '$getcurrencySymbol${widget.courierModel.price}',
+                            style: const TextStyle(color: kGold),
                           )
                         ],
                       ),
@@ -407,15 +472,16 @@ class _CourierOverviewState extends State<CourierOverview> {
                       ),
                       Row(
                         children: [
-                          const Text('Distance:',
-                                  style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 12))
-                              .tr(),
+                          Text('Distance:'.tr(),
+                              style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 12,
+                                  color: Colors.white)),
                           const SizedBox(
                             width: 10,
                           ),
-                          Text('${widget.courierModel.km.toString()}Km')
+                          Text('${widget.courierModel.km.toString()}Km',
+                              style: const TextStyle(color: Colors.white70))
                         ],
                       ),
                       const SizedBox(
@@ -423,16 +489,17 @@ class _CourierOverviewState extends State<CourierOverview> {
                       ),
                       Row(
                         children: [
-                          const Text('Weight:',
-                                  style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 12))
-                              .tr(),
+                          Text('Weight:'.tr(),
+                              style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 12,
+                                  color: Colors.white)),
                           const SizedBox(
                             width: 10,
                           ),
                           Text(
                             '${widget.courierModel.weight.toString()}Kg',
+                            style: const TextStyle(color: Colors.white70),
                           )
                         ],
                       ),
@@ -442,24 +509,30 @@ class _CourierOverviewState extends State<CourierOverview> {
                 const SizedBox(
                   height: 20,
                 ),
-                SizedBox(
-                  height: 40,
+                Container(
                   width: double.infinity,
-                  child: Card(
-                    elevation: 0,
-                    child: Row(
-                      children: [
-                        const Text('Parcel Description',
-                                style: TextStyle(
-                                    fontWeight: FontWeight.bold, fontSize: 12))
-                            .tr(),
-                        const SizedBox(
-                          width: 10,
-                        ),
-                        Text(widget.courierModel.parcelDescription,
-                            style: const TextStyle(fontSize: 12))
-                      ],
-                    ),
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.05),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.white10),
+                  ),
+                  child: Row(
+                    children: [
+                      Text('Parcel Description'.tr(),
+                          style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 12,
+                              color: Colors.white)),
+                      const SizedBox(
+                        width: 10,
+                      ),
+                      Expanded(
+                        child: Text(widget.courierModel.parcelDescription,
+                            style: const TextStyle(
+                                fontSize: 12, color: Colors.white70)),
+                      )
+                    ],
                   ),
                 ),
                 const SizedBox(
@@ -468,9 +541,8 @@ class _CourierOverviewState extends State<CourierOverview> {
                 widget.courierModel.deliveryBoysName == ''
                     ? ElevatedButton(
                         style: ElevatedButton.styleFrom(
-                            textStyle: const TextStyle(color: Colors.white),
-                            backgroundColor:
-                                const Color.fromARGB(255, 47, 37, 37)),
+                            backgroundColor: Colors.redAccent,
+                            foregroundColor: Colors.white),
                         onPressed: () {
                           FirebaseFirestore.instance
                               .collection('Courier')
@@ -480,9 +552,8 @@ class _CourierOverviewState extends State<CourierOverview> {
                             Navigator.of(context).pop();
                           });
                         },
-                        child: const Text('Cancel Delivery',
-                                style: TextStyle(color: Colors.white))
-                            .tr())
+                        child: Text('Cancel Delivery'.tr(),
+                            style: const TextStyle(color: Colors.white)))
                     : Container(),
               ],
             ),

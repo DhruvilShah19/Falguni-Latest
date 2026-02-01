@@ -37,10 +37,10 @@ class OrdersPreview extends StatefulWidget {
 }
 
 class _OrdersPreviewState extends State<OrdersPreview> {
-  // THEME COLORS (matching notifications page)
-  static const Color kPrimary = Color(0xFF2F2525); // Espresso
-  static const Color kDarkBg = Color(0xFF1C1515);
-  static const Color kGold = Color(0xFFC9A86A); // Premium gold
+  static const Color kPrimary =
+      Color(0xFFD4AF37); // Richer, traditional honey-gold
+  static const Color kDarkBg = Color(0xFF2B1B17); // Deep "Roasted Bean" brown
+  static const Color kGold = Color(0xFF5C4033); // Warm "Earth/Clay" brown
 
   String marketName = '';
   String marketAddress = '';

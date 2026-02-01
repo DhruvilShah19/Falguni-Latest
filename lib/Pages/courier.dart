@@ -18,8 +18,10 @@ class CourierPage extends StatefulWidget {
 }
 
 class _CourierPageState extends State<CourierPage> {
-  static const Color kPrimary = Color(0xFF2F2525);
-  static const Color kGold = Color(0xFFC9A86A);
+  static const Color kGold =
+      Color(0xFFD4AF37); // Richer, traditional honey-gold
+  static const Color kBgTop = Color(0xFF2B1B17); // Deep "Roasted Bean" brown
+  static const Color kBgMid = Color(0xFF5C4033); // Warm "Earth/Clay" brown
 
   DocumentReference? userRef;
   String userID = '';
@@ -57,7 +59,7 @@ class _CourierPageState extends State<CourierPage> {
       floatingActionButton: FloatingActionButton(
         backgroundColor: kGold,
         elevation: 6,
-        child: const Icon(Icons.add, color: kPrimary),
+        child: const Icon(Icons.add, color: kBgTop),
         onPressed: () {
           Navigator.push(
               context, MaterialPageRoute(builder: (_) => const AddCourier()));
@@ -80,11 +82,7 @@ class _CourierPageState extends State<CourierPage> {
       body: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
-            colors: [
-              Color(0xFF1C1515),
-              Color(0xFF2F2525),
-              Color(0xFF1C1515),
-            ],
+            colors: [kBgTop, kBgMid, kBgTop],
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
           ),
