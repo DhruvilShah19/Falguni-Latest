@@ -21,6 +21,7 @@ class ProductReturnDetail extends StatefulWidget {
 }
 
 class _ProductReturnDetailState extends State<ProductReturnDetail> {
+  static const Color kGold = Color(0xFFD4AF37);
   int returnDuration = 0;
   getReturnPolicy() {
     FirebaseFirestore.instance
@@ -139,7 +140,7 @@ class _ProductReturnDetailState extends State<ProductReturnDetail> {
               getExpiryBool(returnDuration) == false)
             Container(
               decoration: BoxDecoration(
-                  border: Border.all(color: Colors.grey),
+                  border: Border.all(color: kGold),
                   borderRadius: const BorderRadius.all(Radius.circular(12))),
               child: Padding(
                 padding: const EdgeInsets.all(5.0),
@@ -170,7 +171,7 @@ class _ProductReturnDetailState extends State<ProductReturnDetail> {
               getExpiryBool(returnDuration) == true)
             Container(
               decoration: BoxDecoration(
-                  border: Border.all(color: Colors.grey),
+                  border: Border.all(color: kGold),
                   borderRadius: const BorderRadius.all(Radius.circular(12))),
               child: Padding(
                 padding: const EdgeInsets.all(5.0),
@@ -185,7 +186,7 @@ class _ProductReturnDetailState extends State<ProductReturnDetail> {
           if (returnDuration != 0 && widget.orderModel.uid == null)
             Container(
               decoration: BoxDecoration(
-                  border: Border.all(color: Colors.grey),
+                  border: Border.all(color: kGold),
                   borderRadius: const BorderRadius.all(Radius.circular(12))),
               child: Padding(
                 padding: const EdgeInsets.all(5.0),
@@ -193,8 +194,8 @@ class _ProductReturnDetailState extends State<ProductReturnDetail> {
                   'Return policy of $returnDuration days',
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
-                  style:
-                      const TextStyle(fontSize: 10, fontWeight: FontWeight.w200),
+                  style: const TextStyle(
+                      fontSize: 10, fontWeight: FontWeight.w200),
                 ).tr(),
               ),
             ),

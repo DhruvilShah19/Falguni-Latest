@@ -18,40 +18,38 @@ class OrdersPage extends StatefulWidget {
 
 class _OrdersPageState extends State<OrdersPage>
     with SingleTickerProviderStateMixin {
-  static const Color kPrimary =
+  static const Color kGold =
       Color(0xFFD4AF37); // Richer, traditional honey-gold
-  static const Color kDarkBg = Color(0xFF2B1B17); // Deep "Roasted Bean" brown
-  static const Color kGold = Color(0xFF5C4033); // Warm "Earth/Clay" brown
-
+  static const Color kBgTop = Color(0xFF2B1B17); // Deep "Roasted Bean" brown
+  static const Color kBgMid = Color(0xFF5C4033); // Warm "Earth/Clay" brown
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(
       length: 5,
       child: Scaffold(
         extendBodyBehindAppBar: true,
-        backgroundColor: Colors.black,
+        backgroundColor: kBgTop,
 
         // 🌟 GLASS APPBAR
         appBar: AppBar(
           elevation: 0,
-          backgroundColor: Colors.black.withOpacity(0.15),
+          backgroundColor: kBgTop.withGreen(50).withOpacity(0.5),
           centerTitle: true,
           iconTheme: const IconThemeData(color: Colors.white),
-
-          flexibleSpace: ClipRRect(
+          flexibleSpace: ClipRect(
             child: BackdropFilter(
               filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-              child: Container(color: Colors.black.withOpacity(0.05)),
+              child: Container(color: Colors.transparent),
             ),
           ),
 
           title: Text(
-            "Orders".tr(),
+            "ORDERS".tr(),
             style: const TextStyle(
               color: Colors.white,
-              fontSize: 22,
+              fontSize: 20,
               fontWeight: FontWeight.w800,
-              letterSpacing: .5,
+              letterSpacing: 1.5,
             ),
           ),
 
@@ -60,58 +58,52 @@ class _OrdersPageState extends State<OrdersPage>
             preferredSize: const Size.fromHeight(65),
             child: Container(
               padding: const EdgeInsets.only(bottom: 12, left: 4, right: 4),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(16),
-                child: BackdropFilter(
-                  filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(vertical: 6),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.06),
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(
-                        color: Colors.white.withOpacity(0.12),
-                      ),
-                    ),
-                    child: TabBar(
-                      isScrollable: true,
-                      physics: const BouncingScrollPhysics(),
-                      labelPadding: const EdgeInsets.symmetric(horizontal: 18),
-
-                      labelColor: kPrimary,
-                      unselectedLabelColor: Colors.white70,
-
-                      labelStyle: const TextStyle(
-                        fontSize: 14.5,
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: .3,
-                      ),
-                      unselectedLabelStyle: const TextStyle(
-                        fontSize: 13.5,
-                        fontWeight: FontWeight.w500,
-                      ),
-
-                      // 🌟 GOLD CAPSULE INDICATOR
-                      indicator: RectangularIndicator(
-                        color: kPrimary.withOpacity(0.20),
-                        topLeftRadius: 12,
-                        topRightRadius: 12,
-                        bottomLeftRadius: 12,
-                        bottomRightRadius: 12,
-                        verticalPadding: 4,
-                        horizontalPadding: 14,
-                        paintingStyle: PaintingStyle.fill,
-                      ),
-
-                      tabs: [
-                        Tab(text: "All".tr()),
-                        Tab(text: "Received".tr()),
-                        Tab(text: "Processing".tr()),
-                        Tab(text: "Completed".tr()),
-                        Tab(text: "Cancelled".tr()),
-                      ],
-                    ),
+              child: Container(
+                padding: const EdgeInsets.symmetric(vertical: 6),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.06),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: kGold.withOpacity(0.3),
                   ),
+                ),
+                child: TabBar(
+                  isScrollable: true,
+                  physics: const BouncingScrollPhysics(),
+                  labelPadding: const EdgeInsets.symmetric(horizontal: 18),
+
+                  labelColor: kGold,
+                  unselectedLabelColor: Colors.white70,
+
+                  labelStyle: const TextStyle(
+                    fontSize: 14.5,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: .3,
+                  ),
+                  unselectedLabelStyle: const TextStyle(
+                    fontSize: 13.5,
+                    fontWeight: FontWeight.w500,
+                  ),
+
+                  // 🌟 GOLD CAPSULE INDICATOR
+                  indicator: RectangularIndicator(
+                    color: kGold.withOpacity(0.20),
+                    topLeftRadius: 12,
+                    topRightRadius: 12,
+                    bottomLeftRadius: 12,
+                    bottomRightRadius: 12,
+                    verticalPadding: 4,
+                    horizontalPadding: 14,
+                    paintingStyle: PaintingStyle.fill,
+                  ),
+
+                  tabs: [
+                    Tab(text: "All".tr()),
+                    Tab(text: "Received".tr()),
+                    Tab(text: "Processing".tr()),
+                    Tab(text: "Completed".tr()),
+                    Tab(text: "Cancelled".tr()),
+                  ],
                 ),
               ),
             ),
@@ -122,7 +114,7 @@ class _OrdersPageState extends State<OrdersPage>
         body: Container(
           decoration: const BoxDecoration(
             gradient: LinearGradient(
-              colors: [kDarkBg, kGold, kDarkBg],
+              colors: [kBgTop, kBgMid, kBgTop],
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
             ),

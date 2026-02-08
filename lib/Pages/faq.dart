@@ -1,6 +1,5 @@
 // ignore_for_file: prefer_const_constructors, prefer_const_literals_to_create_immutables
 
-import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
 
@@ -11,59 +10,12 @@ class FaqPage extends StatefulWidget {
   State<FaqPage> createState() => _FaqPageState();
 }
 
-class _FaqPageState extends State<FaqPage> with SingleTickerProviderStateMixin {
+class _FaqPageState extends State<FaqPage> {
   static const Color kPrimary = Color(0xFF2F2525);
-  static const Color kGold = Color(0xFFC9A86A);
-
-  late AnimationController _bgController;
-  late List<_Particle> _particles;
-
-  final int _particleCount = 30;
-
-  @override
-  void initState() {
-    super.initState();
-
-    _bgController =
-        AnimationController(vsync: this, duration: Duration(seconds: 22))
-          ..repeat();
-
-    _initParticles();
-
-    _bgController.addListener(() {
-      setState(() {
-        for (final p in _particles) {
-          p.x += p.vx;
-          p.y += p.vy;
-
-          if (p.x < 0 || p.x > 1) p.vx *= -1;
-          if (p.y < 0 || p.y > 1) p.vy *= -1;
-        }
-      });
-    });
-  }
-
-  void _initParticles() {
-    final rand = Random();
-    _particles = List.generate(_particleCount, (i) {
-      return _Particle(
-        x: rand.nextDouble(),
-        y: rand.nextDouble(),
-        vx: (rand.nextDouble() - 0.5) * 0.002,
-        vy: (rand.nextDouble() - 0.5) * 0.002,
-        radius: 3 + rand.nextDouble() * 3,
-        color: i.isEven
-            ? kPrimary.withOpacity(0.15)
-            : Colors.white.withOpacity(0.18),
-      );
-    });
-  }
-
-  @override
-  void dispose() {
-    _bgController.dispose();
-    super.dispose();
-  }
+  static const Color kGold =
+      Color(0xFFD4AF37); // Richer, traditional honey-gold
+  static const Color kBgTop = Color(0xFF2B1B17); // Deep "Roasted Bean" brown
+  static const Color kBgMid = Color(0xFF5C4033); // Warm "Earth/Clay" brown
 
   // -----------------------------------------------------
   // Build UI
@@ -72,15 +24,15 @@ class _FaqPageState extends State<FaqPage> with SingleTickerProviderStateMixin {
   Widget build(BuildContext context) {
     return Scaffold(
       extendBodyBehindAppBar: true,
-      backgroundColor: kPrimary,
+      backgroundColor: Colors.black,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        iconTheme: IconThemeData(color: Colors.white),
+        iconTheme: const IconThemeData(color: Colors.white),
         centerTitle: true,
         title: Text(
           "FAQ",
-          style: TextStyle(
+          style: const TextStyle(
             color: Colors.white,
             fontWeight: FontWeight.w600,
             letterSpacing: .5,
@@ -89,21 +41,12 @@ class _FaqPageState extends State<FaqPage> with SingleTickerProviderStateMixin {
       ),
       body: Stack(
         children: [
-          Positioned.fill(
-            child: CustomPaint(painter: _ParticlesPainter(_particles)),
-          ),
-          Positioned.fill(
-            child: Container(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    Color(0xFF1B1414),
-                    Color(0xFF2A2121),
-                    Color(0xFF1A1515),
-                  ],
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                ),
+          Container(
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                colors: [kBgTop, kBgMid, kBgTop],
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
               ),
             ),
           ),
@@ -124,14 +67,14 @@ class _FaqPageState extends State<FaqPage> with SingleTickerProviderStateMixin {
         children: [
           Text(
             "Frequently Asked Questions",
-            style: TextStyle(
+            style: const TextStyle(
               color: Colors.white,
               fontSize: 22,
               fontWeight: FontWeight.bold,
               letterSpacing: .3,
             ),
           ),
-          SizedBox(height: 14),
+          const SizedBox(height: 14),
           Text(
             "Find quick answers to common doubts and queries.",
             style: TextStyle(
@@ -140,7 +83,7 @@ class _FaqPageState extends State<FaqPage> with SingleTickerProviderStateMixin {
             ),
           ),
 
-          SizedBox(height: 28),
+          const SizedBox(height: 28),
 
           // FAQ ITEMS
           _faq(
@@ -168,7 +111,7 @@ class _FaqPageState extends State<FaqPage> with SingleTickerProviderStateMixin {
             "Local orders: 2–3 days. Outside Gujarat: 3–4 days. International orders: Based on destination shipping policies.",
           ),
 
-          SizedBox(height: 50),
+          const SizedBox(height: 50),
         ],
       ),
     );
@@ -204,19 +147,19 @@ class _PremiumFaqTileState extends State<PremiumFaqTile>
   bool expanded = false;
 
   static const Color kPrimary = Color(0xFF2F2525);
-  static const Color kGold = Color(0xFFC9A86A);
+  static const Color kGold = Color(0xFFD4AF37);
 
   @override
   Widget build(BuildContext context) {
     return AnimatedContainer(
-      duration: Duration(milliseconds: 260),
+      duration: const Duration(milliseconds: 260),
       curve: Curves.easeOut,
-      margin: EdgeInsets.only(bottom: 18),
-      padding: EdgeInsets.all(18),
+      margin: const EdgeInsets.only(bottom: 18),
+      padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         color: Colors.white.withOpacity(0.08),
         border: Border.all(
-          color: kGold.withOpacity(0.22),
+          color: kGold.withOpacity(0.3),
           width: 1.2,
         ),
         borderRadius: BorderRadius.circular(18),
@@ -224,7 +167,7 @@ class _PremiumFaqTileState extends State<PremiumFaqTile>
           BoxShadow(
             color: Colors.black.withOpacity(0.18),
             blurRadius: 16,
-            offset: Offset(0, 6),
+            offset: const Offset(0, 6),
           ),
         ],
       ),
@@ -238,7 +181,7 @@ class _PremiumFaqTileState extends State<PremiumFaqTile>
                 Expanded(
                   child: Text(
                     widget.question,
-                    style: TextStyle(
+                    style: const TextStyle(
                       color: Colors.white,
                       fontSize: 16.5,
                       fontWeight: FontWeight.w600,
@@ -255,9 +198,9 @@ class _PremiumFaqTileState extends State<PremiumFaqTile>
 
           // Expanded Answer
           AnimatedCrossFade(
-            firstChild: SizedBox.shrink(),
+            firstChild: const SizedBox.shrink(),
             secondChild: Padding(
-              padding: EdgeInsets.only(top: 12),
+              padding: const EdgeInsets.only(top: 12),
               child: Text(
                 widget.answer,
                 style: TextStyle(
@@ -269,47 +212,10 @@ class _PremiumFaqTileState extends State<PremiumFaqTile>
             ),
             crossFadeState:
                 expanded ? CrossFadeState.showSecond : CrossFadeState.showFirst,
-            duration: Duration(milliseconds: 260),
+            duration: const Duration(milliseconds: 260),
           ),
         ],
       ),
     );
   }
-}
-
-// -----------------------------------------------------
-// PARTICLE MODEL + PAINTER
-// -----------------------------------------------------
-class _Particle {
-  double x, y, vx, vy, radius;
-  Color color;
-
-  _Particle({
-    required this.x,
-    required this.y,
-    required this.vx,
-    required this.vy,
-    required this.radius,
-    required this.color,
-  });
-}
-
-class _ParticlesPainter extends CustomPainter {
-  final List<_Particle> particles;
-
-  _ParticlesPainter(this.particles);
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint();
-
-    for (final p in particles) {
-      paint.color = p.color;
-      canvas.drawCircle(
-          Offset(p.x * size.width, p.y * size.height), p.radius, paint);
-    }
-  }
-
-  @override
-  bool shouldRepaint(_) => true;
 }

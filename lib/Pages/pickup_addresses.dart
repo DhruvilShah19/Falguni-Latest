@@ -1,7 +1,11 @@
+// ignore_for_file: use_build_context_synchronously, prefer_const_constructors
+
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:shimmer/shimmer.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../Model/pickup_model.dart';
 
 class PickupAddressesPage extends StatefulWidget {
@@ -14,13 +18,15 @@ class PickupAddressesPage extends StatefulWidget {
 class _PickupAddressesPageState extends State<PickupAddressesPage> {
   // Design constants - matching cart & wallet pages
   static const Color kPrimary = Color(0xFF2F2525);
-  static const Color kGold = Color(0xFFC9A86A);
-  static const Color kBgTop = Color(0xFF1C1515);
-  static const Color kBgMid = Color(0xFF2F2525);
+  static const Color kGold =
+      Color(0xFFD4AF37); // Richer, traditional honey-gold
+  static const Color kBgTop = Color(0xFF2B1B17); // Deep "Roasted Bean" brown
+  static const Color kBgMid = Color(0xFF5C4033); // Warm "Earth/Clay" brown
 
   DocumentReference? userDetails;
   String id = '';
   String addressID = '';
+  final TextEditingController _phoneController = TextEditingController();
 
   Future<List<PickupModel>> getDeliveryAddresses() {
     return FirebaseFirestore.instance.collection('Pickup Addresses').get().then(
@@ -29,9 +35,78 @@ class _PickupAddressesPageState extends State<PickupAddressesPage> {
             .toList());
   }
 
+  Future<void> _launchPhone() async {
+    final Uri launchUri = Uri(scheme: 'tel', path: '+919825382002');
+    if (!await launchUrl(launchUri)) {
+      debugPrint('Could not launch phone');
+    }
+  }
+
+  Future<void> _launchSMS() async {
+    final Uri launchUri = Uri(scheme: 'sms', path: '+919825382002');
+    if (!await launchUrl(launchUri)) {
+      debugPrint('Could not launch sms');
+    }
+  }
+
+  Future<void> _launchEmail() async {
+    final Uri launchUri =
+        Uri(scheme: 'mailto', path: 'falgunigruhudhyog.sales@gmail.com');
+    if (!await launchUrl(launchUri)) {
+      debugPrint('Could not launch email');
+    }
+  }
+
+  Future<void> _launchWhatsApp() async {
+    var whatsappUrl =
+        "whatsapp://send?phone=+919328299680&text=Hello, I need assistance with pickup";
+    if (!await launchUrl(Uri.parse(whatsappUrl))) {
+      debugPrint('Could not launch whatsapp');
+    }
+  }
+
+  Future<void> _launchMap(num lat, num long) async {
+    final String googleMapsUrl =
+        "https://www.google.com/maps/search/?api=1&query=$lat,$long";
+    if (!await launchUrl(Uri.parse(googleMapsUrl),
+        mode: LaunchMode.externalApplication)) {
+      debugPrint('Could not launch maps');
+    }
+  }
+
   @override
   void initState() {
     super.initState();
+    _fetchUserPhone();
+  }
+
+  void _fetchUserPhone() {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .get()
+          .then((doc) {
+        if (doc.exists && mounted) {
+          setState(() {
+            _phoneController.text = doc.data()?['phone'] ?? '';
+          });
+        }
+      });
+    }
+  }
+
+  Future<void> _updateUserPhone() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null && _phoneController.text.isNotEmpty) {
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .update({
+        'phone': _phoneController.text,
+      });
+    }
   }
 
   @override
@@ -64,100 +139,11 @@ class _PickupAddressesPageState extends State<PickupAddressesPage> {
         child: SafeArea(
           child: SingleChildScrollView(
             child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Header Section with Rich Content
+                // Phone Number Input Section
                 Container(
-                  margin: const EdgeInsets.all(16.0),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.08),
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(
-                      color: kGold.withOpacity(0.2),
-                    ),
-                  ),
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Container(
-                            decoration: BoxDecoration(
-                              color: kGold,
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            padding: const EdgeInsets.all(10),
-                            child: const Icon(
-                              Icons.location_on_outlined,
-                              color: kBgMid,
-                              size: 22,
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const Text(
-                                  'Select Your Pickup Location',
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.w700,
-                                    fontSize: 16,
-                                    color: Colors.white,
-                                  ),
-                                ).tr(),
-                                const SizedBox(height: 4),
-                                const Text(
-                                  'Choose from our available locations',
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.w400,
-                                    fontSize: 12,
-                                    color: Colors.white70,
-                                  ),
-                                ).tr(),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 14),
-                      Container(
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.05),
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(
-                            color: Colors.white.withOpacity(0.08),
-                          ),
-                        ),
-                        padding: const EdgeInsets.all(12),
-                        child: Row(
-                          children: [
-                            Icon(
-                              Icons.info_outline,
-                              color: kGold.withOpacity(0.7),
-                              size: 20,
-                            ),
-                            const SizedBox(width: 10),
-                            Expanded(
-                              child: const Text(
-                                'Tap on any location below to see details and confirm your selection',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: Colors.white70,
-                                  height: 1.4,
-                                ),
-                              ).tr(),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 8),
-                // Parking Information & Contact Section
-                Container(
-                  margin: const EdgeInsets.symmetric(horizontal: 16.0),
+                  margin: const EdgeInsets.fromLTRB(16, 16, 16, 8),
                   decoration: BoxDecoration(
                     color: Colors.white.withOpacity(0.06),
                     borderRadius: BorderRadius.circular(14),
@@ -169,17 +155,13 @@ class _PickupAddressesPageState extends State<PickupAddressesPage> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Parking Tips Section
                       Row(
                         children: [
-                          const Icon(
-                            Icons.local_parking_outlined,
-                            color: kGold,
-                            size: 20,
-                          ),
+                          const Icon(Icons.phone_iphone,
+                              color: kGold, size: 20),
                           const SizedBox(width: 10),
                           const Text(
-                            'Parking & Pickup Tips',
+                            'Contact Details',
                             style: TextStyle(
                               fontWeight: FontWeight.w600,
                               fontSize: 13,
@@ -189,118 +171,44 @@ class _PickupAddressesPageState extends State<PickupAddressesPage> {
                         ],
                       ),
                       const SizedBox(height: 10),
-                      // Tips List
-                      _buildTipRow(
-                          '🅿️', 'Free parking available at all locations'),
-                      _buildTipRow('⏱️', 'Pickup usually takes 5-10 minutes'),
-                      _buildTipRow(
-                          '🔔', 'We\'ll notify you when order is ready'),
-                      _buildTipRow('⏰', 'Operating hours: 10 AM - 10 PM daily'),
-                      const SizedBox(height: 12),
-                      // Divider
-                      Container(
-                        height: 0.5,
-                        color: Colors.white.withOpacity(0.1),
-                      ),
-                      const SizedBox(height: 12),
-                      // Contact Section
-                      Row(
-                        children: [
-                          const Icon(
-                            Icons.storefront_outlined,
-                            color: kGold,
-                            size: 20,
+                      TextFormField(
+                        controller: _phoneController,
+                        keyboardType: TextInputType.phone,
+                        style: const TextStyle(color: Colors.white),
+                        decoration: InputDecoration(
+                          hintText: 'Enter your phone number',
+                          hintStyle: const TextStyle(color: Colors.white38),
+                          filled: true,
+                          fillColor: Colors.white.withOpacity(0.05),
+                          contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 10),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide: BorderSide.none,
                           ),
-                          const SizedBox(width: 10),
-                          const Text(
-                            'Available Stores',
-                            style: TextStyle(
-                              fontWeight: FontWeight.w600,
-                              fontSize: 13,
-                              color: Colors.white,
-                            ),
-                          ).tr(),
-                        ],
-                      ),
-                      const SizedBox(height: 10),
-                      // Available Stores Info
-                      Container(
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.04),
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(
-                            color: kGold.withOpacity(0.2),
-                          ),
-                        ),
-                        padding: const EdgeInsets.all(10),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              children: [
-                                Icon(
-                                  Icons.info_outline,
-                                  color: kGold.withOpacity(0.7),
-                                  size: 16,
-                                ),
-                                const SizedBox(width: 8),
-                                Expanded(
-                                  child: const Text(
-                                    'Select any store below to pickup your order',
-                                    style: TextStyle(
-                                      fontSize: 11,
-                                      color: Colors.white70,
-                                    ),
-                                  ).tr(),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 10),
-                            Row(
-                              children: [
-                                const Icon(
-                                  Icons.phone,
-                                  color: kGold,
-                                  size: 16,
-                                ),
-                                const SizedBox(width: 8),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      const Text(
-                                        'Need help? Contact us',
-                                        style: TextStyle(
-                                          fontSize: 10,
-                                          color: Colors.white70,
-                                        ),
-                                      ).tr(),
-                                      const SizedBox(height: 2),
-                                      GestureDetector(
-                                        onTap: () {
-                                          // Open phone dialer
-                                          // launchUrl(Uri(scheme: 'tel', path: '+1234567890'));
-                                        },
-                                        child: const Text(
-                                          '+1 (800) 123-4567',
-                                          style: TextStyle(
-                                            fontSize: 12,
-                                            color: kGold,
-                                            fontWeight: FontWeight.w600,
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
+                          prefixIcon: const Icon(Icons.call,
+                              color: Colors.white54, size: 18),
                         ),
                       ),
+                      const SizedBox(height: 8),
+                      const Text(
+                        'Admin may contact you on this number for order updates.',
+                        style: TextStyle(fontSize: 10, color: Colors.white54),
+                      ).tr(),
                     ],
                   ),
+                ),
+                const SizedBox(height: 20),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Text(
+                    "Select Pickup Outlet",
+                    style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 0.5),
+                  ).tr(),
                 ),
                 const SizedBox(height: 12),
                 FutureBuilder<List<PickupModel>>(
@@ -386,7 +294,8 @@ class _PickupAddressesPageState extends State<PickupAddressesPage> {
                                     child: Material(
                                       color: Colors.transparent,
                                       child: InkWell(
-                                        onTap: () {
+                                        onTap: () async {
+                                          await _updateUserPhone();
                                           Navigator.pop(
                                               context, addressModel.address);
                                         },
@@ -587,34 +496,78 @@ class _PickupAddressesPageState extends State<PickupAddressesPage> {
                                                       ],
                                                     ),
                                                     const SizedBox(height: 12),
-                                                    Container(
-                                                      decoration: BoxDecoration(
-                                                        color: Colors.white
-                                                            .withOpacity(0.05),
-                                                        borderRadius:
-                                                            BorderRadius
-                                                                .circular(6),
-                                                        border: Border.all(
-                                                          color: Colors.white
-                                                              .withOpacity(
-                                                                  0.08),
+                                                    Row(
+                                                      children: [
+                                                        Expanded(
+                                                          child: OutlinedButton(
+                                                            onPressed: () {
+                                                              _launchMap(
+                                                                  addressModel
+                                                                      .lat,
+                                                                  addressModel
+                                                                      .long);
+                                                            },
+                                                            style:
+                                                                OutlinedButton
+                                                                    .styleFrom(
+                                                              side: BorderSide(
+                                                                  color: kGold
+                                                                      .withOpacity(
+                                                                          0.5)),
+                                                              shape:
+                                                                  RoundedRectangleBorder(
+                                                                borderRadius:
+                                                                    BorderRadius
+                                                                        .circular(
+                                                                            8),
+                                                              ),
+                                                            ),
+                                                            child: Text(
+                                                              "Get Directions",
+                                                              style: TextStyle(
+                                                                  color: kGold,
+                                                                  fontSize: 12),
+                                                            ).tr(),
+                                                          ),
                                                         ),
-                                                      ),
-                                                      padding: const EdgeInsets
-                                                          .symmetric(
-                                                        horizontal: 8,
-                                                        vertical: 6,
-                                                      ),
-                                                      child: Text(
-                                                        'Tap to select',
-                                                        style: TextStyle(
-                                                          fontSize: 11,
-                                                          color: kGold
-                                                              .withOpacity(0.7),
-                                                          fontWeight:
-                                                              FontWeight.w600,
+                                                        const SizedBox(
+                                                            width: 10),
+                                                        Expanded(
+                                                          child: ElevatedButton(
+                                                            onPressed:
+                                                                () async {
+                                                              await _updateUserPhone();
+                                                              Navigator.pop(
+                                                                  context,
+                                                                  addressModel
+                                                                      .address);
+                                                            },
+                                                            style:
+                                                                ElevatedButton
+                                                                    .styleFrom(
+                                                              backgroundColor:
+                                                                  kGold,
+                                                              shape:
+                                                                  RoundedRectangleBorder(
+                                                                borderRadius:
+                                                                    BorderRadius
+                                                                        .circular(
+                                                                            8),
+                                                              ),
+                                                            ),
+                                                            child: Text(
+                                                              "Select Outlet",
+                                                              style: TextStyle(
+                                                                  color: Colors
+                                                                      .black,
+                                                                  fontWeight:
+                                                                      FontWeight
+                                                                          .bold,
+                                                                  fontSize: 12),
+                                                            ).tr(),
+                                                          ),
                                                         ),
-                                                      ).tr(),
+                                                      ],
                                                     ),
                                                   ],
                                                 ),
@@ -655,6 +608,89 @@ class _PickupAddressesPageState extends State<PickupAddressesPage> {
                         );
                       }
                     }),
+                const SizedBox(height: 24),
+                // Parking Information & Contact Section (Moved to Bottom)
+                Container(
+                  margin: const EdgeInsets.symmetric(horizontal: 16.0),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.06),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(
+                      color: kGold.withOpacity(0.15),
+                    ),
+                  ),
+                  padding: const EdgeInsets.all(14),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Parking Tips Section
+                      Row(
+                        children: [
+                          const Icon(
+                            Icons.local_parking_outlined,
+                            color: kGold,
+                            size: 20,
+                          ),
+                          const SizedBox(width: 10),
+                          const Text(
+                            'Parking & Pickup Tips',
+                            style: TextStyle(
+                              fontWeight: FontWeight.w600,
+                              fontSize: 13,
+                              color: Colors.white,
+                            ),
+                          ).tr(),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
+                      // Tips List
+                      _buildTipRow(
+                          '🅿️', 'Free parking available at all locations'),
+                      _buildTipRow('⏱️', 'Pickup usually takes 5-10 minutes'),
+                      _buildTipRow(
+                          '🔔', 'We\'ll notify you when order is ready'),
+                      _buildTipRow('⏰', 'Operating hours: 10 AM - 10 PM daily'),
+                      const SizedBox(height: 12),
+                      // Divider
+                      Container(
+                        height: 0.5,
+                        color: Colors.white.withOpacity(0.1),
+                      ),
+                      const SizedBox(height: 12),
+                      // Contact Section
+                      Row(
+                        children: [
+                          const Icon(
+                            Icons.support_agent_outlined,
+                            color: kGold,
+                            size: 20,
+                          ),
+                          const SizedBox(width: 10),
+                          const Text(
+                            'Need Assistance?',
+                            style: TextStyle(
+                              fontWeight: FontWeight.w600,
+                              fontSize: 13,
+                              color: Colors.white,
+                            ),
+                          ).tr(),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          _buildContactOption(Icons.call, 'Call', _launchPhone),
+                          _buildContactOption(Icons.message, 'SMS', _launchSMS),
+                          _buildContactOption(
+                              Icons.email, 'Email', _launchEmail),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 12),
+                _buildWhatsAppCard(),
                 const SizedBox(height: 20),
               ],
             ),
@@ -687,6 +723,89 @@ class _PickupAddressesPageState extends State<PickupAddressesPage> {
             ).tr(),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildContactOption(IconData icon, String label, VoidCallback onTap) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(8),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          color: kGold.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: kGold.withOpacity(0.3)),
+        ),
+        child: Column(
+          children: [
+            Icon(icon, color: kGold, size: 20),
+            const SizedBox(height: 4),
+            Text(label,
+                    style: const TextStyle(color: Colors.white, fontSize: 10))
+                .tr(),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildWhatsAppCard() {
+    return InkWell(
+      onTap: () {
+        _launchWhatsApp();
+      },
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 16.0),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: Colors.greenAccent.withOpacity(0.7)),
+          color: Colors.white.withOpacity(0.03),
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.greenAccent.withOpacity(0.1),
+              ),
+              child: Image.asset(
+                'assets/image/whatsapp.png',
+                height: 24,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Get updates on WhatsApp'.tr(),
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 14.5,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    'Say hi and we\'ll help you with your pickup.'.tr(),
+                    style: TextStyle(
+                      color: Colors.white.withOpacity(0.7),
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 8),
+            Icon(Icons.chevron_right_rounded,
+                color: Colors.white.withOpacity(0.9)),
+          ],
+        ),
       ),
     );
   }

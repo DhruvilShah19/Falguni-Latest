@@ -1,4 +1,4 @@
-// ignore_for_file: deprecated_member_use
+// ignore_for_file: deprecated_member_use, avoid_unnecessary_containers
 
 import 'package:animations/animations.dart';
 import 'package:badges/badges.dart';
@@ -44,6 +44,10 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
   String currentMarketID = '';
   num price = 0;
   num deliveryFee = 0;
+
+  static const Color kGold = Color(0xFFD4AF37);
+  static const Color kBgTop = Color(0xFF2B1B17);
+  static const Color kBgMid = Color(0xFF5C4033);
 
   getMarketDetails() {
     FirebaseFirestore.instance
@@ -327,758 +331,785 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: CustomScrollView(slivers: [
-        SliverAppBar(
-          iconTheme: Theme.of(context).iconTheme,
-          titleTextStyle: TextStyle(color: Theme.of(context).indicatorColor),
-          backgroundColor: Theme.of(context).colorScheme.background,
-          snap: true,
-          elevation: 0,
-          centerTitle: true,
-          pinned: true,
-          floating: true,
-          automaticallyImplyLeading: false,
-          leading: Align(
-              alignment: Alignment.topLeft,
-              child: Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: InkWell(
-                  onTap: () {
-                    Navigator.of(context).pop();
-                  },
-                  child: Container(
-                    height: 40,
-                    width: 40,
-                    decoration: const BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: Color.fromARGB(255, 236, 230, 230)),
-                    child: const Icon(
-                      Icons.cancel,
-                      color: Colors.black,
-                    ),
-                  ),
-                ),
-              )),
-          actions: [
-            Align(
-                alignment: Alignment.topRight,
-                child: InkWell(
-                  onTap: () {
-                    if (userRef == null) {
-                      Navigator.of(context).pushNamed('/login');
-                    } else {
-                      Navigator.of(context).pushNamed('/cart');
-                    }
-                  },
-                  child: Padding(
-                    padding: const EdgeInsets.all(8.0),
+      backgroundColor: kBgTop,
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [kBgTop, kBgMid, kBgTop],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+          ),
+        ),
+        child: CustomScrollView(slivers: [
+          SliverAppBar(
+            iconTheme: Theme.of(context).iconTheme,
+            titleTextStyle: TextStyle(color: Theme.of(context).indicatorColor),
+            backgroundColor: kBgTop,
+            snap: true,
+            elevation: 0,
+            centerTitle: true,
+            pinned: true,
+            floating: true,
+            automaticallyImplyLeading: false,
+            leading: Align(
+                alignment: Alignment.topLeft,
+                child: Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: InkWell(
+                    onTap: () {
+                      Navigator.of(context).pop();
+                    },
                     child: Container(
                       height: 40,
                       width: 40,
                       decoration: const BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: Color.fromARGB(255, 236, 230, 230)),
-                      child: Center(
-                        child: Badge(
-                          badgeStyle: const BadgeStyle(
-                            badgeColor: Colors.orange,
-                          ),
-                          badgeContent: Text(cartQuantity.toString(),
-                              style: const TextStyle(color: Colors.white)),
-                          child: const Icon(
-                            Icons.shopping_cart,
-                            color: Colors.black,
+                          shape: BoxShape.circle, color: Colors.black26),
+                      child: const Icon(
+                        Icons.cancel,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                )),
+            actions: [
+              Align(
+                  alignment: Alignment.topRight,
+                  child: InkWell(
+                    onTap: () {
+                      if (userRef == null) {
+                        Navigator.of(context).pushNamed('/login');
+                      } else {
+                        Navigator.of(context).pushNamed('/cart');
+                      }
+                    },
+                    child: Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: Container(
+                        height: 40,
+                        width: 40,
+                        decoration: const BoxDecoration(
+                            shape: BoxShape.circle, color: Colors.black26),
+                        child: Center(
+                          child: Badge(
+                            badgeStyle: const BadgeStyle(
+                              badgeColor: kGold,
+                            ),
+                            badgeContent: Text(cartQuantity.toString(),
+                                style: const TextStyle(
+                                    color: Colors.white, fontSize: 10)),
+                            child: const Icon(
+                              Icons.shopping_cart,
+                              color: Colors.white,
+                            ),
                           ),
                         ),
                       ),
                     ),
-                  ),
-                ))
-          ],
-          expandedHeight: MediaQuery.of(context).size.height / 2.5,
-          flexibleSpace: FlexibleSpaceBar(
-            background: SizedBox(
-                height: MediaQuery.of(context).size.height / 2.5,
-                width: double.infinity,
-                child: Container(
-                  decoration: const BoxDecoration(
-                    borderRadius: BorderRadius.only(
-                        bottomRight: Radius.circular(40.0),
-                        bottomLeft: Radius.circular(40.0)),
-                  ),
-                  child: CarouselSlider(
-                    // indicatorBgPadding: 10,
-                    // dotSize: 5,
-                    // animationDuration: const Duration(seconds: 10),
-                    // showIndicator: true,
-                    items: [
-                      widget.productsModel.image1 == ''
-                          ? Image.network(
-                              'https://cdn.iconscout.com/icon/free/png-256/gallery-187-902099.png',
-                              fit: BoxFit.cover)
-                          : Image.network(widget.productsModel.image1),
-                      widget.productsModel.image2 == ''
-                          ? Image.network(
-                              'https://cdn.iconscout.com/icon/free/png-256/gallery-187-902099.png',
-                              fit: BoxFit.cover)
-                          : Image.network(widget.productsModel.image2),
-                      widget.productsModel.image3 == ''
-                          ? Image.network(
-                              'https://cdn.iconscout.com/icon/free/png-256/gallery-187-902099.png',
-                              fit: BoxFit.cover)
-                          : Image.network(widget.productsModel.image3),
-                    ],
-                    options: CarouselOptions(),
-                  ),
-                )),
+                  ))
+            ],
+            expandedHeight: MediaQuery.of(context).size.height / 2.5,
+            flexibleSpace: FlexibleSpaceBar(
+              background: SizedBox(
+                  height: MediaQuery.of(context).size.height / 2.5,
+                  width: double.infinity,
+                  child: Container(
+                    decoration: const BoxDecoration(
+                      borderRadius: BorderRadius.only(
+                          bottomRight: Radius.circular(40.0),
+                          bottomLeft: Radius.circular(40.0)),
+                    ),
+                    child: CarouselSlider(
+                      // indicatorBgPadding: 10,
+                      // dotSize: 5,
+                      // animationDuration: const Duration(seconds: 10),
+                      // showIndicator: true,
+                      items: [
+                        widget.productsModel.image1 == ''
+                            ? Image.network(
+                                'https://cdn.iconscout.com/icon/free/png-256/gallery-187-902099.png',
+                                fit: BoxFit.cover)
+                            : Image.network(widget.productsModel.image1),
+                        widget.productsModel.image2 == ''
+                            ? Image.network(
+                                'https://cdn.iconscout.com/icon/free/png-256/gallery-187-902099.png',
+                                fit: BoxFit.cover)
+                            : Image.network(widget.productsModel.image2),
+                        widget.productsModel.image3 == ''
+                            ? Image.network(
+                                'https://cdn.iconscout.com/icon/free/png-256/gallery-187-902099.png',
+                                fit: BoxFit.cover)
+                            : Image.network(widget.productsModel.image3),
+                      ],
+                      options: CarouselOptions(),
+                    ),
+                  )),
+            ),
           ),
-        ),
-        SliverFillRemaining(
-          child: Column(
-            children: [
-              // const SizedBox(height: 10),
-              // Row(
-              //   children: [
-              //     Padding(
-              //       padding: const EdgeInsets.all(8.0),
-              //       child: SizedBox(
-              //         width: double.infinity,
-              //         child: Text(widget.productsModel.name,
-              //             maxLines: 2,
-              //             style: const TextStyle(
-              //                 fontSize: 20, fontWeight: FontWeight.bold),
-              //             textAlign: TextAlign.start,
-              //             overflow: TextOverflow.ellipsis),
-              //       ),
-              //     ),
-              //     IconButton(
-              //       icon: const Icon(Icons.share),
-              //       onPressed: () {
-              //         _shareProduct();
-              //       },
-              //     ),
-              //   ],
-              // ),
-              // const SizedBox(height: 10),
-              const SizedBox(height: 10),
-              Row(
-                mainAxisAlignment: MainAxisAlignment
-                    .spaceBetween, // Aligns items within the row
-                children: [
-                  Expanded(
-                    // Expands the child to take available space
-                    child: Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: Text(
-                        widget.productsModel.name,
-                        maxLines: 2,
-                        style: const TextStyle(
-                            fontSize: 20, fontWeight: FontWeight.bold),
-                        textAlign: TextAlign.start,
-                        overflow: TextOverflow.ellipsis,
+          SliverToBoxAdapter(
+            child: Column(
+              children: [
+                const SizedBox(height: 10),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment
+                      .spaceBetween, // Aligns items within the row
+                  children: [
+                    Expanded(
+                      // Expands the child to take available space
+                      child: Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: Text(
+                          widget.productsModel.name,
+                          maxLines: 2,
+                          style: const TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white),
+                          textAlign: TextAlign.start,
+                          overflow: TextOverflow.ellipsis,
+                        ),
                       ),
                     ),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.share),
-                    onPressed: () {
-                      _shareProduct(widget.productsModel.name,
-                          widget.productsModel.description);
-                    },
-                  ),
-                ],
-              ),
-              const SizedBox(height: 10),
-
-              Padding(
-                padding: const EdgeInsets.only(left: 8),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                        '${widget.currency}${Formatter().converter(widget.productsModel.unitPrice1.toDouble())}',
-                        style: const TextStyle(
-                            fontSize: 20, fontWeight: FontWeight.bold)),
-                    Padding(
-                      padding: const EdgeInsets.only(right: 8),
-                      child: Row(
-                        children: [
-                          RatingBarIndicator(
-                            rating: totalUser == 0
-                                ? 0
-                                : getRatingAndReview().toDouble(),
-                            itemBuilder: (context, index) => const Icon(
-                              Icons.star,
-                              color: Colors.orange,
-                            ),
-                            itemCount: 5,
-                            itemSize: 20,
-                            direction: Axis.horizontal,
-                          ),
-                          const SizedBox(width: 5),
-                          Text('(${totalUser.toString()})',
-                              style: const TextStyle(color: Colors.grey)),
-                        ],
-                      ),
+                    IconButton(
+                      icon: const Icon(Icons.share, color: Colors.white),
+                      onPressed: () {
+                        _shareProduct(widget.productsModel.name,
+                            widget.productsModel.description);
+                      },
                     ),
                   ],
                 ),
-              ),
-              const SizedBox(height: 5),
-              if (widget.productsModel.percantageDiscount != 0)
+                const SizedBox(height: 10),
                 Padding(
                   padding: const EdgeInsets.only(left: 8),
                   child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        '${widget.currency}${Formatter().converter(widget.productsModel.unitOldPrice1.toDouble())}',
-                        style: const TextStyle(
-                            fontSize: 16,
-                            color: Colors.grey,
-                            decoration: TextDecoration.lineThrough),
-                      ),
-                      const SizedBox(width: 5),
-                      Text(
-                        '-${widget.productsModel.percantageDiscount.toString()}',
-                        style: const TextStyle(
-                          fontSize: 16,
-                          color: Colors.orange,
+                          '${widget.currency}${Formatter().converter(widget.productsModel.unitPrice1.toDouble())}',
+                          style: const TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                              color: kGold)),
+                      Padding(
+                        padding: const EdgeInsets.only(right: 8),
+                        child: Row(
+                          children: [
+                            RatingBarIndicator(
+                              rating: totalUser == 0
+                                  ? 0
+                                  : getRatingAndReview().toDouble(),
+                              itemBuilder: (context, index) => const Icon(
+                                Icons.star,
+                                color: kGold,
+                              ),
+                              itemCount: 5,
+                              itemSize: 20,
+                              direction: Axis.horizontal,
+                            ),
+                            const SizedBox(width: 5),
+                            Text('(${totalUser.toString()})',
+                                style: const TextStyle(color: Colors.white54)),
+                          ],
                         ),
                       ),
                     ],
                   ),
                 ),
-              const SizedBox(height: 10),
-              Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: SizedBox(
-                    width: double.infinity,
-                    child: Text(widget.productsModel.description)),
-              ),
-              const SizedBox(height: 10),
-              Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: SizedBox(
-                  width: double.infinity,
-                  child: const Text('Other Variants',
-                          style: TextStyle(
-                              fontSize: 18, fontWeight: FontWeight.bold))
-                      .tr(),
-                ),
-              ),
-              InkWell(
-                onTap: () {
-                  setState(() {
-                    selectedUnit = 'unit1';
-                    quantity = 1;
-                  });
-                },
-                child: Padding(
-                  padding: const EdgeInsets.only(left: 10, right: 10),
-                  child: Padding(
-                    padding: const EdgeInsets.all(8.0),
+                const SizedBox(height: 5),
+                if (widget.productsModel.percantageDiscount != 0)
+                  Padding(
+                    padding: const EdgeInsets.only(left: 8),
                     child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Row(
-                            children: [
-                              selectedUnit == 'unit1'
-                                  ? const Row(
-                                      children: [
-                                        Icon(
-                                          Icons.check_outlined,
-                                        ),
-                                        SizedBox(
-                                          width: 10,
-                                        ),
-                                      ],
-                                    )
-                                  : Container(),
-                              Text(widget.productsModel.unitname1,
-                                  style: const TextStyle(
-                                    color: Colors.grey,
-                                    fontSize: 18,
-                                  )),
-                            ],
+                      children: [
+                        Text(
+                          '${widget.currency}${Formatter().converter(widget.productsModel.unitOldPrice1.toDouble())}',
+                          style: const TextStyle(
+                              fontSize: 16,
+                              color: Colors.white54,
+                              decoration: TextDecoration.lineThrough),
+                        ),
+                        const SizedBox(width: 5),
+                        Text(
+                          '-${widget.productsModel.percantageDiscount.toString()}',
+                          style: const TextStyle(
+                            fontSize: 16,
+                            color: kGold,
                           ),
-                          Row(children: [
-                            Text(
-                                '${widget.currency}${Formatter().converter(widget.productsModel.unitPrice1.toDouble())}',
-                                style: const TextStyle(
-                                    fontSize: 18, fontWeight: FontWeight.bold)),
-                            const SizedBox(width: 5),
-                            if (widget.productsModel.percantageDiscount != 0)
-                              Text(
-                                '${widget.currency}${Formatter().converter(widget.productsModel.unitOldPrice1.toDouble())}',
-                                style: const TextStyle(
-                                    fontSize: 15,
-                                    color: Colors.grey,
-                                    decoration: TextDecoration.lineThrough),
-                              ),
-                          ])
-                        ]),
+                        ),
+                      ],
+                    ),
+                  ),
+                const SizedBox(height: 10),
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: SizedBox(
+                      width: double.infinity,
+                      child: Text(widget.productsModel.description,
+                          style: const TextStyle(color: Colors.white70))),
+                ),
+                const SizedBox(height: 10),
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: SizedBox(
+                    width: double.infinity,
+                    child: const Text('Other Variants',
+                            style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white))
+                        .tr(),
                   ),
                 ),
-              ),
-              widget.productsModel.unitname2 == ''
-                  ? Container()
-                  : InkWell(
-                      onTap: () {
-                        setState(() {
-                          selectedUnit = 'unit2';
-                          quantity = 1;
-                        });
-                      },
-                      child: Padding(
-                        padding: const EdgeInsets.only(left: 10, right: 10),
-                        child: Padding(
-                          padding: const EdgeInsets.all(8.0),
-                          child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Row(
-                                  children: [
-                                    selectedUnit == 'unit2'
-                                        ? const Row(
-                                            children: [
-                                              Icon(
-                                                Icons.check_outlined,
-                                              ),
-                                              SizedBox(
-                                                width: 10,
-                                              ),
-                                            ],
-                                          )
-                                        : Container(),
-                                    Text(widget.productsModel.unitname2,
-                                        style: const TextStyle(
-                                          color: Colors.grey,
-                                          fontSize: 18,
-                                        )),
-                                  ],
-                                ),
-                                Row(children: [
-                                  Text(
-                                      '${widget.currency}${Formatter().converter(widget.productsModel.unitPrice2.toDouble())}',
-                                      style: const TextStyle(
-                                          fontSize: 18,
-                                          fontWeight: FontWeight.bold)),
-                                  const SizedBox(width: 5),
-                                  if (widget.productsModel.percantageDiscount !=
-                                      0)
-                                    Text(
-                                      '${widget.currency}${Formatter().converter(widget.productsModel.unitOldPrice2.toDouble())}',
-                                      style: const TextStyle(
-                                          fontSize: 15,
-                                          color: Colors.grey,
-                                          decoration:
-                                              TextDecoration.lineThrough),
-                                    ),
-                                ])
-                              ]),
-                        ),
-                      ),
-                    ),
-              widget.productsModel.unitname3 == ''
-                  ? Container()
-                  : InkWell(
-                      onTap: () {
-                        setState(() {
-                          selectedUnit = 'unit3';
-                          quantity = 1;
-                        });
-                      },
-                      child: Padding(
-                        padding: const EdgeInsets.only(left: 10, right: 10),
-                        child: Padding(
-                          padding: const EdgeInsets.all(8.0),
-                          child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Row(
-                                  children: [
-                                    selectedUnit == 'unit3'
-                                        ? const Row(
-                                            children: [
-                                              Icon(
-                                                Icons.check_outlined,
-                                              ),
-                                              SizedBox(
-                                                width: 10,
-                                              ),
-                                            ],
-                                          )
-                                        : Container(),
-                                    Text(widget.productsModel.unitname3,
-                                        style: const TextStyle(
-                                          color: Colors.grey,
-                                          fontSize: 18,
-                                        )),
-                                  ],
-                                ),
-                                Row(children: [
-                                  Text(
-                                      '${widget.currency}${Formatter().converter(widget.productsModel.unitPrice3.toDouble())}',
-                                      style: const TextStyle(
-                                          fontSize: 18,
-                                          fontWeight: FontWeight.bold)),
-                                  const SizedBox(width: 5),
-                                  if (widget.productsModel.percantageDiscount !=
-                                      0)
-                                    Text(
-                                      '${widget.currency}${Formatter().converter(widget.productsModel.unitOldPrice3.toDouble())}',
-                                      style: const TextStyle(
-                                          fontSize: 15,
-                                          color: Colors.grey,
-                                          decoration:
-                                              TextDecoration.lineThrough),
-                                    ),
-                                ])
-                              ]),
-                        ),
-                      ),
-                    ),
-              widget.productsModel.unitname4 == ''
-                  ? Container()
-                  : InkWell(
-                      onTap: () {
-                        setState(() {
-                          selectedUnit = 'unit4';
-                          quantity = 1;
-                        });
-                      },
-                      child: Padding(
-                        padding: const EdgeInsets.only(left: 10, right: 10),
-                        child: Padding(
-                          padding: const EdgeInsets.all(8.0),
-                          child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Row(
-                                  children: [
-                                    selectedUnit == 'unit4'
-                                        ? const Row(
-                                            children: [
-                                              Icon(
-                                                Icons.check_outlined,
-                                              ),
-                                              SizedBox(
-                                                width: 10,
-                                              ),
-                                            ],
-                                          )
-                                        : Container(),
-                                    Text(widget.productsModel.unitname4,
-                                        style: const TextStyle(
-                                          color: Colors.grey,
-                                          fontSize: 18,
-                                        )),
-                                  ],
-                                ),
-                                Row(children: [
-                                  Text(
-                                      '${widget.currency}${Formatter().converter(widget.productsModel.unitPrice4.toDouble())}',
-                                      style: const TextStyle(
-                                          fontSize: 18,
-                                          fontWeight: FontWeight.bold)),
-                                  const SizedBox(width: 5),
-                                  if (widget.productsModel.percantageDiscount !=
-                                      0)
-                                    Text(
-                                      '${widget.currency}${Formatter().converter(widget.productsModel.unitOldPrice4.toDouble())}',
-                                      style: const TextStyle(
-                                          fontSize: 15,
-                                          color: Colors.grey,
-                                          decoration:
-                                              TextDecoration.lineThrough),
-                                    ),
-                                ])
-                              ]),
-                        ),
-                      ),
-                    ),
-              widget.productsModel.unitname5 == ''
-                  ? Container()
-                  : InkWell(
-                      onTap: () {
-                        setState(() {
-                          selectedUnit = 'unit5';
-                          quantity = 1;
-                        });
-                      },
-                      child: Padding(
-                        padding: const EdgeInsets.only(left: 10, right: 10),
-                        child: Padding(
-                          padding: const EdgeInsets.all(8.0),
-                          child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Row(
-                                  children: [
-                                    selectedUnit == 'unit5'
-                                        ? const Row(
-                                            children: [
-                                              Icon(
-                                                Icons.check_outlined,
-                                              ),
-                                              SizedBox(
-                                                width: 10,
-                                              ),
-                                            ],
-                                          )
-                                        : Container(),
-                                    Text(widget.productsModel.unitname5,
-                                        style: const TextStyle(
-                                          color: Colors.grey,
-                                          fontSize: 18,
-                                        )),
-                                  ],
-                                ),
-                                Row(children: [
-                                  Text(
-                                      '${widget.currency}${Formatter().converter(widget.productsModel.unitPrice5.toDouble())}',
-                                      style: const TextStyle(
-                                          fontSize: 18,
-                                          fontWeight: FontWeight.bold)),
-                                  const SizedBox(width: 5),
-                                  if (widget.productsModel.percantageDiscount !=
-                                      0)
-                                    Text(
-                                      '${widget.currency}${Formatter().converter(widget.productsModel.unitOldPrice5.toDouble())}',
-                                      style: const TextStyle(
-                                          fontSize: 15,
-                                          color: Colors.grey,
-                                          decoration:
-                                              TextDecoration.lineThrough),
-                                    ),
-                                ])
-                              ]),
-                        ),
-                      ),
-                    ),
-              widget.productsModel.unitname6 == ''
-                  ? Container()
-                  : InkWell(
-                      onTap: () {
-                        setState(() {
-                          quantity = 1;
-                          selectedUnit = 'unit6';
-                        });
-                      },
-                      child: Padding(
-                        padding: const EdgeInsets.only(left: 10, right: 10),
-                        child: Padding(
-                          padding: const EdgeInsets.all(8.0),
-                          child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Row(
-                                  children: [
-                                    selectedUnit == 'unit6'
-                                        ? const Row(
-                                            children: [
-                                              Icon(
-                                                Icons.check_outlined,
-                                              ),
-                                              SizedBox(
-                                                width: 10,
-                                              ),
-                                            ],
-                                          )
-                                        : Container(),
-                                    Text(widget.productsModel.unitname6,
-                                        style: const TextStyle(
-                                          color: Colors.grey,
-                                          fontSize: 18,
-                                        )),
-                                  ],
-                                ),
-                                Row(children: [
-                                  Text(
-                                      '${widget.currency}${Formatter().converter(widget.productsModel.unitPrice6.toDouble())}',
-                                      style: const TextStyle(
-                                          fontSize: 18,
-                                          fontWeight: FontWeight.bold)),
-                                  const SizedBox(width: 5),
-                                  if (widget.productsModel.percantageDiscount !=
-                                      0)
-                                    Text(
-                                      '${widget.currency}${Formatter().converter(widget.productsModel.unitOldPrice6.toDouble())}',
-                                      style: const TextStyle(
-                                          fontSize: 15,
-                                          color: Colors.grey,
-                                          decoration:
-                                              TextDecoration.lineThrough),
-                                    ),
-                                ])
-                              ]),
-                        ),
-                      ),
-                    ),
-              widget.productsModel.unitname7 == ''
-                  ? Container()
-                  : InkWell(
-                      onTap: () {
-                        setState(() {
-                          selectedUnit = 'unit7';
-                          quantity = 1;
-                        });
-                      },
-                      child: Padding(
-                        padding: const EdgeInsets.only(left: 10, right: 10),
-                        child: Padding(
-                          padding: const EdgeInsets.all(8.0),
-                          child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Row(
-                                  children: [
-                                    selectedUnit == 'unit7'
-                                        ? const Row(
-                                            children: [
-                                              Icon(
-                                                Icons.check_outlined,
-                                              ),
-                                              SizedBox(
-                                                width: 10,
-                                              ),
-                                            ],
-                                          )
-                                        : Container(),
-                                    Text(widget.productsModel.unitname7,
-                                        style: const TextStyle(
-                                          color: Colors.grey,
-                                          fontSize: 18,
-                                        )),
-                                  ],
-                                ),
-                                Row(children: [
-                                  Text(
-                                      '${widget.currency}${Formatter().converter(widget.productsModel.unitPrice7.toDouble())}',
-                                      style: const TextStyle(
-                                          fontSize: 18,
-                                          fontWeight: FontWeight.bold)),
-                                  const SizedBox(width: 5),
-                                  if (widget.productsModel.percantageDiscount !=
-                                      0)
-                                    Text(
-                                      '${widget.currency}${Formatter().converter(widget.productsModel.unitOldPrice7.toDouble())}',
-                                      style: const TextStyle(
-                                          fontSize: 15,
-                                          color: Colors.grey,
-                                          decoration:
-                                              TextDecoration.lineThrough),
-                                    ),
-                                ])
-                              ]),
-                        ),
-                      ),
-                    ),
-              const SizedBox(
-                height: 20,
-              ),
-              ratingStatus == false
-                  ? const SizedBox()
-                  : Padding(
+                InkWell(
+                  onTap: () {
+                    setState(() {
+                      selectedUnit = 'unit1';
+                      quantity = 1;
+                    });
+                  },
+                  child: Padding(
+                    padding: const EdgeInsets.only(left: 10, right: 10),
+                    child: Padding(
                       padding: const EdgeInsets.all(8.0),
-                      child: SizedBox(
-                        width: double.infinity,
-                        child: const Text('Product Reviews',
-                                style: TextStyle(
-                                    fontSize: 18, fontWeight: FontWeight.bold))
-                            .tr(),
-                      ),
-                    ),
-              FutureBuilder<List<RatingModel>>(
-                  future: getRating(),
-                  builder: (context, snapshot) {
-                    if (snapshot.hasData) {
-                      return ListView.builder(
-                          shrinkWrap: true,
-                          physics: const BouncingScrollPhysics(),
-                          itemCount: snapshot.data!.length,
-                          itemBuilder: (context, index) {
-                            RatingModel ratingModel = snapshot.data![index];
-                            return Column(
+                      child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Row(
                               children: [
-                                ListTile(
-                                  leading: ratingModel.profilePicture == ''
-                                      ? ClipOval(
-                                          child: CachedNetworkImage(
-                                          height: 35,
-                                          fit: BoxFit.cover,
-                                          width: 35,
-                                          imageUrl:
-                                              "https://eitrawmaterials.eu/wp-content/uploads/2016/09/person-icon.png",
-                                          placeholder: (context, url) =>
-                                              const SpinKitRing(
-                                            color: Colors.orange,
-                                            size: 30,
-                                            lineWidth: 3,
+                                selectedUnit == 'unit1'
+                                    ? const Row(
+                                        children: [
+                                          Icon(
+                                            Icons.check_outlined,
+                                            color: kGold,
                                           ),
-                                          errorWidget: (context, url, error) =>
-                                              const Icon(Icons.error),
-                                        ))
-                                      : ClipOval(
-                                          child: CachedNetworkImage(
+                                          SizedBox(
+                                            width: 10,
+                                          ),
+                                        ],
+                                      )
+                                    : Container(),
+                                Text(widget.productsModel.unitname1,
+                                    style: const TextStyle(
+                                      color: Colors.white70,
+                                      fontSize: 18,
+                                    )),
+                              ],
+                            ),
+                            Row(children: [
+                              Text(
+                                  '${widget.currency}${Formatter().converter(widget.productsModel.unitPrice1.toDouble())}',
+                                  style: const TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.white)),
+                              const SizedBox(width: 5),
+                              if (widget.productsModel.percantageDiscount != 0)
+                                Text(
+                                  '${widget.currency}${Formatter().converter(widget.productsModel.unitOldPrice1.toDouble())}',
+                                  style: const TextStyle(
+                                      fontSize: 15,
+                                      color: Colors.white54,
+                                      decoration: TextDecoration.lineThrough),
+                                ),
+                            ])
+                          ]),
+                    ),
+                  ),
+                ),
+                widget.productsModel.unitname2 == ''
+                    ? Container()
+                    : InkWell(
+                        onTap: () {
+                          setState(() {
+                            selectedUnit = 'unit2';
+                            quantity = 1;
+                          });
+                        },
+                        child: Padding(
+                          padding: const EdgeInsets.only(left: 10, right: 10),
+                          child: Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Row(
+                                    children: [
+                                      selectedUnit == 'unit2'
+                                          ? const Row(
+                                              children: [
+                                                Icon(
+                                                  Icons.check_outlined,
+                                                  color: kGold,
+                                                ),
+                                                SizedBox(
+                                                  width: 10,
+                                                ),
+                                              ],
+                                            )
+                                          : Container(),
+                                      Text(widget.productsModel.unitname2,
+                                          style: const TextStyle(
+                                            color: Colors.white70,
+                                            fontSize: 18,
+                                          )),
+                                    ],
+                                  ),
+                                  Row(children: [
+                                    Text(
+                                        '${widget.currency}${Formatter().converter(widget.productsModel.unitPrice2.toDouble())}',
+                                        style: const TextStyle(
+                                            fontSize: 18,
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.white)),
+                                    const SizedBox(width: 5),
+                                    if (widget
+                                            .productsModel.percantageDiscount !=
+                                        0)
+                                      Text(
+                                        '${widget.currency}${Formatter().converter(widget.productsModel.unitOldPrice2.toDouble())}',
+                                        style: const TextStyle(
+                                            fontSize: 15,
+                                            color: Colors.white54,
+                                            decoration:
+                                                TextDecoration.lineThrough),
+                                      ),
+                                  ])
+                                ]),
+                          ),
+                        ),
+                      ),
+                widget.productsModel.unitname3 == ''
+                    ? Container()
+                    : InkWell(
+                        onTap: () {
+                          setState(() {
+                            selectedUnit = 'unit3';
+                            quantity = 1;
+                          });
+                        },
+                        child: Padding(
+                          padding: const EdgeInsets.only(left: 10, right: 10),
+                          child: Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Row(
+                                    children: [
+                                      selectedUnit == 'unit3'
+                                          ? const Row(
+                                              children: [
+                                                Icon(
+                                                  Icons.check_outlined,
+                                                  color: kGold,
+                                                ),
+                                                SizedBox(
+                                                  width: 10,
+                                                ),
+                                              ],
+                                            )
+                                          : Container(),
+                                      Text(widget.productsModel.unitname3,
+                                          style: const TextStyle(
+                                            color: Colors.white70,
+                                            fontSize: 18,
+                                          )),
+                                    ],
+                                  ),
+                                  Row(children: [
+                                    Text(
+                                        '${widget.currency}${Formatter().converter(widget.productsModel.unitPrice3.toDouble())}',
+                                        style: const TextStyle(
+                                            fontSize: 18,
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.white)),
+                                    const SizedBox(width: 5),
+                                    if (widget
+                                            .productsModel.percantageDiscount !=
+                                        0)
+                                      Text(
+                                        '${widget.currency}${Formatter().converter(widget.productsModel.unitOldPrice3.toDouble())}',
+                                        style: const TextStyle(
+                                            fontSize: 15,
+                                            color: Colors.white54,
+                                            decoration:
+                                                TextDecoration.lineThrough),
+                                      ),
+                                  ])
+                                ]),
+                          ),
+                        ),
+                      ),
+                widget.productsModel.unitname4 == ''
+                    ? Container()
+                    : InkWell(
+                        onTap: () {
+                          setState(() {
+                            selectedUnit = 'unit4';
+                            quantity = 1;
+                          });
+                        },
+                        child: Padding(
+                          padding: const EdgeInsets.only(left: 10, right: 10),
+                          child: Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Row(
+                                    children: [
+                                      selectedUnit == 'unit4'
+                                          ? const Row(
+                                              children: [
+                                                Icon(
+                                                  Icons.check_outlined,
+                                                  color: kGold,
+                                                ),
+                                                SizedBox(
+                                                  width: 10,
+                                                ),
+                                              ],
+                                            )
+                                          : Container(),
+                                      Text(widget.productsModel.unitname4,
+                                          style: const TextStyle(
+                                            color: Colors.white70,
+                                            fontSize: 18,
+                                          )),
+                                    ],
+                                  ),
+                                  Row(children: [
+                                    Text(
+                                        '${widget.currency}${Formatter().converter(widget.productsModel.unitPrice4.toDouble())}',
+                                        style: const TextStyle(
+                                            fontSize: 18,
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.white)),
+                                    const SizedBox(width: 5),
+                                    if (widget
+                                            .productsModel.percantageDiscount !=
+                                        0)
+                                      Text(
+                                        '${widget.currency}${Formatter().converter(widget.productsModel.unitOldPrice4.toDouble())}',
+                                        style: const TextStyle(
+                                            fontSize: 15,
+                                            color: Colors.white54,
+                                            decoration:
+                                                TextDecoration.lineThrough),
+                                      ),
+                                  ])
+                                ]),
+                          ),
+                        ),
+                      ),
+                widget.productsModel.unitname5 == ''
+                    ? Container()
+                    : InkWell(
+                        onTap: () {
+                          setState(() {
+                            selectedUnit = 'unit5';
+                            quantity = 1;
+                          });
+                        },
+                        child: Padding(
+                          padding: const EdgeInsets.only(left: 10, right: 10),
+                          child: Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Row(
+                                    children: [
+                                      selectedUnit == 'unit5'
+                                          ? const Row(
+                                              children: [
+                                                Icon(
+                                                  Icons.check_outlined,
+                                                  color: kGold,
+                                                ),
+                                                SizedBox(
+                                                  width: 10,
+                                                ),
+                                              ],
+                                            )
+                                          : Container(),
+                                      Text(widget.productsModel.unitname5,
+                                          style: const TextStyle(
+                                            color: Colors.white70,
+                                            fontSize: 18,
+                                          )),
+                                    ],
+                                  ),
+                                  Row(children: [
+                                    Text(
+                                        '${widget.currency}${Formatter().converter(widget.productsModel.unitPrice5.toDouble())}',
+                                        style: const TextStyle(
+                                            fontSize: 18,
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.white)),
+                                    const SizedBox(width: 5),
+                                    if (widget
+                                            .productsModel.percantageDiscount !=
+                                        0)
+                                      Text(
+                                        '${widget.currency}${Formatter().converter(widget.productsModel.unitOldPrice5.toDouble())}',
+                                        style: const TextStyle(
+                                            fontSize: 15,
+                                            color: Colors.white54,
+                                            decoration:
+                                                TextDecoration.lineThrough),
+                                      ),
+                                  ])
+                                ]),
+                          ),
+                        ),
+                      ),
+                widget.productsModel.unitname6 == ''
+                    ? Container()
+                    : InkWell(
+                        onTap: () {
+                          setState(() {
+                            quantity = 1;
+                            selectedUnit = 'unit6';
+                          });
+                        },
+                        child: Padding(
+                          padding: const EdgeInsets.only(left: 10, right: 10),
+                          child: Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Row(
+                                    children: [
+                                      selectedUnit == 'unit6'
+                                          ? const Row(
+                                              children: [
+                                                Icon(
+                                                  Icons.check_outlined,
+                                                  color: kGold,
+                                                ),
+                                                SizedBox(
+                                                  width: 10,
+                                                ),
+                                              ],
+                                            )
+                                          : Container(),
+                                      Text(widget.productsModel.unitname6,
+                                          style: const TextStyle(
+                                            color: Colors.white70,
+                                            fontSize: 18,
+                                          )),
+                                    ],
+                                  ),
+                                  Row(children: [
+                                    Text(
+                                        '${widget.currency}${Formatter().converter(widget.productsModel.unitPrice6.toDouble())}',
+                                        style: const TextStyle(
+                                            fontSize: 18,
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.white)),
+                                    const SizedBox(width: 5),
+                                    if (widget
+                                            .productsModel.percantageDiscount !=
+                                        0)
+                                      Text(
+                                        '${widget.currency}${Formatter().converter(widget.productsModel.unitOldPrice6.toDouble())}',
+                                        style: const TextStyle(
+                                            fontSize: 15,
+                                            color: Colors.white54,
+                                            decoration:
+                                                TextDecoration.lineThrough),
+                                      ),
+                                  ])
+                                ]),
+                          ),
+                        ),
+                      ),
+                widget.productsModel.unitname7 == ''
+                    ? Container()
+                    : InkWell(
+                        onTap: () {
+                          setState(() {
+                            selectedUnit = 'unit7';
+                            quantity = 1;
+                          });
+                        },
+                        child: Padding(
+                          padding: const EdgeInsets.only(left: 10, right: 10),
+                          child: Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Row(
+                                    children: [
+                                      selectedUnit == 'unit7'
+                                          ? const Row(
+                                              children: [
+                                                Icon(
+                                                  Icons.check_outlined,
+                                                  color: kGold,
+                                                ),
+                                                SizedBox(
+                                                  width: 10,
+                                                ),
+                                              ],
+                                            )
+                                          : Container(),
+                                      Text(widget.productsModel.unitname7,
+                                          style: const TextStyle(
+                                            color: Colors.white70,
+                                            fontSize: 18,
+                                          )),
+                                    ],
+                                  ),
+                                  Row(children: [
+                                    Text(
+                                        '${widget.currency}${Formatter().converter(widget.productsModel.unitPrice7.toDouble())}',
+                                        style: const TextStyle(
+                                            fontSize: 18,
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.white)),
+                                    const SizedBox(width: 5),
+                                    if (widget
+                                            .productsModel.percantageDiscount !=
+                                        0)
+                                      Text(
+                                        '${widget.currency}${Formatter().converter(widget.productsModel.unitOldPrice7.toDouble())}',
+                                        style: const TextStyle(
+                                            fontSize: 15,
+                                            color: Colors.white54,
+                                            decoration:
+                                                TextDecoration.lineThrough),
+                                      ),
+                                  ])
+                                ]),
+                          ),
+                        ),
+                      ),
+                const SizedBox(
+                  height: 20,
+                ),
+                ratingStatus == false
+                    ? const SizedBox()
+                    : Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: SizedBox(
+                          width: double.infinity,
+                          child: const Text('Product Reviews',
+                                  style: TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.white))
+                              .tr(),
+                        ),
+                      ),
+                FutureBuilder<List<RatingModel>>(
+                    future: getRating(),
+                    builder: (context, snapshot) {
+                      if (snapshot.hasData) {
+                        return ListView.builder(
+                            shrinkWrap: true,
+                            physics: const BouncingScrollPhysics(),
+                            itemCount: snapshot.data!.length,
+                            itemBuilder: (context, index) {
+                              RatingModel ratingModel = snapshot.data![index];
+                              return Column(
+                                children: [
+                                  ListTile(
+                                    leading: ratingModel.profilePicture == ''
+                                        ? ClipOval(
+                                            child: CachedNetworkImage(
                                             height: 35,
                                             fit: BoxFit.cover,
                                             width: 35,
                                             imageUrl:
-                                                ratingModel.profilePicture,
+                                                "https://eitrawmaterials.eu/wp-content/uploads/2016/09/person-icon.png",
                                             placeholder: (context, url) =>
-                                                const SpinKitRing(
+                                                const SpinKitFadingCircle(
                                               color: Colors.orange,
                                               size: 30,
-                                              lineWidth: 3,
                                             ),
                                             errorWidget:
                                                 (context, url, error) =>
                                                     const Icon(Icons.error),
+                                          ))
+                                        : ClipOval(
+                                            child: CachedNetworkImage(
+                                              height: 35,
+                                              fit: BoxFit.cover,
+                                              width: 35,
+                                              imageUrl:
+                                                  ratingModel.profilePicture,
+                                              placeholder: (context, url) =>
+                                                  const SpinKitFadingCircle(
+                                                color: Colors.orange,
+                                                size: 30,
+                                              ),
+                                              errorWidget:
+                                                  (context, url, error) =>
+                                                      const Icon(Icons.error),
+                                            ),
                                           ),
-                                        ),
-                                  title: Text(ratingModel.fullname),
-                                  subtitle: RatingBarIndicator(
-                                    rating: ratingModel.rating.toDouble(),
-                                    itemBuilder: (context, index) => const Icon(
-                                      Icons.star,
-                                      color: Colors.orange,
+                                    title: Text(ratingModel.fullname,
+                                        style: const TextStyle(
+                                            color: Colors.white)),
+                                    subtitle: RatingBarIndicator(
+                                      rating: ratingModel.rating.toDouble(),
+                                      itemBuilder: (context, index) =>
+                                          const Icon(
+                                        Icons.star,
+                                        color: kGold,
+                                      ),
+                                      itemCount: 5,
+                                      itemSize: 15,
+                                      direction: Axis.horizontal,
                                     ),
-                                    itemCount: 5,
-                                    itemSize: 15,
-                                    direction: Axis.horizontal,
+                                    trailing: Text(ratingModel.timeCreated,
+                                        style: const TextStyle(
+                                            color: Colors.white54)),
                                   ),
-                                  trailing: Text(ratingModel.timeCreated),
-                                ),
-                                Padding(
-                                  padding: const EdgeInsets.only(
-                                      left: 20, right: 20),
-                                  child: Container(
-                                    alignment: Alignment.centerLeft,
-                                    child: Text(
-                                      ratingModel.review,
-                                      textAlign: TextAlign.left,
+                                  Padding(
+                                    padding: const EdgeInsets.only(
+                                        left: 20, right: 20),
+                                    child: Container(
+                                      alignment: Alignment.centerLeft,
+                                      child: Text(
+                                        ratingModel.review,
+                                        textAlign: TextAlign.left,
+                                        style: const TextStyle(
+                                            color: Colors.white70),
+                                      ),
                                     ),
                                   ),
-                                ),
-                              ],
-                            );
-                          });
-                    } else {
-                      return const Center(child: CircularProgressIndicator());
-                    }
-                  }),
-              const SizedBox(
-                height: 120,
-              )
-            ],
-          ),
-        )
-      ]),
-      bottomSheet: SizedBox(
+                                ],
+                              );
+                            });
+                      } else {
+                        return const Center(child: CircularProgressIndicator());
+                      }
+                    }),
+                const SizedBox(
+                  height: 120,
+                )
+              ],
+            ),
+          )
+        ]),
+      ),
+      bottomSheet: Container(
           height: 120,
           width: double.infinity,
-          child: Card(
+          color: kBgTop,
+          child: Container(
             child: Column(children: [
               Padding(
                 padding: const EdgeInsets.all(8.0),
@@ -1087,7 +1118,9 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
                     children: [
                       const Text('Quantity',
                               style: TextStyle(
-                                  fontWeight: FontWeight.bold, fontSize: 18))
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 18,
+                                  color: Colors.white))
                           .tr(),
                       Row(children: [
                         InkWell(
@@ -1105,11 +1138,14 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
                                 });
                               }
                             },
-                            child: const Icon(Icons.remove, size: 25)),
+                            child: const Icon(Icons.remove,
+                                size: 25, color: Colors.white)),
                         const SizedBox(width: 20),
                         Text(quantity.toString(),
                             style: const TextStyle(
-                                fontWeight: FontWeight.bold, fontSize: 18)),
+                                fontWeight: FontWeight.bold,
+                                fontSize: 18,
+                                color: Colors.white)),
                         const SizedBox(width: 20),
                         InkWell(
                             onTap: () {
@@ -1128,7 +1164,8 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
                                 });
                               }
                             },
-                            child: const Icon(Icons.add, size: 25)),
+                            child: const Icon(Icons.add,
+                                size: 25, color: Colors.white)),
                       ])
                     ]),
               ),
@@ -1156,7 +1193,7 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
                                 }
                               },
                               child: const Icon(Icons.favorite,
-                                  color: Colors.orange, size: 30))
+                                  color: kGold, size: 30))
                           : InkWell(
                               onTap: () {
                                 if (userRef == null) {
@@ -1240,13 +1277,13 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
                                 }
                               },
                               child: const Icon(Icons.favorite,
-                                  color: Colors.grey, size: 30)),
+                                  color: Colors.white54, size: 30)),
                       widget.productsModel.quantity == 0
                           ? SizedBox(
                               width: MediaQuery.of(context).size.width / 2,
                               child: ElevatedButton(
                                   style: ElevatedButton.styleFrom(
-                                      backgroundColor: Colors.orange),
+                                      backgroundColor: kGold),
                                   onPressed: null,
                                   child: const Text('Sold Out')),
                             )
@@ -1254,7 +1291,7 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
                               width: MediaQuery.of(context).size.width / 1.2,
                               child: ElevatedButton(
                                   style: ElevatedButton.styleFrom(
-                                      backgroundColor: Colors.orange),
+                                      backgroundColor: kGold),
                                   onPressed: () {
                                     if (userRef == null) {
                                       Navigator.of(context)
@@ -1467,7 +1504,11 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
                                       }
                                     }
                                   },
-                                  child: const Text('Add To Cart').tr()))
+                                  child: const Text('Add To Cart',
+                                          style: TextStyle(
+                                              color: kBgTop,
+                                              fontWeight: FontWeight.bold))
+                                      .tr()))
                     ]),
               )
             ]),

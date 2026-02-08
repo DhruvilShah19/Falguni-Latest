@@ -1,4 +1,4 @@
-// ignore_for_file: deprecated_member_use, unused_import
+// ignore_for_file: deprecated_member_use, unused_import, prefer_const_constructors, prefer_const_literals_to_create_immutables
 
 import 'dart:ui';
 import 'dart:math';
@@ -19,49 +19,25 @@ class CouponPage extends StatefulWidget {
   State<CouponPage> createState() => _CouponPageState();
 }
 
-class _CouponPageState extends State<CouponPage>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _bgController;
+class _CouponPageState extends State<CouponPage> {
+  static const Color kPrimary = Color(0xFF2F2525);
+  static const Color kGold =
+      Color(0xFFD4AF37); // Richer, traditional honey-gold
+  static const Color kBgTop = Color(0xFF2B1B17); // Deep "Roasted Bean" brown
+  static const Color kBgMid = Color(0xFF5C4033); // Warm "Earth/Clay" brown
+
   late ConfettiController _confetti;
 
   @override
   void initState() {
     super.initState();
-
-    _bgController =
-        AnimationController(vsync: this, duration: const Duration(seconds: 18))
-          ..repeat();
-
     _confetti = ConfettiController(duration: const Duration(milliseconds: 800));
   }
 
   @override
   void dispose() {
-    _bgController.dispose();
     _confetti.dispose();
     super.dispose();
-  }
-
-  // Minimal premium parallax background
-  Widget premiumBackground() {
-    return AnimatedBuilder(
-      animation: _bgController,
-      builder: (_, __) {
-        return Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment(_bgController.value * 2 - 1, -1),
-              end: Alignment(1, _bgController.value * 2 - 1),
-              colors: const [
-                Color(0xFF1C1515),
-                Color(0xFF2F2525),
-                Color(0xFF1C1515),
-              ],
-            ),
-          ),
-        );
-      },
-    );
   }
 
   Stream<List<CouponModel>> getCoupons() {
@@ -87,10 +63,10 @@ class _CouponPageState extends State<CouponPage>
             height: 220,
             padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 18),
             decoration: BoxDecoration(
-              color: const Color(0xFF2F2525).withOpacity(0.28),
+              color: Colors.white.withOpacity(0.05),
               borderRadius: BorderRadius.circular(22),
               border: Border.all(
-                color: const Color(0xFFC9A86A).withOpacity(0.16),
+                color: kGold.withOpacity(0.3),
                 width: 1.2,
               ),
               boxShadow: [
@@ -109,7 +85,7 @@ class _CouponPageState extends State<CouponPage>
                   coupon.title ?? "Special Offer",
                   style: const TextStyle(
                     fontSize: 20,
-                    color: Color(0xFFF6F3EF),
+                    color: Colors.white,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -126,16 +102,16 @@ class _CouponPageState extends State<CouponPage>
                         fontSize: 70,
                         fontWeight: FontWeight.bold,
                         height: 0.9,
-                        color: Color(0xFFF6F3EF),
+                        color: Colors.white,
                       ),
                     ),
-                    const Padding(
+                    Padding(
                       padding: EdgeInsets.only(bottom: 12),
                       child: Text(
                         "% OFF",
                         style: TextStyle(
                           fontSize: 22,
-                          color: Color(0xFFD4C29A),
+                          color: kGold,
                           fontWeight: FontWeight.w500,
                         ),
                       ),
@@ -161,7 +137,7 @@ class _CouponPageState extends State<CouponPage>
                       });
                     },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFFC9A86A),
+                      backgroundColor: kGold,
                       foregroundColor: Colors.black,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(40),
@@ -189,13 +165,13 @@ class _CouponPageState extends State<CouponPage>
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(Icons.local_offer_rounded,
-              size: 110, color: Colors.brown.withOpacity(0.3)),
+              size: 110, color: Colors.white.withOpacity(0.1)),
           const SizedBox(height: 10),
           Text(
             "No Coupons Yet",
             style: TextStyle(
                 fontSize: 18,
-                color: Colors.brown.withOpacity(0.7),
+                color: Colors.white38,
                 fontWeight: FontWeight.w500),
           )
         ],
@@ -221,7 +197,15 @@ class _CouponPageState extends State<CouponPage>
       ),
       body: Stack(
         children: [
-          premiumBackground(),
+          Container(
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                colors: [kBgTop, kBgMid, kBgTop],
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+              ),
+            ),
+          ),
           Align(
             alignment: Alignment.topCenter,
             child: ConfettiWidget(
@@ -231,11 +215,11 @@ class _CouponPageState extends State<CouponPage>
               numberOfParticles: 10,
               maxBlastForce: 10,
               minBlastForce: 4,
-              colors: const [
-                Color(0xFFC9A86A),
-                Color(0xFF6E4F4F),
+              colors: [
+                kGold,
+                kBgMid,
                 Colors.white,
-                Color(0xFF2F2525),
+                kPrimary,
               ],
             ),
           ),
@@ -244,7 +228,7 @@ class _CouponPageState extends State<CouponPage>
             builder: (context, snapshot) {
               if (!snapshot.hasData) {
                 return const Center(
-                  child: SpinKitRing(color: Color(0xFFC9A86A), size: 36),
+                  child: SpinKitRing(color: kGold, size: 36),
                 );
               }
 

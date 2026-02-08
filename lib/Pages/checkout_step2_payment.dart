@@ -6,9 +6,9 @@ import '../Pages/wallet_page.dart';
 class CheckoutStep2Payment extends StatelessWidget {
   // Design constants - matching cart & wallet pages
   static const Color kPrimary = Color(0xFF2F2525);
-  static const Color kGold = Color(0xFFC9A86A);
-  static const Color kBgTop = Color(0xFF1C1515);
-  static const Color kBgMid = Color(0xFF2F2525);
+  static const Color kGold = Color(0xFFD4AF37);
+  static const Color kBgTop = Color(0xFF2B1B17);
+  static const Color kBgMid = Color(0xFF5C4033);
 
   final bool walletBool;
   final bool payWithCard;

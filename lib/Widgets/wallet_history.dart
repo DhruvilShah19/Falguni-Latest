@@ -23,7 +23,10 @@ class WalletHistory extends StatefulWidget {
 
 class _WalletHistoryState extends State<WalletHistory> {
   static const Color kPrimary = Color(0xFF2F2525);
-  static const Color kGold = Color(0xFFC9A86A);
+  static const Color kGold =
+      Color(0xFFD4AF37); // Richer, traditional honey-gold
+  static const Color kBgTop = Color(0xFF2B1B17); // Deep "Roasted Bean" brown
+  static const Color kBgMid = Color(0xFF5C4033); // Warm "Earth/Clay" brown
 
   DocumentReference? userRef;
   String currencySymbol = '';
@@ -143,6 +146,7 @@ class _WalletHistoryState extends State<WalletHistory> {
     }
 
     return Scaffold(
+      extendBodyBehindAppBar: true,
       backgroundColor: Colors.black,
       appBar: AppBar(
         title: Text("Wallet History".tr(),
@@ -150,16 +154,19 @@ class _WalletHistoryState extends State<WalletHistory> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         centerTitle: true,
+        iconTheme: const IconThemeData(color: Colors.white),
       ),
       body: Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(
-            colors: [Color(0xFF1C1515), Color(0xFF2F2525)],
+            colors: [kBgTop, kBgMid, kBgTop],
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
           ),
         ),
-        child: _loading ? _buildShimmer() : _buildContent(filtered, c, d, r),
+        child: SafeArea(
+          child: _loading ? _buildShimmer() : _buildContent(filtered, c, d, r),
+        ),
       ),
     );
   }
@@ -345,8 +352,8 @@ class _WalletHistoryState extends State<WalletHistory> {
 
   Widget _buildShimmer() {
     return Shimmer.fromColors(
-      baseColor: Colors.grey[900]!,
-      highlightColor: Colors.grey[800]!,
+      baseColor: Colors.white.withOpacity(0.15),
+      highlightColor: Colors.white.withOpacity(0.3),
       child: Column(
         children: List.generate(
             6,
@@ -354,7 +361,7 @@ class _WalletHistoryState extends State<WalletHistory> {
                 height: 80,
                 margin: EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                    color: Colors.black,
+                    color: Colors.white.withOpacity(0.08),
                     borderRadius: BorderRadius.circular(15)))),
       ),
     );
@@ -386,7 +393,7 @@ class _PiePainter extends CustomPainter {
 
     draw(c, Colors.greenAccent);
     draw(d, Colors.redAccent);
-    draw(r, Color(0xFFC9A86A));
+    draw(r, Color(0xFFD4AF37));
   }
 
   @override

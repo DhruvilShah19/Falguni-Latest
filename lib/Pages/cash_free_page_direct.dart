@@ -98,7 +98,9 @@ class _CashFreePageDirectState extends State<CashFreePageDirect> {
   bool isLoading = true;
   dynamic orderID = 0;
 
-  static const Color kGold = Color(0xFFC9A86A);
+  static const Color kGold = Color(0xFFD4AF37);
+  static const Color kBgTop = Color(0xFF2B1B17);
+  static const Color kBgMid = Color(0xFF5C4033);
 
   getUserName() {
     final FirebaseAuth auth = FirebaseAuth.instance;
@@ -372,63 +374,74 @@ class _CashFreePageDirectState extends State<CashFreePageDirect> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF1D1A1A),
+      backgroundColor: kBgTop,
       appBar: AppBar(
         iconTheme: const IconThemeData(color: Colors.white),
-        backgroundColor: const Color(0xFF2F2525),
+        backgroundColor: Colors.transparent,
         title: const Text(
           'Final Step',
           style: TextStyle(color: Colors.white),
         ),
         elevation: 0,
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Icon(Icons.security, color: kGold, size: 64),
-              const SizedBox(height: 24),
-              const Text(
-                'Complete Your Payment',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 16),
-              const Text(
-                'You will be redirected to our secure payment partner, CashFree, to complete your transaction.',
-                textAlign: TextAlign.center,
-                style: TextStyle(color: Colors.white70, fontSize: 16),
-              ),
-              const SizedBox(height: 40),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: webCheckout,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: kGold,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                  ),
-                  child: const Text(
-                    'Continue to Secure Payment',
-                    style: TextStyle(
-                      color: Colors.black,
-                      fontSize: 17,
-                      fontWeight: FontWeight.w700,
-                    ),
+      body: Container(
+        height: double.infinity,
+        width: double.infinity,
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [kBgTop, kBgMid, kBgTop],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+          ),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Icon(Icons.security, color: kGold, size: 64),
+                const SizedBox(height: 24),
+                const Text(
+                  'Complete Your Payment',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
-              ),
-            ],
+                const SizedBox(height: 16),
+                const Text(
+                  'You will be redirected to our secure payment partner, CashFree, to complete your transaction.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: Colors.white70, fontSize: 16),
+                ),
+                const SizedBox(height: 40),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: webCheckout,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: kGold,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                    ),
+                    child: const Text(
+                      'Continue to Secure Payment',
+                      style: TextStyle(
+                        color: Colors.black,
+                        fontSize: 17,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -648,7 +661,9 @@ class _CashFreeAmountWidgetDirectState
   String fullname = '';
   String email = '';
 
-  static const Color kGold = Color(0xFFC9A86A);
+  static const Color kGold = Color(0xFFD4AF37);
+  static const Color kBgTop = Color(0xFF2B1B17);
+  static const Color kBgMid = Color(0xFF5C4033);
 
   getUserDetail() {
     final FirebaseAuth auth = FirebaseAuth.instance;
@@ -764,7 +779,7 @@ class _CashFreeAmountWidgetDirectState
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
       decoration: BoxDecoration(
-        color: Color(0xFF2F2525),
+        color: Colors.white.withOpacity(0.06),
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: kGold.withOpacity(0.5), width: 1.2),
         boxShadow: [
@@ -795,156 +810,166 @@ class _CashFreeAmountWidgetDirectState
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF1D1A1A),
+      backgroundColor: kBgTop,
       appBar: AppBar(
         iconTheme: const IconThemeData(color: Colors.white),
-        backgroundColor: const Color(0xFF2F2525),
+        backgroundColor: Colors.transparent,
         title: const Text(
           'Confirm Order',
           style: TextStyle(color: Colors.white),
         ),
         elevation: 0,
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              "Order Amount",
-              style: TextStyle(color: Colors.white70, fontSize: 14),
-            ),
-            const SizedBox(height: 10),
-            TextFormField(
-              initialValue:
-                  '${widget.currencySymbol}${Formatter().converter((widget.subTotal + (widget.deliveryBool == false ? 0 : widget.deliveryFee)).toDouble())}',
-              readOnly: true,
-              style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold),
-              decoration: InputDecoration(
-                hintStyle: const TextStyle(color: Colors.white38),
-                filled: true,
-                fillColor: Colors.white.withOpacity(0.07),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: Colors.white24),
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: Colors.white24),
-                ),
+      body: Container(
+        height: double.infinity,
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [kBgTop, kBgMid, kBgTop],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+          ),
+        ),
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                "Order Amount",
+                style: TextStyle(color: Colors.white70, fontSize: 14),
               ),
-            ),
-            const SizedBox(height: 30),
-            const Text(
-              "Phone Number",
-              style: TextStyle(color: Colors.white70, fontSize: 14),
-            ),
-            const SizedBox(height: 8),
-            TextFormField(
-              style: const TextStyle(color: Colors.white),
-              maxLength: 10,
-              keyboardType: TextInputType.phone,
-              onChanged: (v) => setState(() => phone = v),
-              decoration: InputDecoration(
-                counterText: "",
-                hintText: "Enter your 10-digit phone number",
-                hintStyle: const TextStyle(color: Colors.white38),
-                filled: true,
-                fillColor: Colors.white.withOpacity(0.07),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: Colors.white24),
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: Colors.white24),
-                ),
-              ),
-            ),
-            const SizedBox(height: 30),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: (phone.length < 10 || isLoading)
-                    ? null
-                    : () => makeHttpPostRequest(),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: kGold,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14),
+              const SizedBox(height: 10),
+              TextFormField(
+                initialValue:
+                    '${widget.currencySymbol}${Formatter().converter((widget.subTotal + (widget.deliveryBool == false ? 0 : widget.deliveryFee)).toDouble())}',
+                readOnly: true,
+                style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold),
+                decoration: InputDecoration(
+                  hintStyle: const TextStyle(color: Colors.white38),
+                  filled: true,
+                  fillColor: Colors.white.withOpacity(0.07),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: Colors.white24),
                   ),
-                  disabledForegroundColor: Colors.black.withOpacity(0.5),
-                  disabledBackgroundColor: kGold.withOpacity(0.4),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: Colors.white24),
+                  ),
                 ),
-                child: isLoading
-                    ? const SizedBox(
-                        height: 24,
-                        width: 24,
-                        child: CircularProgressIndicator(
-                          color: Colors.black,
-                          strokeWidth: 3,
+              ),
+              const SizedBox(height: 30),
+              const Text(
+                "Phone Number",
+                style: TextStyle(color: Colors.white70, fontSize: 14),
+              ),
+              const SizedBox(height: 8),
+              TextFormField(
+                style: const TextStyle(color: Colors.white),
+                maxLength: 10,
+                keyboardType: TextInputType.phone,
+                onChanged: (v) => setState(() => phone = v),
+                decoration: InputDecoration(
+                  counterText: "",
+                  hintText: "Enter your 10-digit phone number",
+                  hintStyle: const TextStyle(color: Colors.white38),
+                  filled: true,
+                  fillColor: Colors.white.withOpacity(0.07),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: Colors.white24),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: Colors.white24),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 30),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: (phone.length < 10 || isLoading)
+                      ? null
+                      : () => makeHttpPostRequest(),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: kGold,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    disabledForegroundColor: Colors.black.withOpacity(0.5),
+                    disabledBackgroundColor: kGold.withOpacity(0.4),
+                  ),
+                  child: isLoading
+                      ? const SizedBox(
+                          height: 24,
+                          width: 24,
+                          child: CircularProgressIndicator(
+                            color: Colors.black,
+                            strokeWidth: 3,
+                          ),
+                        )
+                      : const Text(
+                          "Proceed to Pay",
+                          style: TextStyle(
+                            color: Colors.black,
+                            fontSize: 17,
+                            fontWeight: FontWeight.w700,
+                          ),
                         ),
-                      )
-                    : const Text(
-                        "Proceed to Pay",
-                        style: TextStyle(
-                          color: Colors.black,
-                          fontSize: 17,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
+                ),
               ),
-            ),
-            const SizedBox(height: 25),
-            Column(
-              children: [
-                const SizedBox(height: 28),
-                Divider(
-                  color: kGold.withOpacity(0.35),
-                  thickness: 1.2,
-                  indent: 40,
-                  endIndent: 40,
-                ),
-                const SizedBox(height: 14),
-                Text(
-                  "Payments secured by CashFree",
-                  style: TextStyle(
-                    color: kGold.withOpacity(0.85),
-                    fontSize: 14,
-                    fontWeight: FontWeight.w700,
+              const SizedBox(height: 25),
+              Column(
+                children: [
+                  const SizedBox(height: 28),
+                  Divider(
+                    color: kGold.withOpacity(0.35),
+                    thickness: 1.2,
+                    indent: 40,
+                    endIndent: 40,
                   ),
-                ),
-                const SizedBox(height: 16),
-                Wrap(
-                  alignment: WrapAlignment.center,
-                  spacing: 14,
-                  runSpacing: 10,
-                  children: [
-                    _buildPaymentMethodIcon(Icons.qr_code_2_rounded, "UPI"),
-                    _buildPaymentMethodIcon(
-                        Icons.credit_card_rounded, "Credit / Debit Cards"),
-                    _buildPaymentMethodIcon(
-                        Icons.account_balance_rounded, "Netbanking"),
-                    _buildPaymentMethodIcon(
-                        Icons.account_balance_wallet_rounded, "Wallets"),
-                  ],
-                ),
-                const SizedBox(height: 24),
-                const Text(
-                  "Fast • Secure • 256-bit Encrypted",
-                  style: TextStyle(
-                    color: Colors.white60,
-                    fontSize: 12,
+                  const SizedBox(height: 14),
+                  Text(
+                    "Payments secured by CashFree",
+                    style: TextStyle(
+                      color: kGold.withOpacity(0.85),
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 10),
-              ],
-            )
-          ],
+                  const SizedBox(height: 16),
+                  Wrap(
+                    alignment: WrapAlignment.center,
+                    spacing: 14,
+                    runSpacing: 10,
+                    children: [
+                      _buildPaymentMethodIcon(Icons.qr_code_2_rounded, "UPI"),
+                      _buildPaymentMethodIcon(
+                          Icons.credit_card_rounded, "Credit / Debit Cards"),
+                      _buildPaymentMethodIcon(
+                          Icons.account_balance_rounded, "Netbanking"),
+                      _buildPaymentMethodIcon(
+                          Icons.account_balance_wallet_rounded, "Wallets"),
+                    ],
+                  ),
+                  const SizedBox(height: 24),
+                  const Text(
+                    "Fast • Secure • 256-bit Encrypted",
+                    style: TextStyle(
+                      color: Colors.white60,
+                      fontSize: 12,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                ],
+              )
+            ],
+          ),
         ),
       ),
     );

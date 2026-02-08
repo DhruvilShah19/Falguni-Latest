@@ -198,7 +198,7 @@ class _CategoryTileState extends State<CategoryTile>
                       shape: BoxShape.circle,
                       boxShadow: [
                         BoxShadow(
-                            color: const Color(0xFFC9A86A).withOpacity(0.15),
+                            color: const Color(0xFFD4AF37).withOpacity(0.15),
                             blurRadius: 12,
                             spreadRadius: 2)
                       ],
@@ -208,7 +208,7 @@ class _CategoryTileState extends State<CategoryTile>
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
                         border: Border.all(
-                            color: const Color(0xFFC9A86A).withOpacity(0.4),
+                            color: const Color(0xFFD4AF37).withOpacity(0.4),
                             width: 1.5),
                       ),
                       child: ClipRRect(
@@ -224,7 +224,7 @@ class _CategoryTileState extends State<CategoryTile>
                           placeholder: (context, url) => Container(
                             color: Colors.white10,
                             child: const SpinKitPulse(
-                                color: Color(0xFFC9A86A), size: 20),
+                                color: Color(0xFFD4AF37), size: 20),
                           ),
                           errorWidget: (context, url, error) => const Icon(
                               Icons.error_outline,

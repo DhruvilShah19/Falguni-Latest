@@ -21,8 +21,10 @@ class _CompletedOrdersState extends State<CompletedOrders> {
   List<OrderModel2> orders = [];
   String getcurrencySymbol = '';
 
-  static const Color kPrimary = Color(0xFF2F2525);
-  static const Color kGold = Color(0xFFC9A86A);
+  static const Color kGold =
+      Color(0xFFD4AF37); // Richer, traditional honey-gold
+  static const Color kPrimary = Color(0xFF2B1B17); // Deep "Roasted Bean" brown
+  static const Color kCard = Color(0xFF5C4033); // Warm "Earth/Clay" brown
 
   @override
   initState() {
@@ -126,9 +128,9 @@ class _CompletedOrdersState extends State<CompletedOrders> {
       decoration: const BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            Color(0xFF1C1515),
-            Color(0xFF2F2525),
-            Color(0xFF1C1515),
+            kPrimary,
+            kCard,
+            kPrimary,
           ],
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,

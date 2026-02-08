@@ -9,9 +9,9 @@ import '../Widgets/map_snapshot.dart';
 class CheckoutStep1Delivery extends StatelessWidget {
   // Design constants - matching cart & wallet pages
   static const Color kPrimary = Color(0xFF2F2525);
-  static const Color kGold = Color(0xFFC9A86A);
-  static const Color kBgTop = Color(0xFF1C1515);
-  static const Color kBgMid = Color(0xFF2F2525);
+  static const Color kGold = Color(0xFFD4AF37);
+  static const Color kBgTop = Color(0xFF2B1B17);
+  static const Color kBgMid = Color(0xFF5C4033);
 
   final bool deliveryBool;
   final bool pickupBool;
@@ -77,7 +77,7 @@ class CheckoutStep1Delivery extends StatelessWidget {
                           showDialog(
                             context: context,
                             builder: (context) => AlertDialog(
-                              backgroundColor: const Color(0xFF1C1515),
+                              backgroundColor: kBgTop,
                               shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(14),
                                   side: BorderSide(
@@ -491,8 +491,8 @@ class CheckoutStep1Delivery extends StatelessWidget {
                         separatorBuilder: (context, index) =>
                             const SizedBox(height: 10),
                         itemBuilder: (_, __) => Shimmer.fromColors(
-                          baseColor: Colors.grey[300]!,
-                          highlightColor: Colors.grey[100]!,
+                          baseColor: Colors.white.withOpacity(0.15),
+                          highlightColor: Colors.white.withOpacity(0.3),
                           enabled: true,
                           child: Container(
                             height: 80,

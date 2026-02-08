@@ -1,4 +1,4 @@
-// ignore_for_file: prefer_const_constructors, use_build_context_synchronously
+// ignore_for_file: prefer_const_constructors, use_build_context_synchronously, prefer_const_literals_to_create_immutables
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:easy_localization/easy_localization.dart';
@@ -22,8 +22,11 @@ class _NotificationsPageState extends State<NotificationsPage>
     with TickerProviderStateMixin {
   DocumentReference? userRef;
 
-  static const Color kPrimary = Color(0xFF2F2525); // Espresso
-  static const Color kGold = Color(0xFFC9A86A); // Premium gold
+  static const Color kPrimary = Color(0xFF2F2525);
+  static const Color kGold =
+      Color(0xFFD4AF37); // Richer, traditional honey-gold
+  static const Color kBgTop = Color(0xFF2B1B17); // Deep "Roasted Bean" brown
+  static const Color kBgMid = Color(0xFF5C4033); // Warm "Earth/Clay" brown
 
   // Which order cards are expanded
   final Set<String> _expandedOrderIds = {};
@@ -178,11 +181,7 @@ class _NotificationsPageState extends State<NotificationsPage>
       body: Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(
-            colors: const [
-              Color(0xFF1C1515),
-              Color(0xFF2F2525),
-              Color(0xFF1C1515),
-            ],
+            colors: [kBgTop, kBgMid, kBgTop],
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
           ),
@@ -676,15 +675,15 @@ class _NotificationsPageState extends State<NotificationsPage>
     return Padding(
       padding: const EdgeInsets.all(18.0),
       child: Shimmer.fromColors(
-        baseColor: Colors.grey[700]!,
-        highlightColor: Colors.grey[500]!,
+        baseColor: Colors.white.withOpacity(0.15),
+        highlightColor: Colors.white.withOpacity(0.3),
         child: ListView.builder(
           itemCount: 6,
           itemBuilder: (_, __) => Container(
             height: 80,
             margin: EdgeInsets.only(bottom: 16),
             decoration: BoxDecoration(
-              color: Colors.white12,
+              color: Colors.white.withOpacity(0.08),
               borderRadius: BorderRadius.circular(18),
             ),
           ),

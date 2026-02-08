@@ -39,8 +39,10 @@ class CheckoutPage extends StatefulWidget {
 class _CheckoutPageState extends State<CheckoutPage>
     with SingleTickerProviderStateMixin {
   // Theme Palette
-  static const Color kGold = Color(0xFFC9A86A);
-  static const Color kBgDark = Color(0xFF1C1515);
+  static const Color kPrimary = Color(0xFF2F2525);
+  static const Color kGold = Color(0xFFD4AF37);
+  static const Color kBgTop = Color(0xFF2B1B17);
+  static const Color kBgMid = Color(0xFF5C4033);
 
   int _index = 0;
   DocumentReference? userDetails;
@@ -270,7 +272,7 @@ class _CheckoutPageState extends State<CheckoutPage>
           elevation: 0,
           child: Container(
             decoration: BoxDecoration(
-              color: const Color(0xFF2F2525),
+              color: kPrimary,
               borderRadius: BorderRadius.circular(16),
               border: Border.all(color: accentColor.withOpacity(0.3), width: 1),
             ),
@@ -318,7 +320,7 @@ class _CheckoutPageState extends State<CheckoutPage>
                   child: ElevatedButton(
                     style: ElevatedButton.styleFrom(
                       backgroundColor: accentColor,
-                      foregroundColor: const Color(0xFF2F2525),
+                      foregroundColor: kPrimary,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(10),
                       ),
@@ -504,25 +506,203 @@ class _CheckoutPageState extends State<CheckoutPage>
     });
   }
 
+  Widget _buildCustomStepper() {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(20, 20, 20, 10),
+      decoration: BoxDecoration(
+        color: kBgTop,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.2),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          _buildStepItem(0, 'Delivery', Icons.local_shipping_outlined),
+          Expanded(child: _buildStepDivider(0)),
+          _buildStepItem(1, 'Payment', Icons.payment_outlined),
+          Expanded(child: _buildStepDivider(1)),
+          _buildStepItem(2, 'Completed', Icons.check_circle_outline),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStepItem(int index, String title, IconData icon) {
+    bool isActive = _index == index;
+    bool isCompleted = _index > index;
+    // Allow going back if not completed order
+    bool isClickable = index < _index && _index != 2;
+
+    Color color = (isActive || isCompleted) ? kGold : Colors.white24;
+
+    return InkWell(
+      onTap: isClickable
+          ? () {
+              setState(() {
+                _index = index;
+              });
+            }
+          : null,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          AnimatedContainer(
+            duration: const Duration(milliseconds: 300),
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: isActive ? kGold.withOpacity(0.2) : Colors.transparent,
+              shape: BoxShape.circle,
+              border: Border.all(color: color, width: 2),
+              boxShadow: isActive
+                  ? [
+                      BoxShadow(
+                          color: kGold.withOpacity(0.3),
+                          blurRadius: 8,
+                          spreadRadius: 1)
+                    ]
+                  : [],
+            ),
+            child: Icon(icon, color: color, size: 20),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            title,
+            style: TextStyle(
+              color: color,
+              fontSize: 11,
+              fontWeight: isActive ? FontWeight.bold : FontWeight.w500,
+            ),
+          ).tr(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStepDivider(int index) {
+    bool isCompleted = _index > index;
+    return Container(
+      height: 2,
+      color: isCompleted ? kGold : Colors.white12,
+      margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 14),
+    );
+  }
+
+  Widget _buildStepContent() {
+    if (_index == 0) {
+      return CheckoutStep1Delivery(
+        deliveryBool: deliveryBool,
+        pickupBool: pickupBool,
+        deliveryAddress: deliveryAddress,
+        pickupAddress: pickupAddress,
+        currencySymbol: currencySymbol,
+        deliveryAddressLat: deliveryAddressLat,
+        deliveryAddressLong: deliveryAddressLong,
+        isAddressEmpty: isAddressEmpty,
+        getMyCart: getMyCart,
+        onDeliveryAddressTap: () {
+          Navigator.of(context).pushNamed('/delivery-address').then((value) {
+            getDeliveryLocationLatAndLong();
+          });
+          setState(() {});
+        },
+        onDeliveryChanged: (value) {
+          if (isAddressEmpty == true) {
+            Navigator.of(context).push(MaterialPageRoute(
+                builder: (context) => const DeliveryAddressesPage()));
+          } else {
+            setState(() {
+              deliveryBool = true;
+              pickupBool = false;
+            });
+          }
+          getDeliveryLocationLatAndLong();
+        },
+        onPickupChanged: (value) {
+          setState(() {
+            getPickupAddress();
+          });
+        },
+      );
+    } else if (_index == 1) {
+      return CheckoutStep2Payment(
+        walletBool: walletBool,
+        payWithCard: payWithCard,
+        cashOnDeliveryBool: cashOnDeliveryBool,
+        cashDatabase: cashDatabase,
+        wallet: wallet,
+        subTotal: subTotal,
+        deliveryFee: deliveryFee,
+        deliveryBool: deliveryBool,
+        currencySymbol: currencySymbol,
+        onWalletChanged: (val) {
+          setState(() {
+            walletBool = true;
+            cashOnDeliveryBool = false;
+            payWithCard = false;
+          });
+        },
+        onOnlinePaymentChanged: (val) {
+          setState(() {
+            walletBool = false;
+            payWithCard = true;
+            cashOnDeliveryBool = false;
+          });
+        },
+        onCashOnDeliveryChanged: (val) {
+          setState(() {
+            walletBool = false;
+            cashOnDeliveryBool = true;
+            payWithCard = false;
+          });
+        },
+        onWalletTap: () {
+          Navigator.of(context)
+              .push(MaterialPageRoute(builder: (context) => const WalletPage()))
+              .then((value) {
+            Fluttertoast.showToast(
+                msg: "Please upload more money to continue".tr(),
+                toastLength: Toast.LENGTH_SHORT,
+                gravity: ToastGravity.TOP,
+                timeInSecForIosWeb: 1,
+                fontSize: 14.0);
+          });
+        },
+        orders: orders,
+        getMyCartToOrders: getMyCartToOrders,
+      );
+    } else {
+      return CheckoutStep3Completed(
+        animation: _animation,
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     //  getDeliveryLocationLatAndLong();
     return Theme(
         data: Theme.of(context).copyWith(
           brightness: Brightness.dark,
-          scaffoldBackgroundColor: Colors.black,
+          canvasColor: Colors.transparent,
           colorScheme: const ColorScheme.dark(
             primary: kGold,
+            onPrimary: Colors.black,
             secondary: kGold,
-            background: Colors.black,
-            surface: kBgDark,
+            background: kBgTop,
+            surface: kBgTop,
+            onSurface: Colors.white60,
           ),
         ),
         child: Scaffold(
+          extendBodyBehindAppBar: true,
           backgroundColor: Colors.black,
           appBar: AppBar(
               iconTheme: const IconThemeData(color: Colors.white),
-              backgroundColor: Colors.black,
+              backgroundColor: Colors.transparent,
               centerTitle: true,
               elevation: 0,
               leading: IconButton(
@@ -536,462 +716,373 @@ class _CheckoutPageState extends State<CheckoutPage>
                     fontWeight: FontWeight.w900,
                     letterSpacing: 1.5),
               ).tr()),
-          body: Stack(
-            children: [
-              Stepper(
-                elevation: 0,
-                onStepTapped: (step) {
-                  if (_index == 1) {
-                    setState(() {
-                      _index = step;
-                    });
-                  } else if (step > _index) {
-                    setState(() {
-                      _index = step;
-                    });
-                    Fluttertoast.showToast(
-                        msg: "Order has been submitted".tr(),
-                        toastLength: Toast.LENGTH_SHORT,
-                        gravity: ToastGravity.TOP,
-                        timeInSecForIosWeb: 1,
-                        fontSize: 14.0);
-                  }
-                },
-                type: StepperType.horizontal,
-                controlsBuilder:
-                    (BuildContext context, ControlsDetails controls) {
-                  return const SizedBox();
-                },
-                currentStep: _index,
-                steps: <Step>[
-                  Step(
-                      isActive: selectedStepper1,
-                      title: const Text('Delivery').tr(),
-                      content: CheckoutStep1Delivery(
-                        deliveryBool: deliveryBool,
-                        pickupBool: pickupBool,
-                        deliveryAddress: deliveryAddress,
-                        pickupAddress: pickupAddress,
-                        currencySymbol: currencySymbol,
-                        deliveryAddressLat: deliveryAddressLat,
-                        deliveryAddressLong: deliveryAddressLong,
-                        isAddressEmpty: isAddressEmpty,
-                        getMyCart: getMyCart,
-                        onDeliveryAddressTap: () {
-                          Navigator.of(context)
-                              .pushNamed('/delivery-address')
-                              .then((value) {
-                            getDeliveryLocationLatAndLong();
-                          });
-                          setState(() {});
-                        },
-                        onDeliveryChanged: (value) {
-                          if (isAddressEmpty == true) {
-                            Navigator.of(context).push(MaterialPageRoute(
-                                builder: (context) =>
-                                    const DeliveryAddressesPage()));
-                          } else {
-                            setState(() {
-                              deliveryBool = true;
-                              pickupBool = false;
-                            });
-                          }
-                          getDeliveryLocationLatAndLong();
-                        },
-                        onPickupChanged: (value) {
-                          setState(() {
-                            getPickupAddress();
-                          });
-                        },
-                      )),
-                  Step(
-                      isActive: selectedStepper2,
-                      title: const Text('Payment').tr(),
-                      content: CheckoutStep2Payment(
-                        walletBool: walletBool,
-                        payWithCard: payWithCard,
-                        cashOnDeliveryBool: cashOnDeliveryBool,
-                        cashDatabase: cashDatabase,
-                        wallet: wallet,
-                        subTotal: subTotal,
-                        deliveryFee: deliveryFee,
-                        deliveryBool: deliveryBool,
-                        currencySymbol: currencySymbol,
-                        onWalletChanged: (val) {
-                          setState(() {
-                            walletBool = true;
-                            cashOnDeliveryBool = false;
-                            payWithCard = false;
-                          });
-                        },
-                        onOnlinePaymentChanged: (val) {
-                          setState(() {
-                            walletBool = false;
-                            payWithCard = true;
-                            cashOnDeliveryBool = false;
-                          });
-                        },
-                        onCashOnDeliveryChanged: (val) {
-                          setState(() {
-                            walletBool = false;
-                            cashOnDeliveryBool = true;
-                            payWithCard = false;
-                          });
-                        },
-                        onWalletTap: () {
-                          Navigator.of(context)
-                              .push(MaterialPageRoute(
-                                  builder: (context) => const WalletPage()))
-                              .then((value) {
-                            Fluttertoast.showToast(
-                                msg:
-                                    "Please upload more money to continue".tr(),
-                                toastLength: Toast.LENGTH_SHORT,
-                                gravity: ToastGravity.TOP,
-                                timeInSecForIosWeb: 1,
-                                fontSize: 14.0);
-                          });
-                        },
-                        orders: orders,
-                        getMyCartToOrders: getMyCartToOrders,
-                      )),
-                  Step(
-                    isActive: selectedStepper3,
-                    title: const Text('Completed').tr(),
-                    content: CheckoutStep3Completed(
-                      animation: _animation,
-                    ),
-                  )
-                ],
+          body: Container(
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                colors: [kBgTop, kBgMid, kBgTop],
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
               ),
-              _index == 2
-                  ? Container()
-                  : Align(
-                      alignment: Alignment.bottomCenter,
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: kBgDark,
-                          border: Border(
-                              top: BorderSide(
-                                  color: Colors.white.withOpacity(0.1))),
+            ),
+            child: SafeArea(
+              child: Stack(
+                children: [
+                  Column(
+                    children: [
+                      _buildCustomStepper(),
+                      Expanded(
+                        child: SingleChildScrollView(
+                          padding: const EdgeInsets.only(bottom: 100),
+                          child: _buildStepContent(),
                         ),
-                        child: SizedBox(
-                            height: 70,
-                            width: double.infinity,
-                            child: Padding(
-                              padding: const EdgeInsets.all(8.0),
-                              child: Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceAround,
-                                children: [
-                                  Row(
+                      )
+                    ],
+                  ),
+                  _index == 2
+                      ? Container()
+                      : Align(
+                          alignment: Alignment.bottomCenter,
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: kBgTop,
+                              border: Border(
+                                  top: BorderSide(
+                                      color: Colors.white.withOpacity(0.1))),
+                            ),
+                            child: SizedBox(
+                                height: 80,
+                                width: double.infinity,
+                                child: Padding(
+                                  padding: const EdgeInsets.all(8.0),
+                                  child: Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceAround,
                                     children: [
-                                      const Icon(Icons.info_outline,
-                                          color: Colors.white54),
-                                      const SizedBox(width: 5),
-                                      const Text(
-                                        'Total',
-                                        style: TextStyle(
-                                            color: Colors.white,
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: 18),
-                                      ).tr(),
-                                    ],
-                                  ),
-                                  Text(
-                                      '$currencySymbol${Formatter().converter((subTotal + (deliveryBool == false ? 0 : deliveryFee)).toDouble())}',
-                                      style: const TextStyle(
-                                          color: kGold,
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 18)),
-                                  _index == 1
-                                      ? ElevatedButton(
-                                          style: ElevatedButton.styleFrom(
-                                              backgroundColor: kGold,
-                                              foregroundColor: Colors.black,
-                                              shape: RoundedRectangleBorder(
-                                                  borderRadius:
-                                                      BorderRadius.circular(
-                                                          12))),
-                                          onPressed: () {
-                                            if (deliveryBool == false &&
-                                                pickupBool == false) {
-                                              _showAlertDialog(
-                                                title: 'Select Delivery Method',
-                                                message:
-                                                    'Please select Pickup or use the Manual Delivery Request option to proceed.',
-                                                buttonText: 'OK',
-                                                accentColor: kGold,
-                                                icon: Icons
-                                                    .local_shipping_outlined,
-                                              );
-                                            } else if (isAddressEmpty == true &&
-                                                pickupBool == false) {
-                                              setState(() {
-                                                _index = 0;
-                                              });
-                                              _showAlertDialog(
-                                                title:
-                                                    'Delivery Address Required',
-                                                message:
-                                                    'Please select or add a delivery address to proceed with your order.',
-                                                buttonText: 'Add Address',
-                                                accentColor:
-                                                    const Color(0xFFC9A86A),
-                                                icon:
-                                                    Icons.location_on_outlined,
-                                              );
-                                            } else {
-                                              // First check if wallet has negative balance
-                                              if (wallet < 0) {
-                                                _showAlertDialog(
-                                                  title:
-                                                      'Account Balance Negative',
-                                                  message:
-                                                      'Your wallet has a negative balance of $currencySymbol${Formatter().converter(wallet.abs().toDouble())}.\n\nYou must settle this amount before placing new orders.\n\nPlease contact support for payment options.',
-                                                  buttonText: 'Close',
-                                                  accentColor:
-                                                      const Color(0xFFE74C3C),
-                                                  icon: Icons.error_outline,
-                                                );
-                                              } else if (walletBool == false &&
-                                                  cashOnDeliveryBool == false &&
-                                                  payWithCard == false) {
-                                                _showAlertDialog(
-                                                  title:
-                                                      'Payment Method Required',
-                                                  message:
-                                                      'Please select a payment method to proceed with your order.',
-                                                  buttonText: 'Got It',
-                                                  accentColor:
-                                                      const Color(0xFFC9A86A),
-                                                  icon: Icons.payment_outlined,
-                                                );
-                                              } else if (walletBool == true &&
-                                                  wallet <
-                                                      (subTotal +
-                                                          (deliveryBool == false
-                                                              ? 0
-                                                              : deliveryFee)) &&
-                                                  payWithCard == false &&
-                                                  cashOnDeliveryBool == false) {
-                                                // Wallet selected but insufficient balance and no other payment method
-                                                num shortfall = (subTotal +
-                                                        (deliveryBool == false
-                                                            ? 0
-                                                            : deliveryFee)) -
-                                                    wallet;
-                                                _showAlertDialog(
-                                                  title:
-                                                      'Insufficient Wallet Balance',
-                                                  message:
-                                                      'Your wallet has $currencySymbol${Formatter().converter(wallet.toDouble())}, but you need $currencySymbol${Formatter().converter(shortfall.toDouble())} more.\n\nYou can:\n• Add funds to your wallet\n• Select another payment method (Online Payment or Cash on Delivery)',
-                                                  buttonText: 'Understood',
-                                                  accentColor:
-                                                      const Color(0xFFE74C3C),
-                                                  icon: Icons.warning_outlined,
-                                                );
-                                              } else if (payWithCard == true) {
-                                                print(
-                                                    'PaywithCard is selected');
-                                                Navigator.of(context).push(
-                                                    MaterialPageRoute(
-                                                        builder: (context) {
-                                                  return CashFreeAmountWidgetDirect(
-                                                      deliveryFee: deliveryFee,
-                                                      deliveryBool:
-                                                          deliveryBool,
-                                                      pickupBool: pickupBool,
-                                                      cashOnDeliveryBool:
-                                                          cashOnDeliveryBool,
-                                                      currentMarketID:
-                                                          currentMarketID,
-                                                      deliveryAddress:
-                                                          deliveryAddress,
-                                                      houseNumber: houseNumber,
-                                                      closestBustStop:
-                                                          closestBustStop,
-                                                      vendorID: vendorID,
-                                                      orderID: orderID,
-                                                      orders: orders,
-                                                      uid: uid,
-                                                      getOnesignalKey:
-                                                          getOnesignalKey,
-                                                      vendorToken: vendorToken,
-                                                      pickupAddress:
-                                                          pickupAddress,
-                                                      subTotal: subTotal,
-                                                      currencySymbol:
-                                                          currencySymbol);
-                                                }));
-                                              } else {
-                                                Week currentWeek =
-                                                    Week.current();
-
-                                                // Get the current date and time
-                                                var day = DateTime.now();
-                                                var dateDay =
-                                                    DateTime.now().day;
-                                                var month = DateTime.now();
-                                                // Format the date as a string
-                                                String formattedDate =
-                                                    DateFormat('MMMM')
-                                                        .format(month);
-                                                String dayFormatter =
-                                                    DateFormat('EEEE')
-                                                        .format(day);
-                                                deleteCartCollection();
-                                                deleteVendorsID();
-                                                updateVendorOrderID();
-
-                                                if (walletBool == true) {
-                                                  num totalAmount = subTotal +
-                                                      (deliveryBool == false
-                                                          ? 0
-                                                          : deliveryFee);
-                                                  num amountDeducted =
-                                                      wallet >= totalAmount
-                                                          ? totalAmount
-                                                          : wallet;
-                                                  updateWallet();
-                                                  updateHistory(HistoryModel(
-                                                      timeCreated:
-                                                          DateTime.now(),
-                                                      message: 'Placed an order'
-                                                          .tr(),
-                                                      amount:
-                                                          '-$currencySymbol${Formatter().converter(amountDeducted.toDouble())}',
-                                                      paymentSystem: ''));
-                                                }
-                                                DateTime now = DateTime.now();
-                                                int currentMonth = now.month;
-                                                int currentYear = now.year;
-                                                addToOrder(
-                                                    OrderModel(
-                                                        month: currentMonth
-                                                            .toString(),
-                                                        year: currentYear
-                                                            .toString(),
-                                                        weekNumber:
-                                                            currentWeek
-                                                                .weekNumber,
-                                                        day: dayFormatter,
-                                                        date:
-                                                            '$dayFormatter, $formattedDate $dateDay',
-                                                        pickupAddress:
-                                                            pickupAddress,
-                                                        confirmationStatus:
-                                                            false,
-                                                        uid: uid,
-                                                        marketID:
-                                                            currentMarketID,
-                                                        orderID: orderID + 1,
-                                                        orders: orders,
-                                                        acceptDelivery: false,
-                                                        deliveryFee:
-                                                            pickupBool ==
-                                                                    false
-                                                                ? deliveryFee
-                                                                : 0,
-                                                        total: subTotal +
+                                      Row(
+                                        children: [
+                                          const Icon(Icons.info_outline,
+                                              color: Colors.white54),
+                                          const SizedBox(width: 5),
+                                          const Text(
+                                            'Total',
+                                            style: TextStyle(
+                                                color: Colors.white,
+                                                fontWeight: FontWeight.bold,
+                                                fontSize: 18),
+                                          ).tr(),
+                                        ],
+                                      ),
+                                      Text(
+                                          '$currencySymbol${Formatter().converter((subTotal + (deliveryBool == false ? 0 : deliveryFee)).toDouble())}',
+                                          style: const TextStyle(
+                                              color: kGold,
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 18)),
+                                      _index == 1
+                                          ? ElevatedButton(
+                                              style: ElevatedButton.styleFrom(
+                                                  backgroundColor: kGold,
+                                                  foregroundColor: Colors.black,
+                                                  shape: RoundedRectangleBorder(
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                              12))),
+                                              onPressed: () {
+                                                if (deliveryBool == false &&
+                                                    pickupBool == false) {
+                                                  _showAlertDialog(
+                                                    title:
+                                                        'Select Delivery Method',
+                                                    message:
+                                                        'Please select Pickup or use the Manual Delivery Request option to proceed.',
+                                                    buttonText: 'OK',
+                                                    accentColor: kGold,
+                                                    icon: Icons
+                                                        .local_shipping_outlined,
+                                                  );
+                                                } else if (isAddressEmpty ==
+                                                        true &&
+                                                    pickupBool == false) {
+                                                  setState(() {
+                                                    _index = 0;
+                                                  });
+                                                  _showAlertDialog(
+                                                    title:
+                                                        'Delivery Address Required',
+                                                    message:
+                                                        'Please select or add a delivery address to proceed with your order.',
+                                                    buttonText: 'Add Address',
+                                                    accentColor:
+                                                        const Color(0xFFC9A86A),
+                                                    icon: Icons
+                                                        .location_on_outlined,
+                                                  );
+                                                } else {
+                                                  // First check if wallet has negative balance
+                                                  if (wallet < 0) {
+                                                    _showAlertDialog(
+                                                      title:
+                                                          'Account Balance Negative',
+                                                      message:
+                                                          'Your wallet has a negative balance of $currencySymbol${Formatter().converter(wallet.abs().toDouble())}.\n\nYou must settle this amount before placing new orders.\n\nPlease contact support for payment options.',
+                                                      buttonText: 'Close',
+                                                      accentColor: const Color(
+                                                          0xFFE74C3C),
+                                                      icon: Icons.error_outline,
+                                                    );
+                                                  } else if (walletBool ==
+                                                          false &&
+                                                      cashOnDeliveryBool ==
+                                                          false &&
+                                                      payWithCard == false) {
+                                                    _showAlertDialog(
+                                                      title:
+                                                          'Payment Method Required',
+                                                      message:
+                                                          'Please select a payment method to proceed with your order.',
+                                                      buttonText: 'Got It',
+                                                      accentColor: const Color(
+                                                          0xFFC9A86A),
+                                                      icon: Icons
+                                                          .payment_outlined,
+                                                    );
+                                                  } else if (walletBool ==
+                                                          true &&
+                                                      wallet <
+                                                          (subTotal +
+                                                              (deliveryBool ==
+                                                                      false
+                                                                  ? 0
+                                                                  : deliveryFee)) &&
+                                                      payWithCard == false &&
+                                                      cashOnDeliveryBool ==
+                                                          false) {
+                                                    // Wallet selected but insufficient balance and no other payment method
+                                                    num shortfall = (subTotal +
                                                             (deliveryBool ==
                                                                     false
                                                                 ? 0
-                                                                : deliveryFee),
-                                                        vendorID: vendorID,
-                                                        paymentType:
-                                                            cashOnDeliveryBool ==
-                                                                    true
-                                                                ? 'Cash on delivery'
-                                                                : 'Wallet',
-                                                        userID: id,
-                                                        timeCreated:
-                                                            DateFormat
-                                                                    .yMMMMEEEEd()
-                                                                .format(
-                                                                    DateTime
-                                                                        .now())
-                                                                .toString(),
-                                                        deliveryAddress:
-                                                            pickupBool ==
-                                                                    true
-                                                                ? ''
-                                                                : deliveryAddress,
-                                                        houseNumber:
-                                                            pickupBool == true
-                                                                ? ''
-                                                                : houseNumber,
-                                                        closesBusStop:
-                                                            pickupBool == true
-                                                                ? ''
-                                                                : closestBustStop,
-                                                        deliveryBoyID: '',
-                                                        status: 'Received',
-                                                        accept: false),
-                                                    uid);
-                                                updateHistoryVendor(HistoryModel(
-                                                    message:
-                                                        'New order alert Order ID #${orderID + 1}',
-                                                    amount:
-                                                        '$currencySymbol ${subTotal + (deliveryBool == false ? 0 : deliveryFee)}',
-                                                    paymentSystem: '',
-                                                    timeCreated:
-                                                        DateTime.now()));
-                                                // _handleSendNotification(
-                                                //     vendorToken,
-                                                //     'New order alert Order ID #${orderID + 1}',
-                                                //     'New order alert');
-                                                setState(() {
-                                                  _index = 2;
-                                                  selectedStepper3 = true;
-                                                  selectedStepper1 = false;
-                                                  selectedStepper2 = false;
-                                                });
-                                                _animationController!.forward();
-                                              }
-                                            }
-                                          },
-                                          child: Row(
-                                            children: [
-                                              const Text('PROCEED',
-                                                      style: TextStyle(
-                                                          fontWeight:
-                                                              FontWeight.bold,
-                                                          fontSize: 18))
-                                                  .tr(),
-                                              const SizedBox(width: 5),
-                                              const Icon(Icons.arrow_forward)
-                                            ],
-                                          ))
-                                      : ElevatedButton(
-                                          style: ElevatedButton.styleFrom(
-                                              backgroundColor: kGold,
-                                              foregroundColor: Colors.black,
-                                              shape: RoundedRectangleBorder(
-                                                  borderRadius:
-                                                      BorderRadius.circular(
-                                                          12))),
-                                          onPressed: deliveryAddressLat == 0 &&
-                                                  deliveryBool == true
-                                              ? null
-                                              : () {
-                                                  if (isAddressEmpty == true &&
-                                                      pickupBool == false) {
-                                                    Fluttertoast.showToast(
-                                                        msg:
-                                                            "Please select or add an address"
-                                                                .tr(),
-                                                        toastLength:
-                                                            Toast.LENGTH_SHORT,
-                                                        gravity:
-                                                            ToastGravity.TOP,
-                                                        timeInSecForIosWeb: 1,
-                                                        fontSize: 14.0);
+                                                                : deliveryFee)) -
+                                                        wallet;
+                                                    _showAlertDialog(
+                                                      title:
+                                                          'Insufficient Wallet Balance',
+                                                      message:
+                                                          'Your wallet has $currencySymbol${Formatter().converter(wallet.toDouble())}, but you need $currencySymbol${Formatter().converter(shortfall.toDouble())} more.\n\nYou can:\n• Add funds to your wallet\n• Select another payment method (Online Payment or Cash on Delivery)',
+                                                      buttonText: 'Understood',
+                                                      accentColor: const Color(
+                                                          0xFFE74C3C),
+                                                      icon: Icons
+                                                          .warning_outlined,
+                                                    );
+                                                  } else if (payWithCard ==
+                                                      true) {
+                                                    print(
+                                                        'PaywithCard is selected');
+                                                    Navigator.of(context).push(
+                                                        MaterialPageRoute(
+                                                            builder: (context) {
+                                                      return CashFreeAmountWidgetDirect(
+                                                          deliveryFee:
+                                                              deliveryFee,
+                                                          deliveryBool:
+                                                              deliveryBool,
+                                                          pickupBool:
+                                                              pickupBool,
+                                                          cashOnDeliveryBool:
+                                                              cashOnDeliveryBool,
+                                                          currentMarketID:
+                                                              currentMarketID,
+                                                          deliveryAddress:
+                                                              deliveryAddress,
+                                                          houseNumber:
+                                                              houseNumber,
+                                                          closestBustStop:
+                                                              closestBustStop,
+                                                          vendorID: vendorID,
+                                                          orderID: orderID,
+                                                          orders: orders,
+                                                          uid: uid,
+                                                          getOnesignalKey:
+                                                              getOnesignalKey,
+                                                          vendorToken:
+                                                              vendorToken,
+                                                          pickupAddress:
+                                                              pickupAddress,
+                                                          subTotal: subTotal,
+                                                          currencySymbol:
+                                                              currencySymbol);
+                                                    }));
                                                   } else {
-                                                    if (deliveryBool == true) {
-                                                      if (phone == '') {
+                                                    Week currentWeek =
+                                                        Week.current();
+
+                                                    // Get the current date and time
+                                                    var day = DateTime.now();
+                                                    var dateDay =
+                                                        DateTime.now().day;
+                                                    var month = DateTime.now();
+                                                    // Format the date as a string
+                                                    String formattedDate =
+                                                        DateFormat('MMMM')
+                                                            .format(month);
+                                                    String dayFormatter =
+                                                        DateFormat('EEEE')
+                                                            .format(day);
+                                                    deleteCartCollection();
+                                                    deleteVendorsID();
+                                                    updateVendorOrderID();
+
+                                                    if (walletBool == true) {
+                                                      num totalAmount =
+                                                          subTotal +
+                                                              (deliveryBool ==
+                                                                      false
+                                                                  ? 0
+                                                                  : deliveryFee);
+                                                      num amountDeducted =
+                                                          wallet >= totalAmount
+                                                              ? totalAmount
+                                                              : wallet;
+                                                      updateWallet();
+                                                      updateHistory(HistoryModel(
+                                                          timeCreated:
+                                                              DateTime.now(),
+                                                          message:
+                                                              'Placed an order'
+                                                                  .tr(),
+                                                          amount:
+                                                              '-$currencySymbol${Formatter().converter(amountDeducted.toDouble())}',
+                                                          paymentSystem: ''));
+                                                    }
+                                                    DateTime now =
+                                                        DateTime.now();
+                                                    int currentMonth =
+                                                        now.month;
+                                                    int currentYear = now.year;
+                                                    addToOrder(
+                                                        OrderModel(
+                                                            month: currentMonth
+                                                                .toString(),
+                                                            year: currentYear
+                                                                .toString(),
+                                                            weekNumber:
+                                                                currentWeek
+                                                                    .weekNumber,
+                                                            day: dayFormatter,
+                                                            date:
+                                                                '$dayFormatter, $formattedDate $dateDay',
+                                                            pickupAddress:
+                                                                pickupAddress,
+                                                            confirmationStatus:
+                                                                false,
+                                                            uid: uid,
+                                                            marketID:
+                                                                currentMarketID,
+                                                            orderID: orderID +
+                                                                1,
+                                                            orders: orders,
+                                                            acceptDelivery:
+                                                                false,
+                                                            deliveryFee:
+                                                                pickupBool ==
+                                                                        false
+                                                                    ? deliveryFee
+                                                                    : 0,
+                                                            total:
+                                                                subTotal +
+                                                                    (deliveryBool ==
+                                                                            false
+                                                                        ? 0
+                                                                        : deliveryFee),
+                                                            vendorID: vendorID,
+                                                            paymentType:
+                                                                cashOnDeliveryBool ==
+                                                                        true
+                                                                    ? 'Cash on delivery'
+                                                                    : 'Wallet',
+                                                            userID: id,
+                                                            timeCreated:
+                                                                DateFormat
+                                                                        .yMMMMEEEEd()
+                                                                    .format(
+                                                                        DateTime
+                                                                            .now())
+                                                                    .toString(),
+                                                            deliveryAddress:
+                                                                pickupBool ==
+                                                                        true
+                                                                    ? ''
+                                                                    : deliveryAddress,
+                                                            houseNumber:
+                                                                pickupBool ==
+                                                                        true
+                                                                    ? ''
+                                                                    : houseNumber,
+                                                            closesBusStop:
+                                                                pickupBool ==
+                                                                        true
+                                                                    ? ''
+                                                                    : closestBustStop,
+                                                            deliveryBoyID: '',
+                                                            status: 'Received',
+                                                            accept: false),
+                                                        uid);
+                                                    updateHistoryVendor(HistoryModel(
+                                                        message:
+                                                            'New order alert Order ID #${orderID + 1}',
+                                                        amount:
+                                                            '$currencySymbol ${subTotal + (deliveryBool == false ? 0 : deliveryFee)}',
+                                                        paymentSystem: '',
+                                                        timeCreated:
+                                                            DateTime.now()));
+                                                    // _handleSendNotification(
+                                                    //     vendorToken,
+                                                    //     'New order alert Order ID #${orderID + 1}',
+                                                    //     'New order alert');
+                                                    setState(() {
+                                                      _index = 2;
+                                                      selectedStepper3 = true;
+                                                      selectedStepper1 = false;
+                                                      selectedStepper2 = false;
+                                                    });
+                                                    _animationController!
+                                                        .forward();
+                                                  }
+                                                }
+                                              },
+                                              child: Row(
+                                                children: [
+                                                  const Text('PROCEED',
+                                                          style: TextStyle(
+                                                              fontWeight:
+                                                                  FontWeight
+                                                                      .bold,
+                                                              fontSize: 18))
+                                                      .tr(),
+                                                  const SizedBox(width: 5),
+                                                  const Icon(
+                                                      Icons.arrow_forward)
+                                                ],
+                                              ))
+                                          : ElevatedButton(
+                                              style: ElevatedButton.styleFrom(
+                                                  backgroundColor: kGold,
+                                                  foregroundColor: Colors.black,
+                                                  shape: RoundedRectangleBorder(
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                              12))),
+                                              onPressed: deliveryAddressLat ==
+                                                          0 &&
+                                                      deliveryBool == true
+                                                  ? null
+                                                  : () {
+                                                      if (isAddressEmpty ==
+                                                              true &&
+                                                          pickupBool == false) {
                                                         Fluttertoast.showToast(
-                                                            msg: "Please add your phone number to continue"
+                                                            msg: "Please select or add an address"
                                                                 .tr(),
                                                             toastLength: Toast
                                                                 .LENGTH_SHORT,
@@ -1001,37 +1092,57 @@ class _CheckoutPageState extends State<CheckoutPage>
                                                             timeInSecForIosWeb:
                                                                 1,
                                                             fontSize: 14.0);
-                                                        Navigator.pushNamed(
-                                                            context,
-                                                            '/profile');
                                                       } else {
-                                                        getDeliveryFeeQuote();
+                                                        if (deliveryBool ==
+                                                            true) {
+                                                          if (phone == '') {
+                                                            Fluttertoast.showToast(
+                                                                msg:
+                                                                    "Please add your phone number to continue"
+                                                                        .tr(),
+                                                                toastLength: Toast
+                                                                    .LENGTH_SHORT,
+                                                                gravity:
+                                                                    ToastGravity
+                                                                        .TOP,
+                                                                timeInSecForIosWeb:
+                                                                    1,
+                                                                fontSize: 14.0);
+                                                            Navigator.pushNamed(
+                                                                context,
+                                                                '/profile');
+                                                          } else {
+                                                            getDeliveryFeeQuote();
+                                                          }
+                                                        } else {
+                                                          setState(() {
+                                                            _index = 1;
+                                                            selectedStepper2 =
+                                                                true;
+                                                          });
+                                                        }
                                                       }
-                                                    } else {
-                                                      setState(() {
-                                                        _index = 1;
-                                                        selectedStepper2 = true;
-                                                      });
-                                                    }
-                                                  }
-                                                },
-                                          child: Row(
-                                            children: [
-                                              const Text('CONFIRM',
-                                                      style: TextStyle(
-                                                          fontWeight:
-                                                              FontWeight.bold,
-                                                          fontSize: 18))
-                                                  .tr(),
-                                              const SizedBox(width: 5),
-                                              const Icon(Icons.done)
-                                            ],
-                                          ))
-                                ],
-                              ),
-                            )),
-                      )),
-            ],
+                                                    },
+                                              child: Row(
+                                                children: [
+                                                  const Text('CONFIRM',
+                                                          style: TextStyle(
+                                                              fontWeight:
+                                                                  FontWeight
+                                                                      .bold,
+                                                              fontSize: 18))
+                                                      .tr(),
+                                                  const SizedBox(width: 5),
+                                                  const Icon(Icons.done)
+                                                ],
+                                              ))
+                                    ],
+                                  ),
+                                )),
+                          )),
+                ],
+              ),
+            ),
           ),
         ));
   }

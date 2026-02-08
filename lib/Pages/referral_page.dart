@@ -20,9 +20,10 @@ class ReferralPage extends StatefulWidget {
 
 class _ReferralPageState extends State<ReferralPage>
     with SingleTickerProviderStateMixin {
-  static const Color kPrimary = Color(0xFF2F2525); // Deep espresso
-  static const Color kGold = Color(0xFFC9A86A); // Soft luxury gold
-  static const Color kBg = Color(0xFFF7F6F4); // Soft off-white
+  static const Color kGold =
+      Color(0xFFD4AF37); // Richer, traditional honey-gold
+  static const Color kBgTop = Color(0xFF2B1B17); // Deep "Roasted Bean" brown
+  static const Color kBgMid = Color(0xFF5C4033); // Warm "Earth/Clay" brown
 
   DocumentReference? userRef;
   String referralCode = '';
@@ -68,8 +69,8 @@ class _ReferralPageState extends State<ReferralPage>
         vy: (rand.nextDouble() - 0.5) * 0.002,
         radius: 3 + rand.nextDouble() * 3,
         color: index.isEven
-            ? kPrimary.withOpacity(0.12)
-            : Colors.grey.withOpacity(0.18),
+            ? kGold.withOpacity(0.3)
+            : Colors.white.withOpacity(0.1),
       );
     });
   }
@@ -192,7 +193,7 @@ class _ReferralPageState extends State<ReferralPage>
   void _openShareOptions() {
     showModalBottomSheet(
       context: context,
-      backgroundColor: Colors.white,
+      backgroundColor: kBgTop,
       shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(top: Radius.circular(22))),
       builder: (_) => _buildShareSheet(),
@@ -205,7 +206,7 @@ class _ReferralPageState extends State<ReferralPage>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: kBg,
+      backgroundColor: kBgTop,
       extendBodyBehindAppBar: true,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
@@ -229,9 +230,9 @@ class _ReferralPageState extends State<ReferralPage>
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: [
-                    Color(0xFF1C1515),
-                    Color(0xFF2F2525),
-                    Color(0xFF1C1515),
+                    kBgTop,
+                    kBgMid,
+                    kBgTop,
                   ],
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
@@ -254,7 +255,7 @@ class _ReferralPageState extends State<ReferralPage>
               numberOfParticles: 14,
               emissionFrequency: 0.04,
               gravity: 0.25,
-              colors: [kGold, Colors.white, kPrimary],
+              colors: [kGold, kBgTop, kBgMid],
               maxBlastForce: 13,
               minBlastForce: 6,
             ),
@@ -461,7 +462,7 @@ class _ReferralPageState extends State<ReferralPage>
     return Container(
       padding: EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: Color(0xFF1C1515),
+        color: kBgTop,
         borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
         boxShadow: [
           BoxShadow(
@@ -516,7 +517,7 @@ class _ReferralPageState extends State<ReferralPage>
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w700,
-                color: kPrimary,
+                color: kGold,
               ),
             ),
             SizedBox(height: 16),
@@ -556,8 +557,7 @@ class _ReferralPageState extends State<ReferralPage>
           ),
         ),
         SizedBox(height: 6),
-        Text(label,
-            style: TextStyle(fontSize: 12, color: Colors.grey.shade800)),
+        Text(label, style: TextStyle(fontSize: 12, color: Colors.white70)),
       ],
     );
   }

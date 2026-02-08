@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_custom_clippers/flutter_custom_clippers.dart';
 import 'package:rounded_loading_button_plus/rounded_loading_button.dart';
 import '../Providers/auth.dart';
 import 'package:easy_localization/easy_localization.dart';
@@ -13,8 +12,11 @@ class ForgotPasswordPage extends StatefulWidget {
 
 class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
   String email = '';
-  String password = '';
   final _formKey = GlobalKey<FormState>();
+
+  static const Color kGold = Color(0xFFD4AF37);
+  static const Color kBgTop = Color(0xFF2B1B17);
+  static const Color kBgMid = Color(0xFF5C4033);
 
   @override
   void initState() {
@@ -42,115 +44,119 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      resizeToAvoidBottomInset: false,
-      appBar: AppBar(
-        iconTheme: Theme.of(context).iconTheme,
-        titleTextStyle: TextStyle(color: Theme.of(context).indicatorColor),
-        backgroundColor: Theme.of(context).colorScheme.surface,
-        elevation: 0,
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.pushNamed(context, '/login');
-            },
-            child: const Text(
-              'Login',
-            ).tr(),
-          )
-        ],
-      ),
-      body: Column(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Flexible(
-            flex: 5,
-            child: Form(
-              key: _formKey,
-              child: Column(
-                children: [
-                  const SizedBox(height: 20),
-                  Padding(
-                    padding: const EdgeInsets.all(12.0),
-                    child: Text('Please type in your email Address'.tr(),
-                        style: const TextStyle(
-                            color: Colors.grey,
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold)),
+      backgroundColor: kBgTop,
+      body: Container(
+        height: double.infinity,
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [kBgTop, kBgMid, kBgTop],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+          ),
+        ),
+        child: SafeArea(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 24.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const SizedBox(height: 20),
+                IconButton(
+                  icon: const Icon(Icons.arrow_back, color: Colors.white),
+                  onPressed: () => Navigator.of(context).pop(),
+                ),
+                const SizedBox(height: 20),
+                const Text(
+                  "Forgot Password?",
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 28,
+                    fontWeight: FontWeight.bold,
                   ),
-                  const SizedBox(height: 40),
-                  Padding(
-                    padding: const EdgeInsets.all(12.0),
-                    child: Row(
-                      children: [
-                        const Flexible(
-                            flex: 1,
-                            child: Icon(
-                              Icons.email_outlined,
-                              size: 40,
-                              color: Colors.grey,
-                            )),
-                        const SizedBox(
-                          width: 10,
-                        ),
-                        Flexible(
-                          flex: 6,
-                          child: TextFormField(
-                            keyboardType: TextInputType.emailAddress,
-                            validator: (value) {
-                              if (value!.isEmpty) {
-                                return 'Required field'.tr();
-                              } else {
-                                return null;
-                              }
-                            },
-                            onChanged: (value) {
-                              setState(() {
-                                email = value;
-                              });
-                            },
-                            decoration: InputDecoration(
-                                hintText: 'Email'.tr(),
-                                focusColor:
-                                    const Color.fromARGB(255, 47, 37, 37)),
+                ).tr(),
+                const SizedBox(height: 12),
+                const Text(
+                  "Don't worry! It happens. Please enter the email address associated with your account.",
+                  style: TextStyle(
+                    color: Colors.white70,
+                    fontSize: 16,
+                    height: 1.5,
+                  ),
+                ).tr(),
+                const SizedBox(height: 40),
+                Form(
+                  key: _formKey,
+                  child: Column(
+                    children: [
+                      TextFormField(
+                        style: const TextStyle(color: Colors.white),
+                        keyboardType: TextInputType.emailAddress,
+                        validator: (value) {
+                          if (value!.isEmpty) {
+                            return 'Required field'.tr();
+                          } else {
+                            return null;
+                          }
+                        },
+                        onChanged: (value) {
+                          setState(() {
+                            email = value;
+                          });
+                        },
+                        decoration: InputDecoration(
+                          filled: true,
+                          fillColor: Colors.white.withOpacity(0.05),
+                          hintText: 'Enter your email'.tr(),
+                          hintStyle: const TextStyle(color: Colors.white38),
+                          prefixIcon: const Icon(Icons.email_outlined,
+                              color: kGold, size: 22),
+                          contentPadding: const EdgeInsets.symmetric(
+                              vertical: 16, horizontal: 20),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide.none,
                           ),
-                        )
-                      ],
-                    ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: const BorderSide(color: kGold),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 30),
+                      RoundedLoadingButton(
+                        color: kGold,
+                        successIcon: Icons.done,
+                        failedIcon: Icons.error,
+                        controller: _btnController1,
+                        width: MediaQuery.of(context).size.width,
+                        height: 50,
+                        borderRadius: 12,
+                        onPressed: () {
+                          if (_formKey.currentState!.validate()) {
+                            _doSomething(
+                              _btnController1,
+                              email,
+                              context,
+                            );
+                          } else {
+                            _btnController1.reset();
+                          }
+                        },
+                        child: const Text('SEND RESET LINK',
+                                style: TextStyle(
+                                    color: kBgTop,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 16,
+                                    letterSpacing: 1))
+                            .tr(),
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 20),
-                  const SizedBox(height: 10),
-                  RoundedLoadingButton(
-                    color: Colors.blue,
-                    successIcon: Icons.done,
-                    failedIcon: Icons.error,
-                    controller: _btnController1,
-                    onPressed: () {
-                      if (_formKey.currentState!.validate()) {
-                        _doSomething(
-                          _btnController1,
-                          email,
-                          context,
-                        );
-                      } else {
-                        _btnController1.reset();
-                      }
-                    },
-                    child: const Text('Submit',
-                            style: TextStyle(color: Colors.white))
-                        .tr(),
-                  ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
-          Flexible(
-            flex: 1,
-            child: ClipPath(
-              clipper: OvalTopBorderClipper(),
-              child: Container(color: const Color.fromARGB(255, 47, 37, 37)),
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }

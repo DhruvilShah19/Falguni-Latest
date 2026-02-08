@@ -152,7 +152,7 @@ flutter_icons:
   android: "launcher_icon"
   ios: true
   remove_alpha_ios: true
-  image_path: 'assets/image/Logo-without-BG.png'
+  image_path: 'assets/image/new-logo.png'
   
 flutter_app_name:
   name: "Falguni Gruh Udhyog"
@@ -235,7 +235,7 @@ flutter_native_splash:
 
   # The image parameter allows you to specify an image used in the splash screen.  It must be a
   # png file and should be sized for 4x pixel density.
-  image: 'assets/image/Logo-with-BG.png'
+  image: 'assets/image/new-logo.png'
 
   # The branding property allows you to specify an image used as branding in the splash screen.
   # It must be a png file. Currently, it is only supported for Android < v12 and iOS.
@@ -252,7 +252,7 @@ flutter_native_splash:
   # set.
   color_dark: "#ffffff"
   #background_image_dark: "assets/dark-background.png"
-  image_dark: 'assets/image/Logo-with-BG.png'
+  image_dark: 'assets/image/new-logo.png'
   #branding_dark: assets/dart_dark.png
 
   # Android 12 handles the splash screen differently than previous versions.  Please visit

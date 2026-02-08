@@ -10,17 +10,13 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter_facebook_auth/flutter_facebook_auth.dart';
-import 'package:flutter_signin_button/flutter_signin_button.dart';
 import 'package:fluttertoast/fluttertoast.dart';
-import 'package:gap/gap.dart';
 import 'package:google_sign_in/google_sign_in.dart';
-// import 'package:onesignal_flutter/onesignal_flutter.dart';
 import 'package:random_string/random_string.dart';
 import 'package:rounded_loading_button_plus/rounded_loading_button.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import '../Database/database.dart';
 import '../Providers/auth.dart';
-import 'package:flutter_custom_clippers/flutter_custom_clippers.dart';
 import 'package:flutter_close_app/flutter_close_app.dart';
 
 class LoginPage extends StatefulWidget {
@@ -39,41 +35,17 @@ class _LoginPageState extends State<LoginPage> {
   String getOnesignalKey = '';
   bool showPassword = true;
 
+  static const Color kGold = Color(0xFFD4AF37);
+  static const Color kBgTop = Color(0xFF2B1B17);
+  static const Color kBgMid = Color(0xFF5C4033);
+
   @override
   void initState() {
     super.initState();
     _retrieveToken();
     _btnController1.stateStream.listen((value) {});
     getOneSignalDetails();
-
-    // oneSignalTimer = Timer.periodic(
-    //     const Duration(milliseconds: 100), (Timer t) => initOneSignal());
   }
-
-  // initOneSignal() {
-  //   if (getOnesignalKey != '') {
-  //     OneSignal.shared.setLogLevel(OSLogLevel.verbose, OSLogLevel.none);
-  //     debugPrint('One singal app id is jjjjjj');
-  //     OneSignal.shared.setAppId(getOnesignalKey);
-  //     debugPrint('$getOnesignalKey is firebase oneSignal key');
-  //     OneSignal.shared
-  //         .promptUserForPushNotificationPermission()
-  //         .then((accepted) {
-  //       debugPrint("Accepted permission: $accepted");
-  //     });
-  //     oneSignalTimer!.cancel();
-  //   }
-  // }
-
-  // void _handleGetDeviceState() async {
-  //   debugPrint("Getting DeviceState");
-  //   var deviceState = await OneSignal.shared.getDeviceState();
-  //   setState(() {
-  //     playerId = deviceState!.userId!;
-  //   });
-
-  //   debugPrint('$playerId is your player ID');
-  // }
 
   getOneSignalDetails() {
     if (getOnesignalKey == '') {
@@ -249,32 +221,6 @@ class _LoginPageState extends State<LoginPage> {
     return digest.toString();
   }
 
-  // Future<UserCredential> signInWithApple() async {
-  //   // To prevent replay attacks with the credential returned from Apple, we
-  //   // include a nonce in the credential request. When signing in with
-  //   // Firebase, the nonce in the id token returned by Apple, is expected to
-  //   // match the sha256 hash of `rawNonce`.
-  //   final rawNonce = generateNonce();
-  //   final nonce = sha256ofString(rawNonce);
-
-  //   // Request credential for the currently signed in Apple account.
-  //   final appleCredential = await SignInWithApple.getAppleIDCredential(
-  //     scopes: [
-  //       AppleIDAuthorizationScopes.email,
-  //       AppleIDAuthorizationScopes.fullName,
-  //     ],
-  //     nonce: nonce,
-  //   );
-
-  //   // Create an OAuthCredential from the credential returned by Apple.
-  //   final oauthCredential = OAuthProvider("apple.com").credential(
-  //     idToken: appleCredential.identityToken,
-  //     rawNonce: rawNonce,
-  //   );
-
-  //   // Sign in the user with Firebase.
-  //   return await FirebaseAuth.instance.signInWithCredential(oauthCredential);
-  // }
   Future<void> signInWithApple() async {
     try {
       // To prevent replay attacks with the credential returned from Apple, we
@@ -353,46 +299,6 @@ class _LoginPageState extends State<LoginPage> {
               fontSize: 14.0);
         }
       });
-      // if (user != null) {
-      //   // Prepare user data to save in Firestore
-      //   // final userData = {
-      //   //   'uid': user.uid,
-      //   //   'email': appleCredential.email ?? user.email ?? 'No email provided',
-      //   //   'displayName':
-      //   //       appleCredential.givenName != null && appleCredential.familyName != null
-      //   //           ? '${appleCredential.givenName} ${appleCredential.familyName}'
-      //   //           : user.displayName ?? 'No name provided',
-      //   //   'createdAt': FieldValue.serverTimestamp(), // Timestamp of creation
-      //   //   'lastSignIn': FieldValue.serverTimestamp(), // Last sign-in time
-      //   // };
-
-      //   // Save user data to Firestore in the 'users' collection
-      //   FirebaseFirestore.instance.collection('users').doc(user.uid).set({
-      //     'email': user.email,
-      //     'fullname': user.displayName,
-      //     'created': DateFormat.yMMMMEEEEd().format(DateTime.now()).toString(),
-      //     'id': user.uid,
-      //     'phone': '',
-      //     'photoUrl': '',
-      //     'address': '',
-      //     'DeliveryAddress': '',
-      //     'HouseNumber': '',
-      //     'ClosestBustStop': '',
-      //     'DeliveryAddressID': '',
-      //     'CurrentMarketID': '',
-      //     'deliveryFee': 0,
-      //     'wallet': 0,
-      //     'tokenID': playerId,
-      //     'referralCode': '',
-      //     'awardReferral': false,
-      //     'personalReferralCode': '',
-      //     'Coupon Reward': 0
-      //   });
-
-      //   print('User data successfully saved to Firestore');
-      // } else {
-      //   print('No user found after sign-in');
-      // }
     } catch (e) {
       print('Error during Apple sign-in or Firestore save: $e');
     }
@@ -402,288 +308,272 @@ class _LoginPageState extends State<LoginPage> {
   Widget build(BuildContext context) {
     // _handleGetDeviceState();
     return Scaffold(
-      resizeToAvoidBottomInset: false,
-      body: FlutterCloseAppPage(
-        interval: 2,
-        condition: true,
-        onCloseFailed: () {
-          // The interval is more than 2 seconds, or the return key is pressed for the first time
-          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-            content: Text('Press again to exit'),
-          ));
-        },
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            const SizedBox(height: 100),
-            Expanded(
-              flex: 1,
-              child: Image.asset(
-                // 'assets/image/splash-new.png',
-                'assets/image/LoginBoy.png',
-                height: 110,
-                width: 110,
-                fit: BoxFit.cover,
-              ),
-            ),
-            Flexible(
-              flex: 5,
-              child: Form(
-                key: _formKey,
-                child: Column(
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.all(0.0),
-                      child: const Text('Login to your account',
-                              style: TextStyle(
-                                  color: Colors.grey,
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold))
-                          .tr(),
+      backgroundColor: kBgTop,
+      body: Container(
+        height: double.infinity,
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [kBgTop, kBgMid, kBgTop],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+          ),
+        ),
+        child: FlutterCloseAppPage(
+          interval: 2,
+          condition: true,
+          onCloseFailed: () {
+            // The interval is more than 2 seconds, or the return key is pressed for the first time
+            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+              content: Text('Press again to exit'),
+            ));
+          },
+          child: SafeArea(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 24.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const SizedBox(height: 40),
+                  const Text(
+                    "Welcome Back",
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 28,
+                      fontWeight: FontWeight.bold,
                     ),
-                    Padding(
-                      padding: const EdgeInsets.all(12.0),
-                      child: Row(
-                        children: [
-                          const Flexible(
-                              flex: 1,
-                              child: Icon(
-                                Icons.email_outlined,
-                                size: 40,
-                                color: Colors.grey,
-                              )),
-                          const SizedBox(
-                            width: 10,
-                          ),
-                          Flexible(
-                            flex: 6,
-                            child: TextFormField(
-                              keyboardType: TextInputType.emailAddress,
-                              validator: (value) {
-                                if (value!.isEmpty) {
-                                  return 'Required field'.tr();
-                                } else {
-                                  return null;
-                                }
-                              },
-                              onChanged: (value) {
-                                setState(() {
-                                  email = value;
-                                });
-                              },
-                              decoration: InputDecoration(
-                                  hintText: 'Email'.tr(),
-                                  focusColor:
-                                      const Color.fromARGB(255, 47, 37, 37)),
+                  ).tr(),
+                  const SizedBox(height: 8),
+                  const Text(
+                    "Sign in to continue",
+                    style: TextStyle(
+                      color: Colors.white54,
+                      fontSize: 16,
+                    ),
+                  ).tr(),
+                  const SizedBox(height: 40),
+                  Form(
+                    key: _formKey,
+                    child: Column(
+                      children: [
+                        TextFormField(
+                          style: const TextStyle(color: Colors.white),
+                          keyboardType: TextInputType.emailAddress,
+                          validator: (value) {
+                            if (value!.isEmpty) {
+                              return 'Required field'.tr();
+                            } else {
+                              return null;
+                            }
+                          },
+                          onChanged: (value) {
+                            setState(() {
+                              email = value;
+                            });
+                          },
+                          decoration: InputDecoration(
+                            filled: true,
+                            fillColor: Colors.white.withOpacity(0.05),
+                            hintText: 'Email'.tr(),
+                            hintStyle: const TextStyle(color: Colors.white38),
+                            prefixIcon: const Icon(Icons.email_outlined,
+                                color: kGold, size: 22),
+                            contentPadding: const EdgeInsets.symmetric(
+                                vertical: 16, horizontal: 20),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: BorderSide.none,
                             ),
-                          )
-                        ],
-                      ),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.all(12.0),
-                      child: Row(
-                        children: [
-                          const Flexible(
-                              flex: 1,
-                              child: Icon(
-                                Icons.lock_open_outlined,
-                                size: 40,
-                                color: Colors.grey,
-                              )),
-                          const SizedBox(
-                            width: 10,
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: const BorderSide(color: kGold),
+                            ),
                           ),
-                          Flexible(
-                            flex: 6,
-                            child: TextFormField(
-                              validator: (value) {
-                                if (value!.isEmpty) {
-                                  return 'Required field'.tr();
-                                } else {
-                                  return null;
-                                }
-                              },
-                              onChanged: (value) {
-                                setState(() {
-                                  password = value;
-                                });
-                              },
-                              obscureText: showPassword,
-                              decoration: InputDecoration(
-                                hintText: 'Password'.tr(),
-                                suffixIcon: showPassword == true
-                                    ? InkWell(
-                                        onTap: () {
-                                          setState(() {
-                                            showPassword = false;
-                                          });
-                                        },
-                                        child: const Icon(
-                                          Icons.visibility,
-                                          color: Colors.grey,
-                                          size: 30,
-                                        ),
-                                      )
-                                    : InkWell(
-                                        onTap: () {
-                                          setState(() {
-                                            showPassword = true;
-                                          });
-                                        },
-                                        child: const Icon(
-                                          Icons.visibility_off,
-                                          color: Colors.grey,
-                                          size: 30,
-                                        ),
-                                      ),
+                        ),
+                        const SizedBox(height: 20),
+                        TextFormField(
+                          style: const TextStyle(color: Colors.white),
+                          validator: (value) {
+                            if (value!.isEmpty) {
+                              return 'Required field'.tr();
+                            } else {
+                              return null;
+                            }
+                          },
+                          onChanged: (value) {
+                            setState(() {
+                              password = value;
+                            });
+                          },
+                          obscureText: showPassword,
+                          decoration: InputDecoration(
+                            filled: true,
+                            fillColor: Colors.white.withOpacity(0.05),
+                            hintText: 'Password'.tr(),
+                            hintStyle: const TextStyle(color: Colors.white38),
+                            prefixIcon: const Icon(Icons.lock_outline,
+                                color: kGold, size: 22),
+                            suffixIcon: IconButton(
+                              icon: Icon(
+                                showPassword
+                                    ? Icons.visibility
+                                    : Icons.visibility_off,
+                                color: Colors.white38,
+                                size: 20,
                               ),
+                              onPressed: () {
+                                setState(() {
+                                  showPassword = !showPassword;
+                                });
+                              },
                             ),
-                          )
-                        ],
-                      ),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.end,
-                        children: [
-                          InkWell(
-                            onTap: () {
+                            contentPadding: const EdgeInsets.symmetric(
+                                vertical: 16, horizontal: 20),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: BorderSide.none,
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: const BorderSide(color: kGold),
+                            ),
+                          ),
+                        ),
+                        Align(
+                          alignment: Alignment.centerRight,
+                          child: TextButton(
+                            onPressed: () {
                               Navigator.pushNamed(context, '/forgot-password');
                             },
-                            child: Row(
-                              children: [
-                                Text('FORGOT PASSWORD',
-                                        style: TextStyle(
-                                            color: Colors.blue.shade800))
-                                    .tr(),
-                                Text('?',
-                                    style:
-                                        TextStyle(color: Colors.blue.shade800))
-                              ],
-                            ),
-                          ),
-                          const SizedBox(
-                            width: 20,
-                          )
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-                    RoundedLoadingButton(
-                      color: Colors.blue,
-                      successIcon: Icons.done,
-                      failedIcon: Icons.error,
-                      controller: _btnController1,
-                      onPressed: () {
-                        if (_formKey.currentState!.validate()) {
-                          _doSomething(_btnController1, email, password,
-                              context, playerId);
-                        } else {
-                          _btnController1.reset();
-                        }
-                      },
-                      child: const Text('Login',
-                              style: TextStyle(color: Colors.white))
-                          .tr(),
-                    ),
-                    const SizedBox(height: 20),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Row(
-                          children: [
-                            const Text(
-                              'New on',
-                              style: TextStyle(color: Colors.grey),
+                            child: const Text(
+                              'Forgot Password?',
+                              style: TextStyle(
+                                  color: kGold, fontWeight: FontWeight.w600),
                             ).tr(),
-                            const SizedBox(
-                              width: 5,
-                            ),
-                            const Text(
-                              'Falguni eShop?',
-                              style: TextStyle(color: Colors.grey),
-                            ),
-                          ],
+                          ),
                         ),
-                        const SizedBox(width: 10),
-                        InkWell(
-                          onTap: () {
-                            Navigator.of(context).pushNamed('/signup');
-                          },
-                          child: Text(
-                            'CREATE AN ACCOUNT',
-                            style: TextStyle(
-                                color: Colors.blue.shade800,
-                                fontWeight: FontWeight.bold),
-                          ).tr(),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 20),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Text(
-                          'Continue as a',
-                          style: TextStyle(color: Colors.grey),
-                        ),
-                        TextButton(
+                        const SizedBox(height: 20),
+                        RoundedLoadingButton(
+                          color: kGold,
+                          successIcon: Icons.done,
+                          failedIcon: Icons.error,
+                          controller: _btnController1,
+                          width: MediaQuery.of(context).size.width,
+                          height: 50,
+                          borderRadius: 12,
                           onPressed: () {
-                            Navigator.of(context).pushNamed('/bottomNav');
+                            if (_formKey.currentState!.validate()) {
+                              _doSomething(_btnController1, email, password,
+                                  context, playerId);
+                            } else {
+                              _btnController1.reset();
+                            }
                           },
-                          child: Text(
-                            'Guest',
+                          child: const Text(
+                            'LOGIN',
                             style: TextStyle(
-                                fontSize: 20,
-                                color: Colors.blue.shade800,
-                                fontWeight: FontWeight.bold),
+                                color: kBgTop,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                                letterSpacing: 1),
                           ).tr(),
                         ),
                       ],
                     ),
-                    // SizedBox(
-                    //   child: InkWell(
-                    //     onTap: () {
-                    //       _signInWithGoogle();
-                    //     },
-                    //     child: Image.asset(
-                    //       'assets/image/google.png',
-                    //       width: MediaQuery.of(context).size.width * 1.5,
-                    //       height: 50,
-                    //     ),
-                    //   ),
-                    // ),
-                    // with custom text
-                    SizedBox(
-                      width: MediaQuery.of(context).size.width / 1.07,
-                      height: 50,
-                      child: SignInButton(
-                        Buttons.Google,
-                        text: "Sign up with Google",
-                        onPressed: () {
+                  ),
+                  const SizedBox(height: 40),
+                  const Row(
+                    children: [
+                      Expanded(child: Divider(color: Colors.white24)),
+                      Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 16),
+                        child: Text("Or continue with",
+                            style:
+                                TextStyle(color: Colors.white54, fontSize: 12)),
+                      ),
+                      Expanded(child: Divider(color: Colors.white24)),
+                    ],
+                  ),
+                  const SizedBox(height: 30),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      InkWell(
+                        onTap: () {
                           _signInWithGoogle();
                         },
+                        borderRadius: BorderRadius.circular(50),
+                        child: Container(
+                          width: 56,
+                          height: 56,
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.05),
+                            shape: BoxShape.circle,
+                            border: Border.all(color: Colors.white12),
+                          ),
+                          child: Center(
+                            child: Image.network(
+                              'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c1/Google_%22G%22_logo.svg/240px-Google_%22G%22_logo.svg.png',
+                              height: 24,
+                            ),
+                          ),
+                        ),
                       ),
+                      const SizedBox(width: 24),
+                      InkWell(
+                        onTap: signInWithApple,
+                        borderRadius: BorderRadius.circular(50),
+                        child: Container(
+                          width: 56,
+                          height: 56,
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.05),
+                            shape: BoxShape.circle,
+                            border: Border.all(color: Colors.white12),
+                          ),
+                          child: const Center(
+                            child: Icon(Icons.apple,
+                                color: Colors.white, size: 28),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 40),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Text("Don't have an account? ",
+                              style: TextStyle(color: Colors.white60))
+                          .tr(),
+                      GestureDetector(
+                        onTap: () {
+                          Navigator.of(context).pushNamed('/signup');
+                        },
+                        child: const Text(
+                          "Sign Up",
+                          style: TextStyle(
+                              color: kGold, fontWeight: FontWeight.bold),
+                        ).tr(),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  Center(
+                    child: TextButton(
+                      onPressed: () {
+                        Navigator.of(context).pushNamed('/bottomNav');
+                      },
+                      child: const Text(
+                        "Continue as Guest",
+                        style: TextStyle(color: Colors.white54, fontSize: 14),
+                      ).tr(),
                     ),
-                    const Gap(10),
-                    Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: SignInWithAppleButton(onPressed: signInWithApple),
-                    ),
-                  ],
-                ),
+                  ),
+                  const SizedBox(height: 20),
+                ],
               ),
             ),
-            Flexible(
-              flex: 1,
-              child: ClipPath(
-                clipper: OvalTopBorderClipper(),
-                child: Container(color: const Color.fromARGB(255, 47, 37, 37)),
-              ),
-            ),
-          ],
+          ),
         ),
       ),
     );

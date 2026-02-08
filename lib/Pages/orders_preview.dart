@@ -37,10 +37,10 @@ class OrdersPreview extends StatefulWidget {
 }
 
 class _OrdersPreviewState extends State<OrdersPreview> {
-  static const Color kPrimary =
+  static const Color kGold =
       Color(0xFFD4AF37); // Richer, traditional honey-gold
   static const Color kDarkBg = Color(0xFF2B1B17); // Deep "Roasted Bean" brown
-  static const Color kGold = Color(0xFF5C4033); // Warm "Earth/Clay" brown
+  static const Color kBgMid = Color(0xFF5C4033); // Warm "Earth/Clay" brown
 
   String marketName = '';
   String marketAddress = '';
@@ -679,9 +679,9 @@ class _OrdersPreviewState extends State<OrdersPreview> {
         decoration: const BoxDecoration(
           gradient: LinearGradient(
             colors: [
-              Color(0xFF1C1515),
-              Color(0xFF2F2525),
-              Color(0xFF1C1515),
+              kDarkBg,
+              kBgMid,
+              kDarkBg,
             ],
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
@@ -921,7 +921,7 @@ class _OrdersPreviewState extends State<OrdersPreview> {
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
                           colors: [
-                            kPrimary.withOpacity(0.6),
+                            kGold.withOpacity(0.6),
                             Colors.black.withOpacity(0.9),
                           ],
                           begin: Alignment.topLeft,
@@ -1382,10 +1382,16 @@ class _OrdersPreviewState extends State<OrdersPreview> {
                     const Gap(6),
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 12),
-                      child: ProductReturnDetail(
-                        productID: e.productID,
-                        orderModel: widget.orderModel,
-                        ordersList: e,
+                      child: DefaultTextStyle.merge(
+                        style: const TextStyle(color: Colors.white),
+                        child: IconTheme.merge(
+                          data: const IconThemeData(color: Colors.white),
+                          child: ProductReturnDetail(
+                            productID: e.productID,
+                            orderModel: widget.orderModel,
+                            ordersList: e,
+                          ),
+                        ),
                       ),
                     ),
                     if (orderStatus == 'Completed') ...[
