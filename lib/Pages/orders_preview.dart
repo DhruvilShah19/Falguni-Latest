@@ -2,11 +2,11 @@
 
 import 'dart:async';
 import 'dart:convert';
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:falguni_app/Widgets/product_return_detail.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:gap/gap.dart';
@@ -592,6 +592,90 @@ class _OrdersPreviewState extends State<OrdersPreview> {
     }
   }
 
+  String _generateReceiptText() {
+    final StringBuffer buffer = StringBuffer();
+    buffer.writeln('ORDER RECEIPT');
+    buffer.writeln('--------------------------------');
+    buffer.writeln('Order ID: #${widget.orderModel.orderID}');
+    if (widget.orderModel.timeCreated != null) {
+      buffer.writeln('Date: ${widget.orderModel.timeCreated}');
+    }
+    buffer.writeln('Status: ${orderStatus.tr()}');
+    buffer.writeln('--------------------------------');
+    if (userFullname.isNotEmpty) {
+      buffer.writeln('Customer: $userFullname');
+    }
+    if (widget.orderModel.deliveryAddress.isNotEmpty) {
+      buffer.writeln('Delivery Address: ${widget.orderModel.deliveryAddress}');
+      if (widget.orderModel.houseNumber.isNotEmpty) {
+        buffer.writeln('House No: ${widget.orderModel.houseNumber}');
+      }
+    } else if (widget.orderModel.pickupAddress.isNotEmpty) {
+      buffer.writeln('Pickup Address: ${widget.orderModel.pickupAddress}');
+    }
+    buffer.writeln('--------------------------------');
+    buffer.writeln('ITEMS:');
+    for (var item in widget.orderModel.orders) {
+      buffer.writeln('${item.productName} (x${item.quantity})');
+      buffer.writeln(
+          '  ${item.selected} - ${widget.currencySymbol}${Formatter().converter(item.selectedPrice.toDouble())}');
+    }
+    buffer.writeln('--------------------------------');
+    buffer.writeln(
+        'Payment Type: ${widget.orderModel.paymentType == 'Wallet' ? 'Wallet'.tr() : 'Cash on delivery'.tr()}');
+    if (widget.orderModel.deliveryFee > 0) {
+      buffer.writeln(
+          'Delivery Fee: ${widget.currencySymbol}${Formatter().converter(widget.orderModel.deliveryFee.toDouble())}');
+    }
+    buffer.writeln(
+        'TOTAL: ${widget.currencySymbol}${Formatter().converter(widget.orderModel.total.toDouble())}');
+    buffer.writeln('--------------------------------');
+    buffer.writeln('Thank you for your order!');
+
+    return buffer.toString();
+  }
+
+  void _showReceiptDialog() {
+    String receiptText = _generateReceiptText();
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          backgroundColor: Colors.white,
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: const Text('Order Receipt').tr(),
+          content: Container(
+            width: double.maxFinite,
+            constraints: BoxConstraints(
+              maxHeight: MediaQuery.of(context).size.height * 0.6,
+            ),
+            child: SingleChildScrollView(
+              child: SelectableText(
+                receiptText,
+                style: const TextStyle(fontFamily: 'Monospace', fontSize: 14),
+              ),
+            ),
+          ),
+          actions: [
+            TextButton.icon(
+              onPressed: () {
+                Clipboard.setData(ClipboardData(text: receiptText));
+                Fluttertoast.showToast(msg: "Receipt copied to clipboard".tr());
+              },
+              icon: const Icon(Icons.copy),
+              label: const Text('Copy').tr(),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Close').tr(),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   Future<Future<bool>> openWhatsApp() async {
     return launchUrl(
       Uri.parse(
@@ -674,6 +758,13 @@ class _OrdersPreviewState extends State<OrdersPreview> {
             fontWeight: FontWeight.w600,
           ),
         ).tr(),
+        actions: [
+          IconButton(
+            onPressed: _showReceiptDialog,
+            icon: const Icon(Icons.receipt_long),
+            tooltip: 'View Receipt'.tr(),
+          ),
+        ],
       ),
       body: Container(
         decoration: const BoxDecoration(
