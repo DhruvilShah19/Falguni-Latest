@@ -16,6 +16,9 @@ import 'package:geolocator/geolocator.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:http/http.dart' as http;
 import 'package:url_launcher/url_launcher.dart';
+import 'package:pdf/pdf.dart';
+import 'package:pdf/widgets.dart' as pw;
+import 'package:printing/printing.dart';
 
 import '../Model/formatter.dart';
 import '../Model/history.dart';
@@ -592,8 +595,135 @@ class _OrdersPreviewState extends State<OrdersPreview> {
     }
   }
 
+  Widget _buildReceiptUI() {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Center(
+          child: Text(
+            'Falguni Gruh Udhyog',
+            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            textAlign: TextAlign.center,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Center(
+          child: Text(
+            'ORDER RECEIPT'.tr(),
+            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+          ),
+        ),
+        const Divider(thickness: 1),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text('Order ID: #${widget.orderModel.orderID}',
+                style: const TextStyle(fontSize: 12)),
+            if (widget.orderModel.timeCreated != null)
+              Text('${widget.orderModel.timeCreated}',
+                  style: const TextStyle(fontSize: 12)),
+          ],
+        ),
+        const SizedBox(height: 4),
+        Text('Status: ${orderStatus.tr()}',
+            style: const TextStyle(fontSize: 12)),
+        const Divider(),
+        if (userFullname.isNotEmpty)
+          Text('Customer: $userFullname', style: const TextStyle(fontSize: 13)),
+        if (widget.orderModel.deliveryAddress.isNotEmpty) ...[
+          const SizedBox(height: 4),
+          Text('Delivery Address: ${widget.orderModel.deliveryAddress}',
+              style: const TextStyle(fontSize: 13)),
+          if (widget.orderModel.houseNumber.isNotEmpty)
+            Text('House No: ${widget.orderModel.houseNumber}',
+                style: const TextStyle(fontSize: 13)),
+        ] else if (widget.orderModel.pickupAddress.isNotEmpty)
+          Text('Pickup Address: ${widget.orderModel.pickupAddress}',
+              style: const TextStyle(fontSize: 13)),
+        const Divider(),
+        Text('ITEMS:'.tr(),
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+        const SizedBox(height: 4),
+        ...widget.orderModel.orders.map((item) => Padding(
+              padding: const EdgeInsets.symmetric(vertical: 2.0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('${item.productName} (x${item.quantity})',
+                            style: const TextStyle(
+                                fontWeight: FontWeight.w500, fontSize: 13)),
+                        Text(
+                          '  ${item.selected}',
+                          style:
+                              TextStyle(color: Colors.grey[700], fontSize: 12),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Text(
+                    '${widget.currencySymbol}${Formatter().converter(item.selectedPrice.toDouble())}',
+                    style: const TextStyle(fontSize: 13),
+                  ),
+                ],
+              ),
+            )),
+        const Divider(),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text('Payment Type:'.tr(), style: const TextStyle(fontSize: 13)),
+            Text(
+                widget.orderModel.paymentType == 'Wallet'
+                    ? 'Wallet'.tr()
+                    : 'Cash on delivery'.tr(),
+                style: const TextStyle(fontSize: 13)),
+          ],
+        ),
+        if (widget.orderModel.deliveryFee > 0)
+          Padding(
+            padding: const EdgeInsets.only(top: 4.0),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text('Delivery Fee:'.tr(),
+                    style: const TextStyle(fontSize: 13)),
+                Text(
+                    '${widget.currencySymbol}${Formatter().converter(widget.orderModel.deliveryFee.toDouble())}',
+                    style: const TextStyle(fontSize: 13)),
+              ],
+            ),
+          ),
+        const SizedBox(height: 8),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              'TOTAL:'.tr(),
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+            ),
+            Text(
+              '${widget.currencySymbol}${Formatter().converter(widget.orderModel.total.toDouble())}',
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+            ),
+          ],
+        ),
+        const Divider(thickness: 1),
+        Center(
+            child: Text('Thank you for your order!'.tr(),
+                style: const TextStyle(
+                    fontSize: 12, fontStyle: FontStyle.italic))),
+      ],
+    );
+  }
+
   String _generateReceiptText() {
     final StringBuffer buffer = StringBuffer();
+    buffer.writeln('Falguni Gruh Udhyog');
     buffer.writeln('ORDER RECEIPT');
     buffer.writeln('--------------------------------');
     buffer.writeln('Order ID: #${widget.orderModel.orderID}');
@@ -635,8 +765,98 @@ class _OrdersPreviewState extends State<OrdersPreview> {
     return buffer.toString();
   }
 
+  Future<void> _printReceipt() async {
+    final doc = pw.Document();
+
+    doc.addPage(
+      pw.Page(
+        build: (pw.Context context) {
+          return pw.Column(
+            crossAxisAlignment: pw.CrossAxisAlignment.start,
+            children: [
+              pw.Center(
+                child: pw.Text('Falguni Gruh Udhyog',
+                    style: pw.TextStyle(
+                        fontSize: 24, fontWeight: pw.FontWeight.bold)),
+              ),
+              pw.SizedBox(height: 10),
+              pw.Center(
+                child: pw.Text('ORDER RECEIPT',
+                    style: pw.TextStyle(
+                        fontSize: 18, fontWeight: pw.FontWeight.bold)),
+              ),
+              pw.Divider(),
+              pw.Row(
+                mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                children: [
+                  pw.Text('Order ID: #${widget.orderModel.orderID}'),
+                  if (widget.orderModel.timeCreated != null)
+                    pw.Text('Date: ${widget.orderModel.timeCreated}'),
+                ],
+              ),
+              pw.SizedBox(height: 5),
+              pw.Text('Status: ${orderStatus.tr()}'),
+              pw.Divider(),
+              if (userFullname.isNotEmpty) pw.Text('Customer: $userFullname'),
+              if (widget.orderModel.deliveryAddress.isNotEmpty) ...[
+                pw.Text(
+                    'Delivery Address: ${widget.orderModel.deliveryAddress}'),
+                if (widget.orderModel.houseNumber.isNotEmpty)
+                  pw.Text('House No: ${widget.orderModel.houseNumber}'),
+              ] else if (widget.orderModel.pickupAddress.isNotEmpty)
+                pw.Text('Pickup Address: ${widget.orderModel.pickupAddress}'),
+              pw.Divider(),
+              pw.Text('ITEMS:',
+                  style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
+              pw.SizedBox(height: 5),
+              ...widget.orderModel.orders.map(
+                (item) => pw.Container(
+                  margin: const pw.EdgeInsets.only(bottom: 5),
+                  child: pw.Row(
+                    mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                    children: [
+                      pw.Expanded(
+                        child: pw.Column(
+                          crossAxisAlignment: pw.CrossAxisAlignment.start,
+                          children: [
+                            pw.Text('${item.productName} (x${item.quantity})',
+                                style: pw.TextStyle(
+                                    fontWeight: pw.FontWeight.bold)),
+                            pw.Text('  ${item.selected}',
+                                style: const pw.TextStyle(
+                                    fontSize: 10, color: PdfColors.grey700)),
+                          ],
+                        ),
+                      ),
+                      pw.Text(
+                          '${widget.currencySymbol}${Formatter().converter(item.selectedPrice.toDouble())}'),
+                    ],
+                  ),
+                ),
+              ),
+              pw.Divider(),
+              pw.Text(
+                  'Payment Type: ${widget.orderModel.paymentType == 'Wallet' ? 'Wallet'.tr() : 'Cash on delivery'.tr()}'),
+              if (widget.orderModel.deliveryFee > 0)
+                pw.Text(
+                    'Delivery Fee: ${widget.currencySymbol}${Formatter().converter(widget.orderModel.deliveryFee.toDouble())}'),
+              pw.SizedBox(height: 5),
+              pw.Text(
+                  'TOTAL: ${widget.currencySymbol}${Formatter().converter(widget.orderModel.total.toDouble())}',
+                  style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
+              pw.Divider(),
+              pw.Center(child: pw.Text('Thank you for your order!')),
+            ],
+          );
+        },
+      ),
+    );
+
+    await Printing.layoutPdf(
+        onLayout: (PdfPageFormat format) async => doc.save());
+  }
+
   void _showReceiptDialog() {
-    String receiptText = _generateReceiptText();
     showDialog(
       context: context,
       builder: (context) {
@@ -651,15 +871,20 @@ class _OrdersPreviewState extends State<OrdersPreview> {
               maxHeight: MediaQuery.of(context).size.height * 0.6,
             ),
             child: SingleChildScrollView(
-              child: SelectableText(
-                receiptText,
-                style: const TextStyle(fontFamily: 'Monospace', fontSize: 14),
-              ),
+              child: _buildReceiptUI(),
             ),
           ),
           actions: [
             TextButton.icon(
               onPressed: () {
+                _printReceipt();
+              },
+              icon: const Icon(Icons.print),
+              label: const Text('Print/Download').tr(),
+            ),
+            TextButton.icon(
+              onPressed: () {
+                String receiptText = _generateReceiptText();
                 Clipboard.setData(ClipboardData(text: receiptText));
                 Fluttertoast.showToast(msg: "Receipt copied to clipboard".tr());
               },
