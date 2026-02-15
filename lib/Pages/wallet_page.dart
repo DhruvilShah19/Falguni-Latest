@@ -1,4 +1,4 @@
-// ignore_for_file: curly_braces_in_flow_control_structures, prefer_const_constructors, prefer_const_literals_to_create_immutables, unnecessary_to_list_in_spreads
+// ignore_for_file: curly_braces_in_flow_control_structures, prefer_const_constructors, prefer_const_literals_to_create_immutables, unnecessary_to_list_in_spreads, deprecated_member_use
 
 import 'dart:math' as math;
 import 'package:cloud_firestore/cloud_firestore.dart';

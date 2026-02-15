@@ -1,4 +1,4 @@
-// ignore_for_file: unused_local_variable, avoid_print, use_build_context_synchronously, prefer_const_constructors
+// ignore_for_file: unused_local_variable, avoid_print, use_build_context_synchronously, prefer_const_constructors, deprecated_member_use
 
 import 'dart:async';
 import 'dart:io';

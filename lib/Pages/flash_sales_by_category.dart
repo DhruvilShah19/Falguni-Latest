@@ -1,3 +1,5 @@
+// ignore_for_file: deprecated_member_use
+
 import 'package:badges/badges.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:easy_localization/easy_localization.dart';

@@ -1,4 +1,4 @@
-// ignore_for_file: use_build_context_synchronously
+// ignore_for_file: use_build_context_synchronously, deprecated_member_use
 
 import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
@@ -162,7 +162,8 @@ class __SwitchListTileMenuItemState extends State<_SwitchListTileMenuItem> {
               prefs
                   .setString(
                       'language_selected', widget.locale.countryCode.toString())
-                  .then((value) => Navigator.of(context).pushNamed('/bottomNav'));
+                  .then(
+                      (value) => Navigator.of(context).pushNamed('/bottomNav'));
             }),
       ),
     );

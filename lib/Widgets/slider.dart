@@ -1,4 +1,4 @@
-// ignore_for_file: avoid_print
+// ignore_for_file: avoid_print, deprecated_member_use
 
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -41,7 +41,7 @@ class _SliderWidgetState extends State<SliderWidget> {
   }
 
   int _current = 0;
-   CarouselSliderController controller = CarouselSliderController();
+  CarouselSliderController controller = CarouselSliderController();
   @override
   Widget build(BuildContext context) {
     return FutureBuilder<List<FeedsModel>>(

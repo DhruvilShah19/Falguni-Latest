@@ -1,4 +1,4 @@
-// ignore_for_file: unused_element, prefer_const_constructors, curly_braces_in_flow_control_structures, prefer_const_literals_to_create_immutables, unnecessary_to_list_in_spreads, unnecessary_brace_in_string_interps
+// ignore_for_file: unused_element, prefer_const_constructors, curly_braces_in_flow_control_structures, prefer_const_literals_to_create_immutables, unnecessary_to_list_in_spreads, unnecessary_brace_in_string_interps, deprecated_member_use
 
 import 'dart:math' as math;
 import 'package:cloud_firestore/cloud_firestore.dart';

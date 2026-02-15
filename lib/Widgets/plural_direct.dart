@@ -1,4 +1,4 @@
-// ignore_for_file: avoid_print, unused_local_variable, use_build_context_synchronously
+// ignore_for_file: avoid_print, unused_local_variable, use_build_context_synchronously, deprecated_member_use
 
 import 'dart:convert';
 import 'dart:math';

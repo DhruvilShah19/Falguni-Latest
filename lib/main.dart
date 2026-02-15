@@ -1,4 +1,4 @@
-// ignore_for_file: avoid_print, unused_import
+// ignore_for_file: avoid_print, unused_import, deprecated_member_use
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:easy_localization/easy_localization.dart';

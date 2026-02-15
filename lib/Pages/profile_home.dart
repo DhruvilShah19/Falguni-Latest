@@ -1,4 +1,4 @@
-// ignore_for_file: unused_field, prefer_final_fields, unused_local_variable
+// ignore_for_file: unused_field, prefer_final_fields, unused_local_variable, deprecated_member_use
 
 import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';

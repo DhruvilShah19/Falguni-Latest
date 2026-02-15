@@ -1,4 +1,4 @@
-// ignore_for_file: deprecated_member_use, avoid_unnecessary_containers
+// ignore_for_file: deprecated_member_use, avoid_unnecessary_containers, curly_braces_in_flow_control_structures
 
 import 'package:animations/animations.dart';
 import 'package:badges/badges.dart';
@@ -11,12 +11,13 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:geocoding/geocoding.dart';
+import 'package:geolocator/geolocator.dart';
 import '../Model/formatter.dart';
 import '../Model/products.dart';
 import '../Model/rating.dart';
 import '../Providers/analytics.dart';
 import 'package:share_plus/share_plus.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 class ProductDetailsPage extends StatefulWidget {
   final String marketID;
@@ -44,6 +45,10 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
   String currentMarketID = '';
   num price = 0;
   num deliveryFee = 0;
+  int _currentImageIndex = 0;
+  String fullname = '';
+  String deliveryAddress = '';
+  String address = '';
 
   static const Color kGold = Color(0xFFD4AF37);
   static const Color kBgTop = Color(0xFF2B1B17);
@@ -61,14 +66,26 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
     });
   }
 
+  void _getLocation() async {
+    try {
+      Position pos = await Geolocator.getCurrentPosition(
+          desiredAccuracy: LocationAccuracy.low);
+      List<Placemark> p =
+          await placemarkFromCoordinates(pos.latitude, pos.longitude);
+      if (mounted) setState(() => address = p.first.street ?? "Locating...");
+    } catch (_) {}
+  }
+
   Future<void> _getUserDoc() async {
     final FirebaseAuth auth = FirebaseAuth.instance;
     final FirebaseFirestore firestore = FirebaseFirestore.instance;
 
     User? user = auth.currentUser;
-    setState(() {
-      userRef = firestore.collection('users').doc(user!.uid);
-    });
+    if (user != null) {
+      setState(() {
+        userRef = firestore.collection('users').doc(user.uid);
+      });
+    }
   }
 
   addToCart(ProductsModel productsModel) {
@@ -179,6 +196,7 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
     getRatingAndReview();
     _getUserDetails();
     _getUserDoc();
+    _getLocation();
     super.initState();
   }
 
@@ -186,21 +204,21 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
     final FirebaseAuth auth = FirebaseAuth.instance;
     final FirebaseFirestore firestore = FirebaseFirestore.instance;
     User? user = auth.currentUser;
-    setState(() {
-      userRef = firestore
-          .collection('users')
-          .doc(user!.uid)
-          .snapshots()
-          .listen((value) {
-        setState(() {
-          userID = value['id'];
-        });
-        if (userID != '') {
-          getCart();
-          getselectedMarket();
+    if (user != null) {
+      firestore.collection('users').doc(user.uid).snapshots().listen((value) {
+        if (mounted) {
+          setState(() {
+            userID = value['id'];
+            fullname = value['fullname'].toString().split(' ')[0];
+            deliveryAddress = value['DeliveryAddress'] ?? '';
+          });
+          if (userID != '') {
+            getCart();
+            getselectedMarket();
+          }
         }
-      }) as DocumentReference<Object?>?;
-    });
+      });
+    }
   }
 
   getFavorite() {
@@ -310,22 +328,330 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
 //   Share.share(productDetails);
 // }
 
-  void _shareProduct(String productName, String productDescription) async {
+  Widget _buildGallery() {
+    List<String> images = [];
+    if (widget.productsModel.image1.isNotEmpty) {
+      images.add(widget.productsModel.image1);
+    }
+    if (widget.productsModel.image2.isNotEmpty) {
+      images.add(widget.productsModel.image2);
+    }
+    if (widget.productsModel.image3.isNotEmpty) {
+      images.add(widget.productsModel.image3);
+    }
+
+    if (images.isEmpty) {
+      images.add(
+          'https://cdn.iconscout.com/icon/free/png-256/gallery-187-902099.png');
+    }
+
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(20.0),
+      child: Stack(
+        children: [
+          CarouselSlider(
+            items: images.map((url) {
+              return Builder(
+                builder: (BuildContext context) {
+                  return SizedBox(
+                    width: MediaQuery.of(context).size.width,
+                    child: CachedNetworkImage(
+                      imageUrl: url,
+                      fit: BoxFit.cover,
+                      placeholder: (context, url) => const Center(
+                        child: SpinKitFadingCircle(
+                          color: kGold,
+                          size: 50.0,
+                        ),
+                      ),
+                      errorWidget: (context, url, error) =>
+                          const Icon(Icons.error),
+                    ),
+                  );
+                },
+              );
+            }).toList(),
+            options: CarouselOptions(
+              height: double.infinity,
+              viewportFraction: 1.0,
+              autoPlay: images.length > 1,
+              enableInfiniteScroll: images.length > 1,
+              onPageChanged: (index, reason) {
+                setState(() {
+                  _currentImageIndex = index;
+                });
+              },
+            ),
+          ),
+          if (images.length > 1)
+            Positioned(
+              bottom: 10,
+              left: 0,
+              right: 0,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: images.asMap().entries.map((entry) {
+                  return Container(
+                    width: 8.0,
+                    height: 8.0,
+                    margin: const EdgeInsets.symmetric(
+                        vertical: 8.0, horizontal: 4.0),
+                    decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: Colors.white.withOpacity(
+                            _currentImageIndex == entry.key ? 0.9 : 0.4)),
+                  );
+                }).toList(),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  void _shareProduct(String productName, String productDescription) {
     final String productDetails =
         'Check out this product: $productName\nDescription: $productDescription';
-
-    final String deepLink =
-        'falgunigruhudhyog://product?name=${Uri.encodeComponent(productName)}&description=${Uri.encodeComponent(productDescription)}';
     const String playStoreLink =
         'https://play.google.com/store/apps/details?id=com.Falgunigruhudhyog';
+    final String message =
+        '$productDetails\n\nDownload the app from the Play Store: $playStoreLink';
+    Share.share(message);
+  }
 
-    if (await canLaunch(deepLink)) {
-      await launch(deepLink);
-    } else {
-      final String message =
-          '$productDetails\n\nDownload the app from the Play Store: $playStoreLink';
-      Share.share(message);
-    }
+  Widget _buildDescriptionSection() {
+    if (widget.productsModel.description.isEmpty)
+      return const SizedBox.shrink();
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.05),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: Colors.white10),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 10,
+            offset: const Offset(0, 5),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: kGold.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(Icons.description_outlined,
+                    color: kGold, size: 20),
+              ),
+              const SizedBox(width: 12),
+              Text(
+                'Description'.tr(),
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                  letterSpacing: 0.5,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Text(
+            widget.productsModel.description,
+            style: TextStyle(
+              fontSize: 15,
+              color: Colors.white.withOpacity(0.85),
+              height: 1.6,
+              letterSpacing: 0.3,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildVariantTile(
+      String unitKey, String name, num price, num oldPrice) {
+    if (name.isEmpty) return const SizedBox.shrink();
+
+    bool isSelected = selectedUnit == unitKey;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 6.0),
+      child: InkWell(
+        onTap: () {
+          setState(() {
+            selectedUnit = unitKey;
+            quantity = 1;
+          });
+        },
+        borderRadius: BorderRadius.circular(12),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 300),
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: isSelected
+                ? kGold.withOpacity(0.15)
+                : Colors.white.withOpacity(0.05),
+            border: Border.all(
+              color: isSelected ? kGold : Colors.white24,
+              width: isSelected ? 2 : 1,
+            ),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 20,
+                height: 20,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: isSelected ? kGold : Colors.white54,
+                    width: 2,
+                  ),
+                ),
+                child: isSelected
+                    ? Center(
+                        child: Container(
+                          width: 10,
+                          height: 10,
+                          decoration: const BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: kGold,
+                          ),
+                        ),
+                      )
+                    : null,
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  name,
+                  style: TextStyle(
+                    color: isSelected ? Colors.white : Colors.white70,
+                    fontSize: 16,
+                    fontWeight:
+                        isSelected ? FontWeight.bold : FontWeight.normal,
+                  ),
+                ),
+              ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(
+                    '${widget.currency}${Formatter().converter(price.toDouble())}',
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+                  if (widget.productsModel.percantageDiscount != 0 &&
+                      oldPrice > 0)
+                    Text(
+                      '${widget.currency}${Formatter().converter(oldPrice.toDouble())}',
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: Colors.white54,
+                        decoration: TextDecoration.lineThrough,
+                      ),
+                    ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildReviewsSection() {
+    return FutureBuilder<List<RatingModel>>(
+        future: getRating(),
+        builder: (context, snapshot) {
+          if (snapshot.hasData) {
+            return ListView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: snapshot.data!.length,
+                itemBuilder: (context, index) {
+                  RatingModel ratingModel = snapshot.data![index];
+                  return Column(
+                    children: [
+                      ListTile(
+                        leading: ratingModel.profilePicture == ''
+                            ? ClipOval(
+                                child: CachedNetworkImage(
+                                height: 35,
+                                fit: BoxFit.cover,
+                                width: 35,
+                                imageUrl:
+                                    "https://eitrawmaterials.eu/wp-content/uploads/2016/09/person-icon.png",
+                                placeholder: (context, url) =>
+                                    const SpinKitFadingCircle(
+                                  color: Colors.orange,
+                                  size: 30,
+                                ),
+                                errorWidget: (context, url, error) =>
+                                    const Icon(Icons.error),
+                              ))
+                            : ClipOval(
+                                child: CachedNetworkImage(
+                                  height: 35,
+                                  fit: BoxFit.cover,
+                                  width: 35,
+                                  imageUrl: ratingModel.profilePicture,
+                                  placeholder: (context, url) =>
+                                      const SpinKitFadingCircle(
+                                    color: Colors.orange,
+                                    size: 30,
+                                  ),
+                                  errorWidget: (context, url, error) =>
+                                      const Icon(Icons.error),
+                                ),
+                              ),
+                        title: Text(ratingModel.fullname,
+                            style: const TextStyle(color: Colors.white)),
+                        subtitle: RatingBarIndicator(
+                          rating: ratingModel.rating.toDouble(),
+                          itemBuilder: (context, index) => const Icon(
+                            Icons.star,
+                            color: kGold,
+                          ),
+                          itemCount: 5,
+                          itemSize: 15,
+                          direction: Axis.horizontal,
+                        ),
+                        trailing: Text(ratingModel.timeCreated,
+                            style: const TextStyle(color: Colors.white54)),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.only(left: 20, right: 20),
+                        child: Container(
+                          alignment: Alignment.centerLeft,
+                          child: Text(
+                            ratingModel.review,
+                            textAlign: TextAlign.left,
+                            style: const TextStyle(color: Colors.white70),
+                          ),
+                        ),
+                      ),
+                    ],
+                  );
+                });
+          } else {
+            return const Center(child: CircularProgressIndicator());
+          }
+        });
   }
 
   @override
@@ -340,135 +666,29 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
             end: Alignment.bottomCenter,
           ),
         ),
-        child: CustomScrollView(slivers: [
-          SliverAppBar(
-            iconTheme: Theme.of(context).iconTheme,
-            titleTextStyle: TextStyle(color: Theme.of(context).indicatorColor),
-            backgroundColor: kBgTop,
-            snap: true,
-            elevation: 0,
-            centerTitle: true,
-            pinned: true,
-            floating: true,
-            automaticallyImplyLeading: false,
-            leading: Align(
-                alignment: Alignment.topLeft,
-                child: Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: InkWell(
-                    onTap: () {
-                      Navigator.of(context).pop();
-                    },
-                    child: Container(
-                      height: 40,
-                      width: 40,
-                      decoration: const BoxDecoration(
-                          shape: BoxShape.circle, color: Colors.black26),
-                      child: const Icon(
-                        Icons.cancel,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ),
-                )),
-            actions: [
-              Align(
-                  alignment: Alignment.topRight,
-                  child: InkWell(
-                    onTap: () {
-                      if (userRef == null) {
-                        Navigator.of(context).pushNamed('/login');
-                      } else {
-                        Navigator.of(context).pushNamed('/cart');
-                      }
-                    },
-                    child: Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: Container(
-                        height: 40,
-                        width: 40,
-                        decoration: const BoxDecoration(
-                            shape: BoxShape.circle, color: Colors.black26),
-                        child: Center(
-                          child: Badge(
-                            badgeStyle: const BadgeStyle(
-                              badgeColor: kGold,
-                            ),
-                            badgeContent: Text(cartQuantity.toString(),
-                                style: const TextStyle(
-                                    color: Colors.white, fontSize: 10)),
-                            child: const Icon(
-                              Icons.shopping_cart,
-                              color: Colors.white,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ))
-            ],
-            expandedHeight: MediaQuery.of(context).size.height / 2.5,
-            flexibleSpace: FlexibleSpaceBar(
-              background: SizedBox(
+        child: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              SizedBox(
                   height: MediaQuery.of(context).size.height / 2.5,
                   width: double.infinity,
-                  child: Container(
-                    decoration: const BoxDecoration(
-                      borderRadius: BorderRadius.only(
-                          bottomRight: Radius.circular(40.0),
-                          bottomLeft: Radius.circular(40.0)),
-                    ),
-                    child: CarouselSlider(
-                      // indicatorBgPadding: 10,
-                      // dotSize: 5,
-                      // animationDuration: const Duration(seconds: 10),
-                      // showIndicator: true,
-                      items: [
-                        widget.productsModel.image1 == ''
-                            ? Image.network(
-                                'https://cdn.iconscout.com/icon/free/png-256/gallery-187-902099.png',
-                                fit: BoxFit.cover)
-                            : Image.network(widget.productsModel.image1),
-                        widget.productsModel.image2 == ''
-                            ? Image.network(
-                                'https://cdn.iconscout.com/icon/free/png-256/gallery-187-902099.png',
-                                fit: BoxFit.cover)
-                            : Image.network(widget.productsModel.image2),
-                        widget.productsModel.image3 == ''
-                            ? Image.network(
-                                'https://cdn.iconscout.com/icon/free/png-256/gallery-187-902099.png',
-                                fit: BoxFit.cover)
-                            : Image.network(widget.productsModel.image3),
-                      ],
-                      options: CarouselOptions(),
-                    ),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                    child: _buildGallery(),
                   )),
-            ),
-          ),
-          SliverToBoxAdapter(
-            child: Column(
-              children: [
-                const SizedBox(height: 10),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment
-                      .spaceBetween, // Aligns items within the row
+              const SizedBox(height: 20),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Expanded(
-                      // Expands the child to take available space
-                      child: Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: Text(
-                          widget.productsModel.name,
-                          maxLines: 2,
-                          style: const TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white),
-                          textAlign: TextAlign.start,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                    ),
+                    Text(
+                        '${widget.currency}${Formatter().converter(widget.productsModel.unitPrice1.toDouble())}',
+                        style: const TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                            color: kGold)),
                     IconButton(
                       icon: const Icon(Icons.share, color: Colors.white),
                       onPressed: () {
@@ -478,1041 +698,547 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
                     ),
                   ],
                 ),
-                const SizedBox(height: 10),
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Row(
+                  children: [
+                    RatingBarIndicator(
+                      rating:
+                          totalUser == 0 ? 0 : getRatingAndReview().toDouble(),
+                      itemBuilder: (context, index) => const Icon(
+                        Icons.star,
+                        color: kGold,
+                      ),
+                      itemCount: 5,
+                      itemSize: 20,
+                      direction: Axis.horizontal,
+                    ),
+                    const SizedBox(width: 5),
+                    Text('(${totalUser.toString()})',
+                        style: const TextStyle(color: Colors.white54)),
+                  ],
+                ),
+              ),
+              if (widget.productsModel.percantageDiscount != 0)
                 Padding(
-                  padding: const EdgeInsets.only(left: 8),
+                  padding: const EdgeInsets.only(left: 16, top: 5),
                   child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                          '${widget.currency}${Formatter().converter(widget.productsModel.unitPrice1.toDouble())}',
-                          style: const TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
-                              color: kGold)),
-                      Padding(
-                        padding: const EdgeInsets.only(right: 8),
-                        child: Row(
-                          children: [
-                            RatingBarIndicator(
-                              rating: totalUser == 0
-                                  ? 0
-                                  : getRatingAndReview().toDouble(),
-                              itemBuilder: (context, index) => const Icon(
-                                Icons.star,
-                                color: kGold,
-                              ),
-                              itemCount: 5,
-                              itemSize: 20,
-                              direction: Axis.horizontal,
-                            ),
-                            const SizedBox(width: 5),
-                            Text('(${totalUser.toString()})',
-                                style: const TextStyle(color: Colors.white54)),
-                          ],
+                        '${widget.currency}${Formatter().converter(widget.productsModel.unitOldPrice1.toDouble())}',
+                        style: const TextStyle(
+                            fontSize: 16,
+                            color: Colors.white54,
+                            decoration: TextDecoration.lineThrough),
+                      ),
+                      const SizedBox(width: 5),
+                      Text(
+                        '-${widget.productsModel.percantageDiscount.toString()}',
+                        style: const TextStyle(
+                          fontSize: 16,
+                          color: kGold,
                         ),
                       ),
                     ],
                   ),
                 ),
-                const SizedBox(height: 5),
-                if (widget.productsModel.percantageDiscount != 0)
-                  Padding(
-                    padding: const EdgeInsets.only(left: 8),
-                    child: Row(
-                      children: [
-                        Text(
-                          '${widget.currency}${Formatter().converter(widget.productsModel.unitOldPrice1.toDouble())}',
+              _buildDescriptionSection(),
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: SizedBox(
+                  width: double.infinity,
+                  child: const Text('Select Variant',
+                          style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white))
+                      .tr(),
+                ),
+              ),
+              _buildVariantTile(
+                  'unit1',
+                  widget.productsModel.unitname1,
+                  widget.productsModel.unitPrice1,
+                  widget.productsModel.unitOldPrice1),
+              _buildVariantTile(
+                  'unit2',
+                  widget.productsModel.unitname2,
+                  widget.productsModel.unitPrice2,
+                  widget.productsModel.unitOldPrice2),
+              _buildVariantTile(
+                  'unit3',
+                  widget.productsModel.unitname3,
+                  widget.productsModel.unitPrice3,
+                  widget.productsModel.unitOldPrice3),
+              _buildVariantTile(
+                  'unit4',
+                  widget.productsModel.unitname4,
+                  widget.productsModel.unitPrice4,
+                  widget.productsModel.unitOldPrice4),
+              _buildVariantTile(
+                  'unit5',
+                  widget.productsModel.unitname5,
+                  widget.productsModel.unitPrice5,
+                  widget.productsModel.unitOldPrice5),
+              _buildVariantTile(
+                  'unit6',
+                  widget.productsModel.unitname6,
+                  widget.productsModel.unitPrice6,
+                  widget.productsModel.unitOldPrice6),
+              _buildVariantTile(
+                  'unit7',
+                  widget.productsModel.unitname7,
+                  widget.productsModel.unitPrice7,
+                  widget.productsModel.unitOldPrice7),
+              const SizedBox(height: 20),
+              ratingStatus == false
+                  ? const SizedBox()
+                  : Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: SizedBox(
+                        width: double.infinity,
+                        child: const Text('Product Reviews',
+                                style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white))
+                            .tr(),
+                      ),
+                    ),
+              _buildReviewsSection(),
+              const SizedBox(height: 120),
+            ],
+          ),
+        ),
+      ),
+      appBar: AppBar(
+        backgroundColor: kBgTop,
+        elevation: 0,
+        centerTitle: true,
+        title: FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Text(
+            widget.productsModel.name,
+            style: const TextStyle(
+                fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white),
+          ),
+        ),
+        leading: IconButton(
+          onPressed: () {
+            Navigator.of(context).pop();
+          },
+          icon: const Icon(
+            Icons.arrow_back,
+            color: Colors.white,
+          ),
+        ),
+        actions: [
+          IconButton(
+            onPressed: () {
+              if (userRef == null) {
+                Navigator.of(context).pushNamed('/login');
+              } else {
+                Navigator.of(context).pushNamed('/cart');
+              }
+            },
+            icon: Badge(
+              badgeStyle: const BadgeStyle(badgeColor: kGold),
+              badgeContent: Text(cartQuantity.toString(),
+                  style: const TextStyle(color: Colors.white, fontSize: 10)),
+              child:
+                  const Icon(Icons.shopping_bag_outlined, color: Colors.white),
+            ),
+          ),
+        ],
+      ),
+      bottomSheet: Container(
+        decoration: BoxDecoration(
+          color: kBgTop,
+          // borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.3),
+              blurRadius: 20,
+              offset: const Offset(0, -5),
+            ),
+          ],
+        ),
+        padding: const EdgeInsets.fromLTRB(20, 20, 20, 30),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Quantity'.tr(),
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+                Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.05),
+                    borderRadius: BorderRadius.circular(30),
+                    border: Border.all(color: kGold.withOpacity(0.3)),
+                  ),
+                  child: Row(
+                    children: [
+                      IconButton(
+                        onPressed: () {
+                          if (quantity <= 1) {
+                            Fluttertoast.showToast(
+                                msg: "This is the quantity limit".tr(),
+                                toastLength: Toast.LENGTH_SHORT,
+                                gravity: ToastGravity.TOP,
+                                timeInSecForIosWeb: 1,
+                                fontSize: 14.0);
+                          } else {
+                            setState(() {
+                              quantity--;
+                            });
+                          }
+                        },
+                        icon: const Icon(Icons.remove, color: Colors.white),
+                        constraints: const BoxConstraints(),
+                        padding: const EdgeInsets.all(12),
+                        iconSize: 20,
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        child: Text(
+                          quantity.toString(),
                           style: const TextStyle(
-                              fontSize: 16,
-                              color: Colors.white54,
-                              decoration: TextDecoration.lineThrough),
-                        ),
-                        const SizedBox(width: 5),
-                        Text(
-                          '-${widget.productsModel.percantageDiscount.toString()}',
-                          style: const TextStyle(
-                            fontSize: 16,
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
                             color: kGold,
                           ),
                         ),
-                      ],
-                    ),
-                  ),
-                const SizedBox(height: 10),
-                Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: SizedBox(
-                      width: double.infinity,
-                      child: Text(widget.productsModel.description,
-                          style: const TextStyle(color: Colors.white70))),
-                ),
-                const SizedBox(height: 10),
-                Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: SizedBox(
-                    width: double.infinity,
-                    child: const Text('Other Variants',
-                            style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.white))
-                        .tr(),
-                  ),
-                ),
-                InkWell(
-                  onTap: () {
-                    setState(() {
-                      selectedUnit = 'unit1';
-                      quantity = 1;
-                    });
-                  },
-                  child: Padding(
-                    padding: const EdgeInsets.only(left: 10, right: 10),
-                    child: Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Row(
-                              children: [
-                                selectedUnit == 'unit1'
-                                    ? const Row(
-                                        children: [
-                                          Icon(
-                                            Icons.check_outlined,
-                                            color: kGold,
-                                          ),
-                                          SizedBox(
-                                            width: 10,
-                                          ),
-                                        ],
-                                      )
-                                    : Container(),
-                                Text(widget.productsModel.unitname1,
-                                    style: const TextStyle(
-                                      color: Colors.white70,
-                                      fontSize: 18,
-                                    )),
-                              ],
-                            ),
-                            Row(children: [
-                              Text(
-                                  '${widget.currency}${Formatter().converter(widget.productsModel.unitPrice1.toDouble())}',
-                                  style: const TextStyle(
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.white)),
-                              const SizedBox(width: 5),
-                              if (widget.productsModel.percantageDiscount != 0)
-                                Text(
-                                  '${widget.currency}${Formatter().converter(widget.productsModel.unitOldPrice1.toDouble())}',
-                                  style: const TextStyle(
-                                      fontSize: 15,
-                                      color: Colors.white54,
-                                      decoration: TextDecoration.lineThrough),
-                                ),
-                            ])
-                          ]),
-                    ),
-                  ),
-                ),
-                widget.productsModel.unitname2 == ''
-                    ? Container()
-                    : InkWell(
-                        onTap: () {
-                          setState(() {
-                            selectedUnit = 'unit2';
-                            quantity = 1;
-                          });
-                        },
-                        child: Padding(
-                          padding: const EdgeInsets.only(left: 10, right: 10),
-                          child: Padding(
-                            padding: const EdgeInsets.all(8.0),
-                            child: Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Row(
-                                    children: [
-                                      selectedUnit == 'unit2'
-                                          ? const Row(
-                                              children: [
-                                                Icon(
-                                                  Icons.check_outlined,
-                                                  color: kGold,
-                                                ),
-                                                SizedBox(
-                                                  width: 10,
-                                                ),
-                                              ],
-                                            )
-                                          : Container(),
-                                      Text(widget.productsModel.unitname2,
-                                          style: const TextStyle(
-                                            color: Colors.white70,
-                                            fontSize: 18,
-                                          )),
-                                    ],
-                                  ),
-                                  Row(children: [
-                                    Text(
-                                        '${widget.currency}${Formatter().converter(widget.productsModel.unitPrice2.toDouble())}',
-                                        style: const TextStyle(
-                                            fontSize: 18,
-                                            fontWeight: FontWeight.bold,
-                                            color: Colors.white)),
-                                    const SizedBox(width: 5),
-                                    if (widget
-                                            .productsModel.percantageDiscount !=
-                                        0)
-                                      Text(
-                                        '${widget.currency}${Formatter().converter(widget.productsModel.unitOldPrice2.toDouble())}',
-                                        style: const TextStyle(
-                                            fontSize: 15,
-                                            color: Colors.white54,
-                                            decoration:
-                                                TextDecoration.lineThrough),
-                                      ),
-                                  ])
-                                ]),
-                          ),
-                        ),
                       ),
-                widget.productsModel.unitname3 == ''
-                    ? Container()
-                    : InkWell(
-                        onTap: () {
-                          setState(() {
-                            selectedUnit = 'unit3';
-                            quantity = 1;
-                          });
-                        },
-                        child: Padding(
-                          padding: const EdgeInsets.only(left: 10, right: 10),
-                          child: Padding(
-                            padding: const EdgeInsets.all(8.0),
-                            child: Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Row(
-                                    children: [
-                                      selectedUnit == 'unit3'
-                                          ? const Row(
-                                              children: [
-                                                Icon(
-                                                  Icons.check_outlined,
-                                                  color: kGold,
-                                                ),
-                                                SizedBox(
-                                                  width: 10,
-                                                ),
-                                              ],
-                                            )
-                                          : Container(),
-                                      Text(widget.productsModel.unitname3,
-                                          style: const TextStyle(
-                                            color: Colors.white70,
-                                            fontSize: 18,
-                                          )),
-                                    ],
-                                  ),
-                                  Row(children: [
-                                    Text(
-                                        '${widget.currency}${Formatter().converter(widget.productsModel.unitPrice3.toDouble())}',
-                                        style: const TextStyle(
-                                            fontSize: 18,
-                                            fontWeight: FontWeight.bold,
-                                            color: Colors.white)),
-                                    const SizedBox(width: 5),
-                                    if (widget
-                                            .productsModel.percantageDiscount !=
-                                        0)
-                                      Text(
-                                        '${widget.currency}${Formatter().converter(widget.productsModel.unitOldPrice3.toDouble())}',
-                                        style: const TextStyle(
-                                            fontSize: 15,
-                                            color: Colors.white54,
-                                            decoration:
-                                                TextDecoration.lineThrough),
-                                      ),
-                                  ])
-                                ]),
-                          ),
-                        ),
-                      ),
-                widget.productsModel.unitname4 == ''
-                    ? Container()
-                    : InkWell(
-                        onTap: () {
-                          setState(() {
-                            selectedUnit = 'unit4';
-                            quantity = 1;
-                          });
-                        },
-                        child: Padding(
-                          padding: const EdgeInsets.only(left: 10, right: 10),
-                          child: Padding(
-                            padding: const EdgeInsets.all(8.0),
-                            child: Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Row(
-                                    children: [
-                                      selectedUnit == 'unit4'
-                                          ? const Row(
-                                              children: [
-                                                Icon(
-                                                  Icons.check_outlined,
-                                                  color: kGold,
-                                                ),
-                                                SizedBox(
-                                                  width: 10,
-                                                ),
-                                              ],
-                                            )
-                                          : Container(),
-                                      Text(widget.productsModel.unitname4,
-                                          style: const TextStyle(
-                                            color: Colors.white70,
-                                            fontSize: 18,
-                                          )),
-                                    ],
-                                  ),
-                                  Row(children: [
-                                    Text(
-                                        '${widget.currency}${Formatter().converter(widget.productsModel.unitPrice4.toDouble())}',
-                                        style: const TextStyle(
-                                            fontSize: 18,
-                                            fontWeight: FontWeight.bold,
-                                            color: Colors.white)),
-                                    const SizedBox(width: 5),
-                                    if (widget
-                                            .productsModel.percantageDiscount !=
-                                        0)
-                                      Text(
-                                        '${widget.currency}${Formatter().converter(widget.productsModel.unitOldPrice4.toDouble())}',
-                                        style: const TextStyle(
-                                            fontSize: 15,
-                                            color: Colors.white54,
-                                            decoration:
-                                                TextDecoration.lineThrough),
-                                      ),
-                                  ])
-                                ]),
-                          ),
-                        ),
-                      ),
-                widget.productsModel.unitname5 == ''
-                    ? Container()
-                    : InkWell(
-                        onTap: () {
-                          setState(() {
-                            selectedUnit = 'unit5';
-                            quantity = 1;
-                          });
-                        },
-                        child: Padding(
-                          padding: const EdgeInsets.only(left: 10, right: 10),
-                          child: Padding(
-                            padding: const EdgeInsets.all(8.0),
-                            child: Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Row(
-                                    children: [
-                                      selectedUnit == 'unit5'
-                                          ? const Row(
-                                              children: [
-                                                Icon(
-                                                  Icons.check_outlined,
-                                                  color: kGold,
-                                                ),
-                                                SizedBox(
-                                                  width: 10,
-                                                ),
-                                              ],
-                                            )
-                                          : Container(),
-                                      Text(widget.productsModel.unitname5,
-                                          style: const TextStyle(
-                                            color: Colors.white70,
-                                            fontSize: 18,
-                                          )),
-                                    ],
-                                  ),
-                                  Row(children: [
-                                    Text(
-                                        '${widget.currency}${Formatter().converter(widget.productsModel.unitPrice5.toDouble())}',
-                                        style: const TextStyle(
-                                            fontSize: 18,
-                                            fontWeight: FontWeight.bold,
-                                            color: Colors.white)),
-                                    const SizedBox(width: 5),
-                                    if (widget
-                                            .productsModel.percantageDiscount !=
-                                        0)
-                                      Text(
-                                        '${widget.currency}${Formatter().converter(widget.productsModel.unitOldPrice5.toDouble())}',
-                                        style: const TextStyle(
-                                            fontSize: 15,
-                                            color: Colors.white54,
-                                            decoration:
-                                                TextDecoration.lineThrough),
-                                      ),
-                                  ])
-                                ]),
-                          ),
-                        ),
-                      ),
-                widget.productsModel.unitname6 == ''
-                    ? Container()
-                    : InkWell(
-                        onTap: () {
-                          setState(() {
-                            quantity = 1;
-                            selectedUnit = 'unit6';
-                          });
-                        },
-                        child: Padding(
-                          padding: const EdgeInsets.only(left: 10, right: 10),
-                          child: Padding(
-                            padding: const EdgeInsets.all(8.0),
-                            child: Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Row(
-                                    children: [
-                                      selectedUnit == 'unit6'
-                                          ? const Row(
-                                              children: [
-                                                Icon(
-                                                  Icons.check_outlined,
-                                                  color: kGold,
-                                                ),
-                                                SizedBox(
-                                                  width: 10,
-                                                ),
-                                              ],
-                                            )
-                                          : Container(),
-                                      Text(widget.productsModel.unitname6,
-                                          style: const TextStyle(
-                                            color: Colors.white70,
-                                            fontSize: 18,
-                                          )),
-                                    ],
-                                  ),
-                                  Row(children: [
-                                    Text(
-                                        '${widget.currency}${Formatter().converter(widget.productsModel.unitPrice6.toDouble())}',
-                                        style: const TextStyle(
-                                            fontSize: 18,
-                                            fontWeight: FontWeight.bold,
-                                            color: Colors.white)),
-                                    const SizedBox(width: 5),
-                                    if (widget
-                                            .productsModel.percantageDiscount !=
-                                        0)
-                                      Text(
-                                        '${widget.currency}${Formatter().converter(widget.productsModel.unitOldPrice6.toDouble())}',
-                                        style: const TextStyle(
-                                            fontSize: 15,
-                                            color: Colors.white54,
-                                            decoration:
-                                                TextDecoration.lineThrough),
-                                      ),
-                                  ])
-                                ]),
-                          ),
-                        ),
-                      ),
-                widget.productsModel.unitname7 == ''
-                    ? Container()
-                    : InkWell(
-                        onTap: () {
-                          setState(() {
-                            selectedUnit = 'unit7';
-                            quantity = 1;
-                          });
-                        },
-                        child: Padding(
-                          padding: const EdgeInsets.only(left: 10, right: 10),
-                          child: Padding(
-                            padding: const EdgeInsets.all(8.0),
-                            child: Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Row(
-                                    children: [
-                                      selectedUnit == 'unit7'
-                                          ? const Row(
-                                              children: [
-                                                Icon(
-                                                  Icons.check_outlined,
-                                                  color: kGold,
-                                                ),
-                                                SizedBox(
-                                                  width: 10,
-                                                ),
-                                              ],
-                                            )
-                                          : Container(),
-                                      Text(widget.productsModel.unitname7,
-                                          style: const TextStyle(
-                                            color: Colors.white70,
-                                            fontSize: 18,
-                                          )),
-                                    ],
-                                  ),
-                                  Row(children: [
-                                    Text(
-                                        '${widget.currency}${Formatter().converter(widget.productsModel.unitPrice7.toDouble())}',
-                                        style: const TextStyle(
-                                            fontSize: 18,
-                                            fontWeight: FontWeight.bold,
-                                            color: Colors.white)),
-                                    const SizedBox(width: 5),
-                                    if (widget
-                                            .productsModel.percantageDiscount !=
-                                        0)
-                                      Text(
-                                        '${widget.currency}${Formatter().converter(widget.productsModel.unitOldPrice7.toDouble())}',
-                                        style: const TextStyle(
-                                            fontSize: 15,
-                                            color: Colors.white54,
-                                            decoration:
-                                                TextDecoration.lineThrough),
-                                      ),
-                                  ])
-                                ]),
-                          ),
-                        ),
-                      ),
-                const SizedBox(
-                  height: 20,
-                ),
-                ratingStatus == false
-                    ? const SizedBox()
-                    : Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: SizedBox(
-                          width: double.infinity,
-                          child: const Text('Product Reviews',
-                                  style: TextStyle(
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.white))
-                              .tr(),
-                        ),
-                      ),
-                FutureBuilder<List<RatingModel>>(
-                    future: getRating(),
-                    builder: (context, snapshot) {
-                      if (snapshot.hasData) {
-                        return ListView.builder(
-                            shrinkWrap: true,
-                            physics: const BouncingScrollPhysics(),
-                            itemCount: snapshot.data!.length,
-                            itemBuilder: (context, index) {
-                              RatingModel ratingModel = snapshot.data![index];
-                              return Column(
-                                children: [
-                                  ListTile(
-                                    leading: ratingModel.profilePicture == ''
-                                        ? ClipOval(
-                                            child: CachedNetworkImage(
-                                            height: 35,
-                                            fit: BoxFit.cover,
-                                            width: 35,
-                                            imageUrl:
-                                                "https://eitrawmaterials.eu/wp-content/uploads/2016/09/person-icon.png",
-                                            placeholder: (context, url) =>
-                                                const SpinKitFadingCircle(
-                                              color: Colors.orange,
-                                              size: 30,
-                                            ),
-                                            errorWidget:
-                                                (context, url, error) =>
-                                                    const Icon(Icons.error),
-                                          ))
-                                        : ClipOval(
-                                            child: CachedNetworkImage(
-                                              height: 35,
-                                              fit: BoxFit.cover,
-                                              width: 35,
-                                              imageUrl:
-                                                  ratingModel.profilePicture,
-                                              placeholder: (context, url) =>
-                                                  const SpinKitFadingCircle(
-                                                color: Colors.orange,
-                                                size: 30,
-                                              ),
-                                              errorWidget:
-                                                  (context, url, error) =>
-                                                      const Icon(Icons.error),
-                                            ),
-                                          ),
-                                    title: Text(ratingModel.fullname,
-                                        style: const TextStyle(
-                                            color: Colors.white)),
-                                    subtitle: RatingBarIndicator(
-                                      rating: ratingModel.rating.toDouble(),
-                                      itemBuilder: (context, index) =>
-                                          const Icon(
-                                        Icons.star,
-                                        color: kGold,
-                                      ),
-                                      itemCount: 5,
-                                      itemSize: 15,
-                                      direction: Axis.horizontal,
-                                    ),
-                                    trailing: Text(ratingModel.timeCreated,
-                                        style: const TextStyle(
-                                            color: Colors.white54)),
-                                  ),
-                                  Padding(
-                                    padding: const EdgeInsets.only(
-                                        left: 20, right: 20),
-                                    child: Container(
-                                      alignment: Alignment.centerLeft,
-                                      child: Text(
-                                        ratingModel.review,
-                                        textAlign: TextAlign.left,
-                                        style: const TextStyle(
-                                            color: Colors.white70),
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              );
+                      IconButton(
+                        onPressed: () {
+                          if (widget.productsModel.quantity! <= quantity) {
+                            Fluttertoast.showToast(
+                                msg:
+                                    "This is the quantity available for this product"
+                                        .tr(),
+                                toastLength: Toast.LENGTH_SHORT,
+                                gravity: ToastGravity.TOP,
+                                timeInSecForIosWeb: 1,
+                                fontSize: 14.0);
+                          } else {
+                            setState(() {
+                              quantity++;
                             });
-                      } else {
-                        return const Center(child: CircularProgressIndicator());
-                      }
-                    }),
-                const SizedBox(
-                  height: 120,
-                )
+                          }
+                        },
+                        icon: const Icon(Icons.add, color: Colors.white),
+                        constraints: const BoxConstraints(),
+                        padding: const EdgeInsets.all(12),
+                        iconSize: 20,
+                      ),
+                    ],
+                  ),
+                ),
               ],
             ),
-          )
-        ]),
-      ),
-      bottomSheet: Container(
-          height: 120,
-          width: double.infinity,
-          color: kBgTop,
-          child: Container(
-            child: Column(children: [
-              Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text('Quantity',
-                              style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 18,
-                                  color: Colors.white))
-                          .tr(),
-                      Row(children: [
-                        InkWell(
-                            onTap: () {
-                              if (quantity <= 1) {
+            const SizedBox(height: 20),
+            Row(
+              children: [
+                Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.05),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: Colors.white10),
+                  ),
+                  child: IconButton(
+                    onPressed: () {
+                      if (userRef == null) {
+                        Navigator.of(context).pushNamed('/login').then((value) {
+                          Fluttertoast.showToast(
+                              msg: "Please login to continue".tr(),
+                              toastLength: Toast.LENGTH_SHORT,
+                              gravity: ToastGravity.TOP,
+                              timeInSecForIosWeb: 1,
+                              fontSize: 14.0);
+                        });
+                      } else {
+                        if (isFavorite) {
+                          removeFromFavorite();
+                        } else {
+                          Analytics().trackProductWishlist(
+                              widget.productsModel.productID,
+                              widget.productsModel.name);
+                          addToFavorite(ProductsModel(
+                              productID: widget.productsModel.productID,
+                              quantity: 0,
+                              selected: '',
+                              description: widget.productsModel.description,
+                              marketID: widget.marketID,
+                              marketName: widget.productsModel.marketName,
+                              uid: widget.productsModel.uid,
+                              name: widget.productsModel.name,
+                              category: widget.productsModel.category,
+                              subCategory: widget.productsModel.subCategory,
+                              subSubCategory:
+                                  widget.productsModel.subSubCategory,
+                              image1: widget.productsModel.image1,
+                              image2: widget.productsModel.image2,
+                              image3: widget.productsModel.image3,
+                              unitname1: widget.productsModel.unitname1,
+                              unitname2: widget.productsModel.unitname2,
+                              unitname3: widget.productsModel.unitname3,
+                              unitname4: widget.productsModel.unitname4,
+                              unitname5: widget.productsModel.unitname5,
+                              unitname6: widget.productsModel.unitname6,
+                              unitname7: widget.productsModel.unitname7,
+                              unitPrice1: widget.productsModel.unitPrice1,
+                              unitPrice2: widget.productsModel.unitPrice2,
+                              unitPrice3: widget.productsModel.unitPrice3,
+                              unitPrice4: widget.productsModel.unitPrice4,
+                              unitPrice5: widget.productsModel.unitPrice5,
+                              unitPrice6: widget.productsModel.unitPrice6,
+                              unitPrice7: widget.productsModel.unitPrice7,
+                              unitOldPrice1: widget.productsModel.unitOldPrice1,
+                              unitOldPrice2: widget.productsModel.unitOldPrice2,
+                              unitOldPrice3: widget.productsModel.unitOldPrice3,
+                              unitOldPrice4: widget.productsModel.unitOldPrice4,
+                              unitOldPrice5: widget.productsModel.unitOldPrice5,
+                              unitOldPrice6: widget.productsModel.unitOldPrice6,
+                              unitOldPrice7: widget.productsModel.unitOldPrice7,
+                              percantageDiscount:
+                                  widget.productsModel.percantageDiscount,
+                              vendorId: widget.productsModel.vendorId,
+                              brandName: widget.productsModel.brandName,
+                              totalNumberOfUserRating:
+                                  widget.productsModel.totalNumberOfUserRating,
+                              totalRating: widget.productsModel.totalRating));
+                        }
+                      }
+                    },
+                    icon: Icon(
+                      isFavorite ? Icons.favorite : Icons.favorite_border,
+                      color: isFavorite ? kGold : Colors.white,
+                      size: 28,
+                    ),
+                    padding: const EdgeInsets.all(12),
+                    constraints: const BoxConstraints(),
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: widget.productsModel.quantity == 0
+                        ? null
+                        : () {
+                            if (userRef == null) {
+                              Navigator.of(context)
+                                  .pushNamed('/login')
+                                  .then((value) {
                                 Fluttertoast.showToast(
-                                    msg: "This is the quantity limit".tr(),
+                                    msg: "Please login to continue".tr(),
                                     toastLength: Toast.LENGTH_SHORT,
                                     gravity: ToastGravity.TOP,
                                     timeInSecForIosWeb: 1,
                                     fontSize: 14.0);
+                              });
+                            } else {
+                              if (currentMarketID == '') {
+                                addToCart(ProductsModel(
+                                    totalNumberOfUserRating: widget
+                                        .productsModel.totalNumberOfUserRating,
+                                    totalRating:
+                                        widget.productsModel.totalRating,
+                                    productID: widget.productsModel.productID,
+                                    price: selectedPriceFunction(),
+                                    selectedPrice: selectedPrice(),
+                                    quantity: quantity,
+                                    selected: selectedUnitFunction(),
+                                    description:
+                                        widget.productsModel.description,
+                                    marketID: widget.marketID,
+                                    marketName: widget.productsModel.marketName,
+                                    uid: widget.productsModel.uid,
+                                    name: widget.productsModel.name,
+                                    category: widget.productsModel.category,
+                                    subCategory:
+                                        widget.productsModel.subCategory,
+                                    subSubCategory:
+                                        widget.productsModel.subSubCategory,
+                                    image1: widget.productsModel.image1,
+                                    image2: widget.productsModel.image2,
+                                    image3: widget.productsModel.image3,
+                                    unitname1: widget.productsModel.unitname1,
+                                    unitname2: widget.productsModel.unitname2,
+                                    unitname3: widget.productsModel.unitname3,
+                                    unitname4: widget.productsModel.unitname4,
+                                    unitname5: widget.productsModel.unitname5,
+                                    unitname6: widget.productsModel.unitname6,
+                                    unitname7: widget.productsModel.unitname7,
+                                    unitPrice1: widget.productsModel.unitPrice1,
+                                    unitPrice2: widget.productsModel.unitPrice2,
+                                    unitPrice3: widget.productsModel.unitPrice3,
+                                    unitPrice4: widget.productsModel.unitPrice4,
+                                    unitPrice5: widget.productsModel.unitPrice5,
+                                    unitPrice6: widget.productsModel.unitPrice6,
+                                    unitPrice7: widget.productsModel.unitPrice7,
+                                    unitOldPrice1:
+                                        widget.productsModel.unitOldPrice1,
+                                    unitOldPrice2:
+                                        widget.productsModel.unitOldPrice2,
+                                    unitOldPrice3:
+                                        widget.productsModel.unitOldPrice3,
+                                    unitOldPrice4:
+                                        widget.productsModel.unitOldPrice4,
+                                    unitOldPrice5:
+                                        widget.productsModel.unitOldPrice5,
+                                    unitOldPrice6:
+                                        widget.productsModel.unitOldPrice6,
+                                    unitOldPrice7:
+                                        widget.productsModel.unitOldPrice7,
+                                    percantageDiscount:
+                                        widget.productsModel.percantageDiscount,
+                                    vendorId: widget.productsModel.vendorId,
+                                    brandName: widget.productsModel.brandName));
+                              } else if (currentMarketID == widget.marketID) {
+                                addToCart(ProductsModel(
+                                    totalNumberOfUserRating: widget
+                                        .productsModel.totalNumberOfUserRating,
+                                    totalRating:
+                                        widget.productsModel.totalRating,
+                                    productID: widget.productsModel.productID,
+                                    selectedPrice: selectedPrice(),
+                                    price: selectedPriceFunction(),
+                                    quantity: quantity,
+                                    selected: selectedUnitFunction(),
+                                    description:
+                                        widget.productsModel.description,
+                                    marketID: widget.marketID,
+                                    marketName: widget.productsModel.marketName,
+                                    uid: widget.productsModel.uid,
+                                    name: widget.productsModel.name,
+                                    category: widget.productsModel.category,
+                                    subCategory:
+                                        widget.productsModel.subCategory,
+                                    subSubCategory:
+                                        widget.productsModel.subSubCategory,
+                                    image1: widget.productsModel.image1,
+                                    image2: widget.productsModel.image2,
+                                    image3: widget.productsModel.image3,
+                                    unitname1: widget.productsModel.unitname1,
+                                    unitname2: widget.productsModel.unitname2,
+                                    unitname3: widget.productsModel.unitname3,
+                                    unitname4: widget.productsModel.unitname4,
+                                    unitname5: widget.productsModel.unitname5,
+                                    unitname6: widget.productsModel.unitname6,
+                                    unitname7: widget.productsModel.unitname7,
+                                    unitPrice1: widget.productsModel.unitPrice1,
+                                    unitPrice2: widget.productsModel.unitPrice2,
+                                    unitPrice3: widget.productsModel.unitPrice3,
+                                    unitPrice4: widget.productsModel.unitPrice4,
+                                    unitPrice5: widget.productsModel.unitPrice5,
+                                    unitPrice6: widget.productsModel.unitPrice6,
+                                    unitPrice7: widget.productsModel.unitPrice7,
+                                    unitOldPrice1:
+                                        widget.productsModel.unitOldPrice1,
+                                    unitOldPrice2:
+                                        widget.productsModel.unitOldPrice2,
+                                    unitOldPrice3:
+                                        widget.productsModel.unitOldPrice3,
+                                    unitOldPrice4:
+                                        widget.productsModel.unitOldPrice4,
+                                    unitOldPrice5:
+                                        widget.productsModel.unitOldPrice5,
+                                    unitOldPrice6:
+                                        widget.productsModel.unitOldPrice6,
+                                    unitOldPrice7:
+                                        widget.productsModel.unitOldPrice7,
+                                    percantageDiscount:
+                                        widget.productsModel.percantageDiscount,
+                                    vendorId: widget.productsModel.vendorId,
+                                    brandName: widget.productsModel.brandName));
                               } else {
-                                setState(() {
-                                  quantity--;
-                                });
-                              }
-                            },
-                            child: const Icon(Icons.remove,
-                                size: 25, color: Colors.white)),
-                        const SizedBox(width: 20),
-                        Text(quantity.toString(),
-                            style: const TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 18,
-                                color: Colors.white)),
-                        const SizedBox(width: 20),
-                        InkWell(
-                            onTap: () {
-                              if (widget.productsModel.quantity! <= quantity) {
-                                Fluttertoast.showToast(
-                                    msg:
-                                        "This is the quantity available for this product"
-                                            .tr(),
-                                    toastLength: Toast.LENGTH_SHORT,
-                                    gravity: ToastGravity.TOP,
-                                    timeInSecForIosWeb: 1,
-                                    fontSize: 14.0);
-                              } else {
-                                setState(() {
-                                  quantity++;
-                                });
-                              }
-                            },
-                            child: const Icon(Icons.add,
-                                size: 25, color: Colors.white)),
-                      ])
-                    ]),
-              ),
-              Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      isFavorite == true
-                          ? InkWell(
-                              onTap: () {
-                                if (userRef == null) {
-                                  Navigator.of(context)
-                                      .pushNamed('/login')
-                                      .then((value) {
-                                    Fluttertoast.showToast(
-                                        msg: "Please login to continue".tr(),
-                                        toastLength: Toast.LENGTH_SHORT,
-                                        gravity: ToastGravity.TOP,
-                                        timeInSecForIosWeb: 1,
-                                        fontSize: 14.0);
-                                  });
-                                } else {
-                                  removeFromFavorite();
-                                }
-                              },
-                              child: const Icon(Icons.favorite,
-                                  color: kGold, size: 30))
-                          : InkWell(
-                              onTap: () {
-                                if (userRef == null) {
-                                  Navigator.of(context)
-                                      .pushNamed('/login')
-                                      .then((value) {
-                                    Fluttertoast.showToast(
-                                        msg: "Please login to continue".tr(),
-                                        toastLength: Toast.LENGTH_SHORT,
-                                        gravity: ToastGravity.TOP,
-                                        timeInSecForIosWeb: 1,
-                                        fontSize: 14.0);
-                                  });
-                                } else {
-                                  Analytics().trackProductWishlist(
-                                      widget.productsModel.productID,
-                                      widget.productsModel.name);
-                                  addToFavorite(ProductsModel(
-                                      productID: widget.productsModel.productID,
-                                      quantity: 0,
-                                      selected: '',
-                                      description:
-                                          widget.productsModel.description,
-                                      marketID: widget.marketID,
-                                      marketName:
-                                          widget.productsModel.marketName,
-                                      uid: widget.productsModel.uid,
-                                      name: widget.productsModel.name,
-                                      category: widget.productsModel.category,
-                                      subCategory:
-                                          widget.productsModel.subCategory,
-                                      subSubCategory:
-                                          widget.productsModel.subSubCategory,
-                                      image1: widget.productsModel.image1,
-                                      image2: widget.productsModel.image2,
-                                      image3: widget.productsModel.image3,
-                                      unitname1: widget.productsModel.unitname1,
-                                      unitname2: widget.productsModel.unitname2,
-                                      unitname3: widget.productsModel.unitname3,
-                                      unitname4: widget.productsModel.unitname4,
-                                      unitname5: widget.productsModel.unitname5,
-                                      unitname6: widget.productsModel.unitname6,
-                                      unitname7: widget.productsModel.unitname7,
-                                      unitPrice1:
-                                          widget.productsModel.unitPrice1,
-                                      unitPrice2:
-                                          widget.productsModel.unitPrice2,
-                                      unitPrice3:
-                                          widget.productsModel.unitPrice3,
-                                      unitPrice4:
-                                          widget.productsModel.unitPrice4,
-                                      unitPrice5:
-                                          widget.productsModel.unitPrice5,
-                                      unitPrice6:
-                                          widget.productsModel.unitPrice6,
-                                      unitPrice7:
-                                          widget.productsModel.unitPrice7,
-                                      unitOldPrice1:
-                                          widget.productsModel.unitOldPrice1,
-                                      unitOldPrice2:
-                                          widget.productsModel.unitOldPrice2,
-                                      unitOldPrice3:
-                                          widget.productsModel.unitOldPrice3,
-                                      unitOldPrice4:
-                                          widget.productsModel.unitOldPrice4,
-                                      unitOldPrice5:
-                                          widget.productsModel.unitOldPrice5,
-                                      unitOldPrice6:
-                                          widget.productsModel.unitOldPrice6,
-                                      unitOldPrice7:
-                                          widget.productsModel.unitOldPrice7,
-                                      percantageDiscount: widget
-                                          .productsModel.percantageDiscount,
-                                      vendorId: widget.productsModel.vendorId,
-                                      brandName: widget.productsModel.brandName,
-                                      totalNumberOfUserRating: widget
-                                          .productsModel
-                                          .totalNumberOfUserRating,
-                                      totalRating:
-                                          widget.productsModel.totalRating));
-                                }
-                              },
-                              child: const Icon(Icons.favorite,
-                                  color: Colors.white54, size: 30)),
-                      widget.productsModel.quantity == 0
-                          ? SizedBox(
-                              width: MediaQuery.of(context).size.width / 2,
-                              child: ElevatedButton(
-                                  style: ElevatedButton.styleFrom(
-                                      backgroundColor: kGold),
-                                  onPressed: null,
-                                  child: const Text('Sold Out')),
-                            )
-                          : SizedBox(
-                              width: MediaQuery.of(context).size.width / 1.2,
-                              child: ElevatedButton(
-                                  style: ElevatedButton.styleFrom(
-                                      backgroundColor: kGold),
-                                  onPressed: () {
-                                    if (userRef == null) {
-                                      Navigator.of(context)
-                                          .pushNamed('/login')
-                                          .then((value) {
-                                        Fluttertoast.showToast(
-                                            msg:
-                                                "Please login to continue".tr(),
-                                            toastLength: Toast.LENGTH_SHORT,
-                                            gravity: ToastGravity.TOP,
-                                            timeInSecForIosWeb: 1,
-                                            fontSize: 14.0);
-                                      });
-                                    } else {
-                                      if (currentMarketID == '') {
-                                        addToCart(ProductsModel(
-                                            totalNumberOfUserRating: widget
-                                                .productsModel
-                                                .totalNumberOfUserRating,
-                                            totalRating: widget
-                                                .productsModel.totalRating,
-                                            productID:
-                                                widget.productsModel.productID,
-                                            price: selectedPriceFunction(),
-                                            selectedPrice: selectedPrice(),
-                                            quantity: quantity,
-                                            selected: selectedUnitFunction(),
-                                            description: widget
-                                                .productsModel.description,
-                                            marketID: widget.marketID,
-                                            marketName:
-                                                widget.productsModel.marketName,
-                                            uid: widget.productsModel.uid,
-                                            name: widget.productsModel.name,
-                                            category:
-                                                widget.productsModel.category,
-                                            subCategory: widget
-                                                .productsModel.subCategory,
-                                            subSubCategory: widget
-                                                .productsModel.subSubCategory,
-                                            image1: widget.productsModel.image1,
-                                            image2: widget.productsModel.image2,
-                                            image3: widget.productsModel.image3,
-                                            unitname1:
-                                                widget.productsModel.unitname1,
-                                            unitname2:
-                                                widget.productsModel.unitname2,
-                                            unitname3:
-                                                widget.productsModel.unitname3,
-                                            unitname4:
-                                                widget.productsModel.unitname4,
-                                            unitname5:
-                                                widget.productsModel.unitname5,
-                                            unitname6:
-                                                widget.productsModel.unitname6,
-                                            unitname7:
-                                                widget.productsModel.unitname7,
-                                            unitPrice1:
-                                                widget.productsModel.unitPrice1,
-                                            unitPrice2:
-                                                widget.productsModel.unitPrice2,
-                                            unitPrice3:
-                                                widget.productsModel.unitPrice3,
-                                            unitPrice4:
-                                                widget.productsModel.unitPrice4,
-                                            unitPrice5:
-                                                widget.productsModel.unitPrice5,
-                                            unitPrice6:
-                                                widget.productsModel.unitPrice6,
-                                            unitPrice7:
-                                                widget.productsModel.unitPrice7,
-                                            unitOldPrice1: widget.productsModel.unitOldPrice1,
-                                            unitOldPrice2: widget.productsModel.unitOldPrice2,
-                                            unitOldPrice3: widget.productsModel.unitOldPrice3,
-                                            unitOldPrice4: widget.productsModel.unitOldPrice4,
-                                            unitOldPrice5: widget.productsModel.unitOldPrice5,
-                                            unitOldPrice6: widget.productsModel.unitOldPrice6,
-                                            unitOldPrice7: widget.productsModel.unitOldPrice7,
-                                            percantageDiscount: widget.productsModel.percantageDiscount,
-                                            vendorId: widget.productsModel.vendorId,
-                                            brandName: widget.productsModel.brandName));
-                                      } else if (currentMarketID ==
-                                          widget.marketID) {
-                                        addToCart(ProductsModel(
-                                            totalNumberOfUserRating: widget
-                                                .productsModel
-                                                .totalNumberOfUserRating,
-                                            totalRating: widget
-                                                .productsModel.totalRating,
-                                            productID:
-                                                widget.productsModel.productID,
-                                            selectedPrice: selectedPrice(),
-                                            price: selectedPriceFunction(),
-                                            quantity: quantity,
-                                            selected: selectedUnitFunction(),
-                                            description: widget
-                                                .productsModel.description,
-                                            marketID: widget.marketID,
-                                            marketName:
-                                                widget.productsModel.marketName,
-                                            uid: widget.productsModel.uid,
-                                            name: widget.productsModel.name,
-                                            category:
-                                                widget.productsModel.category,
-                                            subCategory: widget
-                                                .productsModel.subCategory,
-                                            subSubCategory: widget
-                                                .productsModel.subSubCategory,
-                                            image1: widget.productsModel.image1,
-                                            image2: widget.productsModel.image2,
-                                            image3: widget.productsModel.image3,
-                                            unitname1:
-                                                widget.productsModel.unitname1,
-                                            unitname2:
-                                                widget.productsModel.unitname2,
-                                            unitname3:
-                                                widget.productsModel.unitname3,
-                                            unitname4:
-                                                widget.productsModel.unitname4,
-                                            unitname5:
-                                                widget.productsModel.unitname5,
-                                            unitname6:
-                                                widget.productsModel.unitname6,
-                                            unitname7:
-                                                widget.productsModel.unitname7,
-                                            unitPrice1:
-                                                widget.productsModel.unitPrice1,
-                                            unitPrice2:
-                                                widget.productsModel.unitPrice2,
-                                            unitPrice3:
-                                                widget.productsModel.unitPrice3,
-                                            unitPrice4:
-                                                widget.productsModel.unitPrice4,
-                                            unitPrice5:
-                                                widget.productsModel.unitPrice5,
-                                            unitPrice6:
-                                                widget.productsModel.unitPrice6,
-                                            unitPrice7:
-                                                widget.productsModel.unitPrice7,
-                                            unitOldPrice1: widget.productsModel.unitOldPrice1,
-                                            unitOldPrice2: widget.productsModel.unitOldPrice2,
-                                            unitOldPrice3: widget.productsModel.unitOldPrice3,
-                                            unitOldPrice4: widget.productsModel.unitOldPrice4,
-                                            unitOldPrice5: widget.productsModel.unitOldPrice5,
-                                            unitOldPrice6: widget.productsModel.unitOldPrice6,
-                                            unitOldPrice7: widget.productsModel.unitOldPrice7,
-                                            percantageDiscount: widget.productsModel.percantageDiscount,
-                                            vendorId: widget.productsModel.vendorId,
-                                            brandName: widget.productsModel.brandName));
-                                      } else {
-                                        showModal(
-                                            configuration:
-                                                const FadeScaleTransitionConfiguration(
-                                                    transitionDuration:
-                                                        Duration(seconds: 1)),
-                                            context: context,
-                                            builder: (BuildContext context) {
-                                              return AlertDialog(
-                                                title: Image.asset(
-                                                  "assets/image/new cart.gif",
-                                                  height: 200,
-                                                ),
-                                                content: SingleChildScrollView(
-                                                  child: ListBody(
-                                                    children: <Widget>[
-                                                      const Text(
-                                                              "Your Cart is not Empty")
+                                showModal(
+                                    configuration:
+                                        const FadeScaleTransitionConfiguration(
+                                            transitionDuration:
+                                                Duration(seconds: 1)),
+                                    context: context,
+                                    builder: (BuildContext context) {
+                                      return AlertDialog(
+                                        title: Image.asset(
+                                          "assets/image/new cart.gif",
+                                          height: 200,
+                                        ),
+                                        content: SingleChildScrollView(
+                                          child: ListBody(
+                                            children: <Widget>[
+                                              const Text(
+                                                      "Your Cart is not Empty")
+                                                  .tr(),
+                                            ],
+                                          ),
+                                        ),
+                                        actions: <Widget>[
+                                          TextButton.icon(
+                                              onPressed: () {
+                                                Navigator.of(context).pop();
+                                                deleteVendorsID();
+                                                deleteCartCollection()
+                                                    .then((_) {
+                                                  Fluttertoast.showToast(
+                                                      msg: "Your cart is empty"
                                                           .tr(),
-                                                    ],
-                                                  ),
-                                                ),
-                                                actions: <Widget>[
-                                                  TextButton.icon(
-                                                      onPressed: () {
-                                                        Navigator.of(context)
-                                                            .pop();
-                                                        deleteVendorsID();
-                                                        deleteCartCollection()
-                                                            .then((_) {
-                                                          Fluttertoast.showToast(
-                                                              msg:
-                                                                  "Your cart is empty"
-                                                                      .tr(),
-                                                              toastLength: Toast
-                                                                  .LENGTH_SHORT,
-                                                              gravity:
-                                                                  ToastGravity
-                                                                      .TOP,
-                                                              timeInSecForIosWeb:
-                                                                  1,
-                                                              fontSize: 14.0);
-                                                        });
-                                                      },
-                                                      icon: const Icon(
-                                                          Icons.delete),
-                                                      label: const Text("Empty")
-                                                          .tr()),
-                                                  TextButton.icon(
-                                                      onPressed: () {
-                                                        Navigator.of(context)
-                                                            .pop();
-                                                      },
-                                                      icon: const Icon(
-                                                          Icons.cancel),
-                                                      label: const Text('No')
-                                                          .tr()),
-                                                ],
-                                              );
-                                            });
-                                      }
-                                    }
-                                  },
-                                  child: const Text('Add To Cart',
-                                          style: TextStyle(
-                                              color: kBgTop,
-                                              fontWeight: FontWeight.bold))
-                                      .tr()))
-                    ]),
-              )
-            ]),
-          )),
+                                                      toastLength:
+                                                          Toast.LENGTH_SHORT,
+                                                      gravity: ToastGravity.TOP,
+                                                      timeInSecForIosWeb: 1,
+                                                      fontSize: 14.0);
+                                                });
+                                              },
+                                              icon: const Icon(Icons.delete),
+                                              label: const Text("Empty").tr()),
+                                          TextButton.icon(
+                                              onPressed: () {
+                                                Navigator.of(context).pop();
+                                              },
+                                              icon: const Icon(Icons.cancel),
+                                              label: const Text('No').tr()),
+                                        ],
+                                      );
+                                    });
+                              }
+                            }
+                          },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: kGold,
+                      foregroundColor: kBgTop,
+                      disabledBackgroundColor: Colors.grey,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      elevation: 0,
+                    ),
+                    child: Text(
+                      widget.productsModel.quantity == 0
+                          ? 'Sold Out'
+                          : 'Add To Cart',
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ).tr(),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
