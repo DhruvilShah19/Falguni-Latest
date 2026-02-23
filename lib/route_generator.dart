@@ -20,7 +20,7 @@ import 'Pages/orders.dart';
 import 'Pages/profile.dart';
 import 'Pages/referral_page.dart';
 import 'Pages/signup_page.dart';
-import 'Pages/wallet_page.dart';
+import 'Pages/paused_wallet_page.dart';
 
 class RouteGenerator {
   static Route<dynamic> generateRoute(RouteSettings settings) {
@@ -69,7 +69,7 @@ class RouteGenerator {
       case '/referral-page':
         return MaterialPageRoute(builder: (_) => const ReferralPage());
       case '/wallet':
-        return MaterialPageRoute(builder: (_) => const WalletPage());
+        return MaterialPageRoute(builder: (_) => const PausedWalletPage());
       case '/notifications':
         return MaterialPageRoute(builder: (_) => const NotificationsPage());
       case '/faq':

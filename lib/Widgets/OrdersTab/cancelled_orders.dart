@@ -1,4 +1,4 @@
-// ignore_for_file: deprecated_member_use
+// ignore_for_file: curly_braces_in_flow_control_structures, deprecated_member_use
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -10,7 +10,9 @@ import '../../Model/order_model.dart';
 import '../../Pages/orders_preview.dart';
 
 class CancelledOrders extends StatefulWidget {
-  const CancelledOrders({super.key});
+  final DateTime? filterStart;
+  final DateTime? filterEnd;
+  const CancelledOrders({super.key, this.filterStart, this.filterEnd});
 
   @override
   State<CancelledOrders> createState() => _CancelledOrdersState();
@@ -83,6 +85,7 @@ class _CancelledOrdersState extends State<CancelledOrders> {
                     deliveryFee: doc.data()['deliveryFee'],
                     acceptDelivery: doc.data()['acceptDelivery'],
                     paymentType: doc.data()['paymentType'],
+                    cashFreeDetails: doc.data()['cashFreeDetails'],
                   ),
                 );
               });
@@ -121,16 +124,29 @@ class _CancelledOrdersState extends State<CancelledOrders> {
     });
   }
 
+  List<OrderModel2> get _filtered {
+    if (widget.filterStart == null && widget.filterEnd == null) return orders;
+    return orders.where((o) {
+      try {
+        final d = DateTime.parse(o.uid);
+        if (widget.filterStart != null && d.isBefore(widget.filterStart!))
+          return false;
+        if (widget.filterEnd != null && d.isAfter(widget.filterEnd!))
+          return false;
+        return true;
+      } catch (_) {
+        return true;
+      }
+    }).toList();
+  }
+
   @override
   Widget build(BuildContext context) {
+    final display = _filtered;
     return Container(
       decoration: const BoxDecoration(
         gradient: LinearGradient(
-          colors: [
-            kPrimary,
-            kCard,
-            kPrimary,
-          ],
+          colors: [kPrimary, kCard, kPrimary],
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
         ),
@@ -140,7 +156,7 @@ class _CancelledOrdersState extends State<CancelledOrders> {
         shrinkWrap: true,
         children: [
           const SizedBox(height: 16),
-          orders.isEmpty
+          display.isEmpty
               ? Center(
                   child: Padding(
                     padding: const EdgeInsets.only(top: 50),
@@ -153,11 +169,11 @@ class _CancelledOrdersState extends State<CancelledOrders> {
               : ListView.builder(
                   physics: const NeverScrollableScrollPhysics(),
                   shrinkWrap: true,
-                  itemCount: orders.length,
+                  itemCount: display.length,
                   itemBuilder: (context, i) {
                     return _orderCard(
                       context,
-                      orders[i],
+                      display[i],
                       getcurrencySymbol,
                     );
                   },
@@ -271,7 +287,9 @@ class _CancelledOrdersState extends State<CancelledOrders> {
                         Text(
                           order.paymentType == 'Wallet'
                               ? 'Wallet'.tr()
-                              : 'Cash on delivery'.tr(),
+                              : order.paymentType == 'Cash Free'
+                                  ? 'Cash Free'.tr()
+                                  : 'Cash on delivery'.tr(),
                           style: const TextStyle(
                             color: Colors.white,
                             fontSize: 16,

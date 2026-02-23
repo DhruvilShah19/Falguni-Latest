@@ -50,8 +50,10 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
   @override
   void initState() {
-    _initData();
     super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _initData();
+    });
   }
 
   void _initData() {
@@ -158,6 +160,12 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
   void _getLocation() async {
     try {
+      Position? lastPos = await Geolocator.getLastKnownPosition();
+      if (lastPos != null) {
+        List<Placemark> p =
+            await placemarkFromCoordinates(lastPos.latitude, lastPos.longitude);
+        if (mounted) setState(() => address = p.first.street ?? "Locating...");
+      }
       Position pos = await Geolocator.getCurrentPosition(
           desiredAccuracy: LocationAccuracy.low);
       List<Placemark> p =
@@ -364,25 +372,28 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
             ],
           ),
           flexibleSpace: FlexibleSpaceBar(
+            collapseMode: CollapseMode.pin,
             background: Column(
               children: [
                 const SizedBox(height: 130),
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: Container(
-                    decoration: BoxDecoration(
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.4),
-                          blurRadius: 20,
-                          offset: const Offset(0, 10),
-                        ),
-                      ],
-                    ),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(25),
-                      child: const SizedBox(
-                          height: 240, child: SliderWidget(category: '')),
+                  child: RepaintBoundary(
+                    child: Container(
+                      decoration: BoxDecoration(
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.4),
+                            blurRadius: 20,
+                            offset: const Offset(0, 10),
+                          ),
+                        ],
+                      ),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(25),
+                        child: const SizedBox(
+                            height: 240, child: SliderWidget(category: '')),
+                      ),
                     ),
                   ),
                 ),

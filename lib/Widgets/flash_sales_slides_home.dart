@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_countdown_timer/flutter_countdown_timer.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
@@ -220,8 +221,8 @@ class _FlashSalesSlidesHomeState extends State<FlashSalesSlidesHome> {
                                               mainAxisAlignment:
                                                   MainAxisAlignment.spaceAround,
                                               children: [
-                                                Image.network(
-                                                  productModel.image1,
+                                                CachedNetworkImage(
+                                                  imageUrl: productModel.image1,
                                                   height: MediaQuery.of(context)
                                                               .size
                                                               .width >=
@@ -240,6 +241,14 @@ class _FlashSalesSlidesHomeState extends State<FlashSalesSlidesHome> {
                                                           : 120,
                                                   width: double.infinity,
                                                   fit: BoxFit.cover,
+                                                  placeholder: (context, url) =>
+                                                      Container(
+                                                    height: 120,
+                                                    color: Colors.grey[200],
+                                                  ),
+                                                  errorWidget: (context, url,
+                                                          error) =>
+                                                      const Icon(Icons.error),
                                                 ),
                                                 Padding(
                                                   padding:

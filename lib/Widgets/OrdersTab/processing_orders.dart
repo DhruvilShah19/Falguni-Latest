@@ -1,4 +1,4 @@
-// ignore_for_file: deprecated_member_use
+// ignore_for_file: curly_braces_in_flow_control_structures, deprecated_member_use
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -10,7 +10,9 @@ import '../../Model/order_model.dart';
 import '../../Pages/orders_preview.dart';
 
 class ProcessingOrders extends StatefulWidget {
-  const ProcessingOrders({super.key});
+  final DateTime? filterStart;
+  final DateTime? filterEnd;
+  const ProcessingOrders({super.key, this.filterStart, this.filterEnd});
 
   @override
   State<ProcessingOrders> createState() => _ProcessingOrdersState();
@@ -84,6 +86,7 @@ class _ProcessingOrdersState extends State<ProcessingOrders> {
                     deliveryFee: doc.data()['deliveryFee'],
                     acceptDelivery: doc.data()['acceptDelivery'],
                     paymentType: doc.data()['paymentType'],
+                    cashFreeDetails: doc.data()['cashFreeDetails'],
                   ),
                 );
               });
@@ -123,16 +126,29 @@ class _ProcessingOrdersState extends State<ProcessingOrders> {
     });
   }
 
+  List<OrderModel2> get _filtered {
+    if (widget.filterStart == null && widget.filterEnd == null) return orders;
+    return orders.where((o) {
+      try {
+        final d = DateTime.parse(o.uid);
+        if (widget.filterStart != null && d.isBefore(widget.filterStart!))
+          return false;
+        if (widget.filterEnd != null && d.isAfter(widget.filterEnd!))
+          return false;
+        return true;
+      } catch (_) {
+        return true;
+      }
+    }).toList();
+  }
+
   @override
   Widget build(BuildContext context) {
+    final display = _filtered;
     return Container(
       decoration: const BoxDecoration(
         gradient: LinearGradient(
-          colors: [
-            kPrimary,
-            kCard,
-            kPrimary,
-          ],
+          colors: [kPrimary, kCard, kPrimary],
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
         ),
@@ -141,7 +157,7 @@ class _ProcessingOrdersState extends State<ProcessingOrders> {
         physics: const BouncingScrollPhysics(),
         children: [
           const SizedBox(height: 16),
-          orders.isEmpty
+          display.isEmpty
               ? Center(
                   child: Image.asset(
                     'assets/image/empty.png',
@@ -151,9 +167,9 @@ class _ProcessingOrdersState extends State<ProcessingOrders> {
               : ListView.builder(
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
-                  itemCount: orders.length,
+                  itemCount: display.length,
                   itemBuilder: (context, i) {
-                    return _orderCard(context, orders[i], currencySymbol);
+                    return _orderCard(context, display[i], currencySymbol);
                   },
                 ),
         ],
@@ -248,7 +264,9 @@ class _ProcessingOrdersState extends State<ProcessingOrders> {
                         Text(
                           order.paymentType == "Wallet"
                               ? "Wallet"
-                              : "Cash on delivery",
+                              : order.paymentType == "Cash Free"
+                                  ? "Cash Free"
+                                  : "Cash on delivery",
                           style: const TextStyle(
                             color: Colors.white,
                             fontSize: 16.5,

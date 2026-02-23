@@ -8,6 +8,7 @@ import 'package:flutter/services.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:gap/gap.dart';
 import '../Providers/auth.dart';
+import 'package:falguni_app/Pages/audit_orders_page.dart';
 
 class ProfileHome extends StatefulWidget {
   final bool isbottomNav;
@@ -156,10 +157,10 @@ class _ProfileHomeState extends State<ProfileHome> {
                           '/profile'),
                       _menuItem(Icons.map_outlined, "Delivery Address",
                           '/delivery-address'),
-                      _menuItem(Icons.account_balance_wallet_outlined, "Wallet",
-                          '/wallet'),
+                      _walletMenuItem(),
                       _menuItem(Icons.favorite_outline_rounded, "Favorites",
                           '/favorites'),
+                      _auditMenuItem(),
                     ]),
                     const Gap(20),
                     _sectionHeader("Promotions & Support"),
@@ -306,6 +307,80 @@ class _ProfileHomeState extends State<ProfileHome> {
         } else {
           Navigator.pushNamed(context, route);
         }
+      },
+    );
+  }
+
+  Widget _walletMenuItem() {
+    return ListTile(
+      leading: Icon(Icons.account_balance_wallet_outlined,
+          color: kGold.withOpacity(0.8), size: 22),
+      title: Row(
+        children: [
+          Text(
+            'Wallet'.tr(),
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          const SizedBox(width: 8),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+            decoration: BoxDecoration(
+              color: Colors.redAccent.withOpacity(0.15),
+              borderRadius: BorderRadius.circular(4),
+              border: Border.all(color: Colors.redAccent.withOpacity(0.3)),
+            ),
+            child: const Text(
+              'Deprecating soon',
+              style: TextStyle(
+                color: Colors.redAccent,
+                fontSize: 9,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        ],
+      ),
+      trailing: const Icon(
+        Icons.chevron_right_rounded,
+        color: Colors.white24,
+        size: 20,
+      ),
+      onTap: () {
+        HapticFeedback.lightImpact();
+        if (!isLogged) {
+          Navigator.pushNamed(context, '/login');
+        } else {
+          Navigator.pushNamed(context, '/wallet');
+        }
+      },
+    );
+  }
+
+  Widget _auditMenuItem() {
+    return ListTile(
+      leading: Icon(Icons.verified_user_outlined,
+          color: kGold.withOpacity(0.8), size: 22),
+      title: const Text(
+        'Transaction Data',
+        style: TextStyle(
+          color: Colors.white,
+          fontSize: 14,
+          fontWeight: FontWeight.w500,
+        ),
+      ),
+      trailing: const Icon(
+        Icons.chevron_right_rounded,
+        color: Colors.white24,
+        size: 20,
+      ),
+      onTap: () {
+        HapticFeedback.lightImpact();
+        Navigator.push(context,
+            MaterialPageRoute(builder: (_) => const AuditOrdersPage()));
       },
     );
   }

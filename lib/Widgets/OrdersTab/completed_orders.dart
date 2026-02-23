@@ -1,4 +1,4 @@
-// ignore_for_file: deprecated_member_use
+// ignore_for_file: curly_braces_in_flow_control_structures, deprecated_member_use
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -10,7 +10,9 @@ import '../../Model/order_model.dart';
 import '../../Pages/orders_preview.dart';
 
 class CompletedOrders extends StatefulWidget {
-  const CompletedOrders({super.key});
+  final DateTime? filterStart;
+  final DateTime? filterEnd;
+  const CompletedOrders({super.key, this.filterStart, this.filterEnd});
 
   @override
   State<CompletedOrders> createState() => _CompletedOrdersState();
@@ -84,6 +86,7 @@ class _CompletedOrdersState extends State<CompletedOrders> {
                     deliveryFee: doc.data()['deliveryFee'],
                     acceptDelivery: doc.data()['acceptDelivery'],
                     paymentType: doc.data()['paymentType'],
+                    cashFreeDetails: doc.data()['cashFreeDetails'],
                   ),
                 );
               });
@@ -124,16 +127,29 @@ class _CompletedOrdersState extends State<CompletedOrders> {
     });
   }
 
+  List<OrderModel2> get _filtered {
+    if (widget.filterStart == null && widget.filterEnd == null) return orders;
+    return orders.where((o) {
+      try {
+        final d = DateTime.parse(o.uid);
+        if (widget.filterStart != null && d.isBefore(widget.filterStart!))
+          return false;
+        if (widget.filterEnd != null && d.isAfter(widget.filterEnd!))
+          return false;
+        return true;
+      } catch (_) {
+        return true;
+      }
+    }).toList();
+  }
+
   @override
   Widget build(BuildContext context) {
+    final display = _filtered;
     return Container(
       decoration: const BoxDecoration(
         gradient: LinearGradient(
-          colors: [
-            kPrimary,
-            kCard,
-            kPrimary,
-          ],
+          colors: [kPrimary, kCard, kPrimary],
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
         ),
@@ -142,7 +158,7 @@ class _CompletedOrdersState extends State<CompletedOrders> {
         physics: const BouncingScrollPhysics(),
         children: [
           const SizedBox(height: 16),
-          orders.isEmpty
+          display.isEmpty
               ? Center(
                   child: Image.asset(
                     'assets/image/empty.png',
@@ -152,9 +168,9 @@ class _CompletedOrdersState extends State<CompletedOrders> {
               : ListView.builder(
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
-                  itemCount: orders.length,
+                  itemCount: display.length,
                   itemBuilder: (context, i) {
-                    return _orderCard(context, orders[i], getcurrencySymbol);
+                    return _orderCard(context, display[i], getcurrencySymbol);
                   },
                 ),
         ],
@@ -253,7 +269,9 @@ class _CompletedOrdersState extends State<CompletedOrders> {
                         Text(
                           order.paymentType == 'Wallet'
                               ? "Wallet".tr()
-                              : "Cash on delivery".tr(),
+                              : order.paymentType == "Cash Free"
+                                  ? "Cash Free".tr()
+                                  : "Cash on delivery".tr(),
                           style: const TextStyle(
                             color: Colors.white,
                             fontSize: 16.5,

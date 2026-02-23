@@ -621,7 +621,7 @@ class _OrdersPreviewState extends State<OrdersPreview> {
             Text('Order ID: #${widget.orderModel.orderID}',
                 style: const TextStyle(fontSize: 12)),
             if (widget.orderModel.timeCreated != null)
-              Text('${widget.orderModel.timeCreated}',
+              Text(_formatTimeSafe(widget.orderModel.timeCreated),
                   style: const TextStyle(fontSize: 12)),
           ],
         ),
@@ -680,7 +680,9 @@ class _OrdersPreviewState extends State<OrdersPreview> {
             Text(
                 widget.orderModel.paymentType == 'Wallet'
                     ? 'Wallet'.tr()
-                    : 'Cash on delivery'.tr(),
+                    : widget.orderModel.paymentType == 'Cash Free'
+                        ? 'Cash Free'.tr()
+                        : 'Cash on delivery'.tr(),
                 style: const TextStyle(fontSize: 13)),
           ],
         ),
@@ -728,7 +730,8 @@ class _OrdersPreviewState extends State<OrdersPreview> {
     buffer.writeln('--------------------------------');
     buffer.writeln('Order ID: #${widget.orderModel.orderID}');
     if (widget.orderModel.timeCreated != null) {
-      buffer.writeln('Date: ${widget.orderModel.timeCreated}');
+      buffer.writeln(
+          'Date: ${DateFormat('dd MMM yyyy, hh:mm a').format(widget.orderModel.timeCreated!)}');
     }
     buffer.writeln('Status: ${orderStatus.tr()}');
     buffer.writeln('--------------------------------');
@@ -752,7 +755,7 @@ class _OrdersPreviewState extends State<OrdersPreview> {
     }
     buffer.writeln('--------------------------------');
     buffer.writeln(
-        'Payment Type: ${widget.orderModel.paymentType == 'Wallet' ? 'Wallet'.tr() : 'Cash on delivery'.tr()}');
+        'Payment Type: ${widget.orderModel.paymentType == 'Wallet' ? 'Wallet'.tr() : widget.orderModel.paymentType == 'Cash Free' ? 'Cash Free'.tr() : 'Cash on delivery'.tr()}');
     if (widget.orderModel.deliveryFee > 0) {
       buffer.writeln(
           'Delivery Fee: ${widget.currencySymbol}${Formatter().converter(widget.orderModel.deliveryFee.toDouble())}');
@@ -791,7 +794,8 @@ class _OrdersPreviewState extends State<OrdersPreview> {
                 children: [
                   pw.Text('Order ID: #${widget.orderModel.orderID}'),
                   if (widget.orderModel.timeCreated != null)
-                    pw.Text('Date: ${widget.orderModel.timeCreated}'),
+                    pw.Text(
+                        'Date: ${DateFormat('dd MMM yyyy, hh:mm a').format(widget.orderModel.timeCreated!)}'),
                 ],
               ),
               pw.SizedBox(height: 5),
@@ -836,7 +840,7 @@ class _OrdersPreviewState extends State<OrdersPreview> {
               ),
               pw.Divider(),
               pw.Text(
-                  'Payment Type: ${widget.orderModel.paymentType == 'Wallet' ? 'Wallet'.tr() : 'Cash on delivery'.tr()}'),
+                  'Payment Type: ${widget.orderModel.paymentType == 'Wallet' ? 'Wallet'.tr() : widget.orderModel.paymentType == 'Cash Free' ? 'Cash Free'.tr() : 'Cash on delivery'.tr()}'),
               if (widget.orderModel.deliveryFee > 0)
                 pw.Text(
                     'Delivery Fee: ${widget.currencySymbol}${Formatter().converter(widget.orderModel.deliveryFee.toDouble())}'),
@@ -1038,7 +1042,9 @@ class _OrdersPreviewState extends State<OrdersPreview> {
   // ---------------------------------------------------------------------------
 
   Widget _buildOrderSummaryCard() {
-    final timeText = widget.orderModel.timeCreated?.toString() ?? '';
+    final timeText = widget.orderModel.timeCreated != null
+        ? _formatTimeSafe(widget.orderModel.timeCreated)
+        : '';
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -1122,7 +1128,9 @@ class _OrdersPreviewState extends State<OrdersPreview> {
                 label: 'Payment type'.tr(),
                 value: widget.orderModel.paymentType == 'Wallet'
                     ? 'Wallet'.tr()
-                    : 'Cash on delivery'.tr(),
+                    : widget.orderModel.paymentType == 'Cash Free'
+                        ? 'Cash Free'.tr()
+                        : 'Cash on delivery'.tr(),
               ),
               const SizedBox(width: 16),
               _buildSummaryItem(
@@ -1513,7 +1521,9 @@ class _OrdersPreviewState extends State<OrdersPreview> {
                     Text(
                       widget.orderModel.paymentType == 'Wallet'
                           ? 'Wallet'.tr()
-                          : 'Cash on delivery'.tr(),
+                          : widget.orderModel.paymentType == 'Cash Free'
+                              ? 'Cash Free'.tr()
+                              : 'Cash on delivery'.tr(),
                       style: const TextStyle(
                         color: Colors.white,
                         fontSize: 13.5,
@@ -1541,6 +1551,63 @@ class _OrdersPreviewState extends State<OrdersPreview> {
               ),
             ],
           ),
+          if (widget.orderModel.cashFreeDetails != null) ...[
+            const SizedBox(height: 12),
+            const Divider(color: Colors.white24),
+            const SizedBox(height: 8),
+            Text(
+              'Cashfree Transaction Details'.tr(),
+              style: const TextStyle(
+                color: kGold,
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: 6),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: Colors.black.withOpacity(0.2),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildInfoRow(
+                      Icons.receipt_long,
+                      'Payment ID'.tr(),
+                      widget.orderModel.cashFreeDetails['cf_order_id']
+                              ?.toString() ??
+                          'N/A'),
+                  const SizedBox(height: 8),
+                  _buildInfoRow(
+                      Icons.tag,
+                      'Order Ref'.tr(),
+                      widget.orderModel.cashFreeDetails['order_id']
+                              ?.toString() ??
+                          'N/A'),
+                  const SizedBox(height: 8),
+                  _buildInfoRow(Icons.payments_outlined, 'Amount'.tr(),
+                      '${widget.orderModel.cashFreeDetails['order_currency']} ${widget.orderModel.cashFreeDetails['order_amount']}'),
+                  const SizedBox(height: 8),
+                  _buildInfoRow(
+                      Icons.access_time,
+                      'Time'.tr(),
+                      widget.orderModel.cashFreeDetails['created_at']
+                              ?.toString() ??
+                          'N/A'),
+                  const SizedBox(height: 8),
+                  _buildInfoRow(
+                      Icons.info_outline,
+                      'Status'.tr(),
+                      widget.orderModel.cashFreeDetails['order_status']
+                              ?.toString() ??
+                          'N/A'),
+                ],
+              ),
+            ),
+          ],
         ],
       ),
     );
@@ -1749,45 +1816,16 @@ class _OrdersPreviewState extends State<OrdersPreview> {
   }
 
   Widget _buildActionsSection() {
-    final bool canDelete = accepted == false;
     final bool canConfirm = acceptDelivery == true &&
         accepted == true &&
         deliveryAddress != '' &&
         orderStatus == 'Completed' &&
         confirmationStatus == false;
 
-    if (!canDelete && !canConfirm) return const SizedBox.shrink();
+    if (!canConfirm) return const SizedBox.shrink();
 
     return Column(
       children: [
-        if (canDelete)
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: () {
-                if (widget.orderModel.paymentType == 'Wallet') {
-                  updateWallet();
-                }
-                FirebaseFirestore.instance
-                    .collection('Orders')
-                    .doc(widget.orderModel.uid)
-                    .delete()
-                    .then((value) {
-                  Navigator.of(context).pop();
-                });
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.redAccent.withOpacity(0.9),
-                foregroundColor: Colors.white,
-                minimumSize: const Size.fromHeight(44),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-              child: const Text('Delete Order').tr(),
-            ),
-          ),
-        if (canDelete && canConfirm) const Gap(10),
         if (canConfirm)
           SizedBox(
             width: double.infinity,
@@ -1901,6 +1939,23 @@ class _OrdersPreviewState extends State<OrdersPreview> {
         ),
       ),
     );
+  }
+
+  String _formatTimeSafe(dynamic timeVal) {
+    if (timeVal == null || timeVal.toString().isEmpty) return '';
+    try {
+      if (timeVal is Timestamp) {
+        return DateFormat('dd MMM yyyy, hh:mm a')
+            .format(timeVal.toDate().toLocal());
+      }
+      // Aggressive coercion: handles both raw strings AND uncasted DateTime objects
+      String stringVal = timeVal.toString();
+      DateTime parsed = DateTime.parse(stringVal);
+      return DateFormat('dd MMM yyyy, hh:mm a').format(parsed.toLocal());
+    } catch (e) {
+      // If parsing strictly fails, fall back to the exact string payload provided
+      return timeVal.toString();
+    }
   }
 }
 

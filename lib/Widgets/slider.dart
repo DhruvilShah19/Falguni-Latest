@@ -1,6 +1,7 @@
 // ignore_for_file: avoid_print, deprecated_member_use
 
 import 'package:carousel_slider/carousel_slider.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
@@ -75,8 +76,8 @@ class _SliderWidgetState extends State<SliderWidget> {
                                     collection: feedsModel.category)));
                           }
                         },
-                        child: Image.network(
-                          feedsModel.image,
+                        child: CachedNetworkImage(
+                          imageUrl: feedsModel.image,
                           fit: MediaQuery.of(context).size.width >= 1100
                               ? BoxFit.fill
                               : MediaQuery.of(context).size.width > 600 &&
@@ -90,6 +91,12 @@ class _SliderWidgetState extends State<SliderWidget> {
                                       MediaQuery.of(context).size.width < 1200
                                   ? MediaQuery.of(context).size.width / 1
                                   : MediaQuery.of(context).size.width / 1,
+                          placeholder: (context, url) => const Center(
+                            child:
+                                SpinKitCircle(color: Colors.blueGrey, size: 30),
+                          ),
+                          errorWidget: (context, url, error) =>
+                              const Icon(Icons.error),
                         ),
                       );
                     },

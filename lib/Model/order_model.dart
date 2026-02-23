@@ -23,6 +23,7 @@ class OrderModel {
   final String day;
   final String month;
   final String year;
+  final dynamic cashFreeDetails;
 
   OrderModel(
       {required this.marketID,
@@ -31,6 +32,7 @@ class OrderModel {
       required this.month,
       required this.year,
       required this.day,
+      this.cashFreeDetails,
       required this.pickupAddress,
       required this.orderID,
       required this.orders,
@@ -75,7 +77,8 @@ class OrderModel {
       'status': status,
       'confirmationStatus': confirmationStatus,
       'accept': accept,
-      'uid': uid
+      'uid': uid,
+      'cashFreeDetails': cashFreeDetails
     };
   }
 }
@@ -100,6 +103,7 @@ class OrderModel2 {
   final bool acceptDelivery;
   final List<OrdersList> orders;
   final String paymentType;
+  final dynamic cashFreeDetails;
 
   OrderModel2(
       {required this.marketID,
@@ -111,16 +115,19 @@ class OrderModel2 {
       required this.deliveryFee,
       required this.total,
       required this.vendorID,
-      required this.paymentType,
+      required String paymentType,
       required this.userID,
       required this.timeCreated,
       this.confirmationStatus,
+      this.cashFreeDetails,
       required this.deliveryAddress,
       required this.houseNumber,
       required this.closesBusStop,
       required this.deliveryBoyID,
       required this.status,
-      required this.accept});
+      required this.accept})
+      : paymentType =
+            paymentType == 'Cash on delivery' ? 'Cash Free' : paymentType;
 
   OrderModel2.fromMap(
     Map<String, dynamic> data,
@@ -134,7 +141,9 @@ class OrderModel2 {
         deliveryFee = data['deliveryFee'],
         total = data['total'],
         vendorID = data['vendorID'],
-        paymentType = data['paymentType'],
+        paymentType = data['paymentType'] == 'Cash on delivery'
+            ? 'Cash Free'
+            : data['paymentType'],
         userID = data['userID'],
         timeCreated = data['timeCreated'],
         deliveryAddress = data['deliveryAddress'],
@@ -143,7 +152,8 @@ class OrderModel2 {
         deliveryBoyID = data['deliveryBoyID'],
         status = data['status'],
         accept = data['accept'],
-        uid = data['uid'];
+        uid = data['uid'],
+        cashFreeDetails = data['cashFreeDetails'];
 }
 
 class OrdersList {

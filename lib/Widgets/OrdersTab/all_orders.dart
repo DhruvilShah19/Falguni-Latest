@@ -1,4 +1,4 @@
-// ignore_for_file: deprecated_member_use
+// ignore_for_file: curly_braces_in_flow_control_structures, deprecated_member_use
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -10,7 +10,11 @@ import '../../Model/order_model.dart';
 import '../../Pages/orders_preview.dart';
 
 class AllOrders extends StatefulWidget {
-  const AllOrders({super.key});
+  final DateTime? filterStart;
+  final DateTime? filterEnd;
+  final String? filterStatus;
+  const AllOrders(
+      {super.key, this.filterStart, this.filterEnd, this.filterStatus});
 
   @override
   State<AllOrders> createState() => _AllOrdersState();
@@ -75,6 +79,7 @@ class _AllOrdersState extends State<AllOrders> {
                   deliveryFee: doc.data()['deliveryFee'],
                   acceptDelivery: doc.data()['acceptDelivery'],
                   paymentType: doc.data()['paymentType'],
+                  cashFreeDetails: doc.data()["cashFreeDetails"],
                 ));
               });
             }
@@ -120,8 +125,31 @@ class _AllOrdersState extends State<AllOrders> {
   static const Color kPrimary = Color(0xFF2B1B17); // Deep "Roasted Bean" brown
   static const Color kCard = Color(0xFF5C4033); // Warm "Earth/Clay" brown
 
+  List<OrderModel2> get _filtered {
+    return orders.where((o) {
+      // Status filter
+      if (widget.filterStatus != null &&
+          widget.filterStatus != 'All' &&
+          o.status != widget.filterStatus) {
+        return false;
+      }
+      // Date filter
+      if (widget.filterStart != null || widget.filterEnd != null) {
+        try {
+          final d = DateTime.parse(o.uid);
+          if (widget.filterStart != null && d.isBefore(widget.filterStart!))
+            return false;
+          if (widget.filterEnd != null && d.isAfter(widget.filterEnd!))
+            return false;
+        } catch (_) {}
+      }
+      return true;
+    }).toList();
+  }
+
   @override
   Widget build(BuildContext context) {
+    final display = _filtered;
     return Container(
       decoration: const BoxDecoration(
         gradient: LinearGradient(
@@ -135,10 +163,10 @@ class _AllOrdersState extends State<AllOrders> {
         ),
       ),
       child: ListView(
+        padding: const EdgeInsets.only(top: 10, bottom: 100),
         physics: const BouncingScrollPhysics(),
         children: [
-          const SizedBox(height: 16),
-          orders.isEmpty
+          display.isEmpty
               ? Center(
                   child: Padding(
                     padding: const EdgeInsets.only(top: 50),
@@ -151,9 +179,9 @@ class _AllOrdersState extends State<AllOrders> {
               : ListView.builder(
                   physics: const NeverScrollableScrollPhysics(),
                   shrinkWrap: true,
-                  itemCount: orders.length,
+                  itemCount: display.length,
                   itemBuilder: (context, i) {
-                    return _orderCard(context, orders[i], getcurrencySymbol);
+                    return _orderCard(context, display[i], getcurrencySymbol);
                   },
                 ),
         ],
@@ -261,7 +289,9 @@ class _AllOrdersState extends State<AllOrders> {
                         Text(
                           order.paymentType == 'Wallet'
                               ? 'Wallet'.tr()
-                              : 'Cash on delivery'.tr(),
+                              : order.paymentType == 'Cash Free'
+                                  ? 'Cash Free'.tr()
+                                  : 'Cash on delivery'.tr(),
                           style: const TextStyle(
                             color: Colors.white,
                             fontSize: 16,
