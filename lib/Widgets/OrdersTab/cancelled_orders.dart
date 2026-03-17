@@ -94,9 +94,12 @@ class _CancelledOrdersState extends State<CancelledOrders> {
 
           // Sort latest → oldest by uid (timestamp string)
           orders.sort((a, b) {
-            DateTime dateA = DateTime.parse(a.uid);
-            DateTime dateB = DateTime.parse(b.uid);
-            return dateB.compareTo(dateA);
+            DateTime? dateA = DateTime.tryParse(a.uid);
+            DateTime? dateB = DateTime.tryParse(b.uid);
+            if (dateA != null && dateB != null) {
+              return dateB.compareTo(dateA);
+            }
+            return b.orderID.compareTo(a.orderID);
           });
         });
       }) as DocumentReference?;
@@ -285,11 +288,7 @@ class _CancelledOrdersState extends State<CancelledOrders> {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          order.paymentType == 'Wallet'
-                              ? 'Wallet'.tr()
-                              : order.paymentType == 'Cash Free'
-                                  ? 'Cash Free'.tr()
-                                  : 'Cash on delivery'.tr(),
+                          'Cash Free'.tr(),
                           style: const TextStyle(
                             color: Colors.white,
                             fontSize: 16,

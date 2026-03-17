@@ -184,25 +184,6 @@ class CheckoutStep2Payment extends StatelessWidget {
               ),
               const SizedBox(height: 12),
 
-              // Cash on Delivery Option
-              if (cashDatabase)
-                _buildPaymentOption(
-                  context: context,
-                  title: 'Cash on Delivery',
-                  subtitle: 'Pay with cash when your order arrives',
-                  icon: Icons.local_shipping_outlined,
-                  isSelected: cashOnDeliveryBool,
-                  onTap: () {
-                    if (orders.isEmpty) {
-                      getMyCartToOrders();
-                    }
-                    onCashOnDeliveryChanged(!cashOnDeliveryBool);
-                  },
-                  additionalInfo: 'Available in selected areas',
-                ),
-
-              const SizedBox(height: 20),
-
               // Order Summary Section
               Container(
                 decoration: BoxDecoration(

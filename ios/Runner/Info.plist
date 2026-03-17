@@ -24,6 +24,7 @@
     <string>$(FLUTTER_BUILD_NAME)</string>
     <key>CFBundleSignature</key>
     <string>????</string>
+    
     <key>CFBundleURLTypes</key>
     <array>
         <dict>
@@ -35,18 +36,23 @@
             </array>
         </dict>
     </array>
+    
     <key>CFBundleVersion</key>
     <string>$(FLUTTER_BUILD_NUMBER)</string>
     <key>GIDClientID</key>
     <string>7031551502-8m6p4qv7d6svsri6nvavgi7a2643665a.apps.googleusercontent.com</string>
     <key>LSRequiresIPhoneOS</key>
     <true/>
+
     <key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
-    <string>We use your location to provide accurate Google Maps functionality, and improve delivery options, even when the app is not in use.</string>
+    <string>Falguni App uses your location to provide accurate delivery options and maps functionality.</string>
     <key>NSLocationWhenInUseUsageDescription</key>
-    <string>We use your location to display relevant Google Maps content, including locations, real-time navigation, and local offers while you are using the app.</string>
+    <string>Falguni App uses your location to help you find nearby delivery points and show your position on the map.</string>
     <key>NSPhotoLibraryUsageDescription</key>
-    <string>We need access to your photo library to allow you to upload photos.</string>
+    <string>We need access to your photo library to allow you to upload images for your profile or orders.</string>
+    <key>NSCameraUsageDescription</key>
+    <string>Falguni App requires camera access to take photos for profile updates and order verification.</string>
+
     <key>UIApplicationSupportsIndirectInputEvents</key>
     <true/>
     <key>UILaunchStoryboardName</key>

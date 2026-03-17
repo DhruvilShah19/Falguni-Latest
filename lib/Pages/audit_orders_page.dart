@@ -241,137 +241,144 @@ class _AuditOrdersPageState extends State<AuditOrdersPage>
 
   Widget _buildTab1() {
     return SafeArea(
-      child: Column(children: [
-        _cashfreeNoticeBanner(),
-        _cashfreePortalCard(),
+      child: SingleChildScrollView(
+        physics: const BouncingScrollPhysics(),
+        child: Column(
+          children: [
+            _cashfreeNoticeBanner(),
+            _cashfreePortalCard(),
 
-        // --- MANUAL LOOKUP SECTION ---
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'Lookup Specific Order:',
-                style: TextStyle(
-                    color: Colors.white70,
-                    fontSize: 13,
-                    fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 8),
-              Row(
+            // --- MANUAL LOOKUP SECTION ---
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Expanded(
-                    child: TextFormField(
-                      controller: _orderIdController,
-                      style: const TextStyle(color: Colors.white, fontSize: 13),
-                      decoration: InputDecoration(
-                        hintText: 'Enter Cashfree Order ID...',
-                        hintStyle:
-                            TextStyle(color: Colors.white.withOpacity(0.3)),
-                        filled: true,
-                        fillColor: Colors.white.withOpacity(0.06),
-                        contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 12, vertical: 12),
-                        border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide:
-                                BorderSide(color: kGold.withOpacity(0.3))),
-                        enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide:
-                                BorderSide(color: kGold.withOpacity(0.3))),
-                        focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: const BorderSide(color: kGold)),
-                        prefixIcon: Icon(Icons.search,
-                            color: kGold.withOpacity(0.6), size: 18),
+                  const Text(
+                    'Lookup Specific Order:',
+                    style: TextStyle(
+                        color: Colors.white70,
+                        fontSize: 13,
+                        fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextFormField(
+                          controller: _orderIdController,
+                          style: const TextStyle(
+                              color: Colors.white, fontSize: 13),
+                          decoration: InputDecoration(
+                            hintText: 'Enter Cashfree Order ID...',
+                            hintStyle:
+                                TextStyle(color: Colors.white.withOpacity(0.3)),
+                            filled: true,
+                            fillColor: Colors.white.withOpacity(0.06),
+                            contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 12, vertical: 12),
+                            border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide:
+                                    BorderSide(color: kGold.withOpacity(0.3))),
+                            enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide:
+                                    BorderSide(color: kGold.withOpacity(0.3))),
+                            focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: const BorderSide(color: kGold)),
+                            prefixIcon: Icon(Icons.search,
+                                color: kGold.withOpacity(0.6), size: 18),
+                          ),
+                        ),
                       ),
-                    ),
+                      const SizedBox(width: 8),
+                      ElevatedButton(
+                        onPressed: isLookingUp ? null : _runTab2,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: kGold,
+                          foregroundColor: Colors.black,
+                          padding: const EdgeInsets.symmetric(
+                              vertical: 14, horizontal: 16),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12)),
+                          disabledBackgroundColor: kGold.withOpacity(0.4),
+                        ),
+                        child: isLookingUp
+                            ? const SizedBox(
+                                width: 16,
+                                height: 16,
+                                child: CircularProgressIndicator(
+                                    strokeWidth: 2, color: Colors.black))
+                            : const Text('Verify',
+                                style: TextStyle(fontWeight: FontWeight.bold)),
+                      ),
+                    ],
                   ),
-                  const SizedBox(width: 8),
-                  ElevatedButton(
-                    onPressed: isLookingUp ? null : _runTab2,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: kGold,
-                      foregroundColor: Colors.black,
-                      padding: const EdgeInsets.symmetric(
-                          vertical: 14, horizontal: 16),
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12)),
-                      disabledBackgroundColor: kGold.withOpacity(0.4),
+                  if (lookupError != null)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 8),
+                      child: _errBox(lookupError!),
                     ),
-                    child: isLookingUp
-                        ? const SizedBox(
-                            width: 16,
-                            height: 16,
-                            child: CircularProgressIndicator(
-                                strokeWidth: 2, color: Colors.black))
-                        : const Text('Verify',
-                            style: TextStyle(fontWeight: FontWeight.bold)),
-                  ),
+                  if (lookupResult != null)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 8),
+                      child: _auditTile(lookupResult!),
+                    ),
                 ],
               ),
-              if (lookupError != null)
-                Padding(
-                  padding: const EdgeInsets.only(top: 8),
-                  child: _errBox(lookupError!),
-                ),
-              if (lookupResult != null)
-                Padding(
-                  padding: const EdgeInsets.only(top: 8),
-                  child: _auditTile(lookupResult!),
-                ),
-            ],
-          ),
-        ),
-
-        const Divider(color: Colors.white12, height: 24, thickness: 1),
-
-        // --- BATCH VERIFICATION SECTION ---
-        if (hasRun) _summaryCard(),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: SizedBox(
-            width: double.infinity,
-            child: ElevatedButton.icon(
-              onPressed: isLoading ? null : _runTab1,
-              icon: isLoading
-                  ? const SizedBox(
-                      width: 18,
-                      height: 18,
-                      child: CircularProgressIndicator(
-                          strokeWidth: 2, color: Colors.black))
-                  : const Icon(Icons.verified_user_rounded),
-              label: Text(isLoading
-                  ? 'Verifying...'
-                  : hasRun
-                      ? 'Re-verify'
-                      : 'Verify My Transactions'),
-              style: _goldBtn(),
             ),
-          ),
+
+            const Divider(color: Colors.white12, height: 24, thickness: 1),
+
+            // --- BATCH VERIFICATION SECTION ---
+            if (hasRun) _summaryCard(),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: isLoading ? null : _runTab1,
+                  icon: isLoading
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(
+                              strokeWidth: 2, color: Colors.black))
+                      : const Icon(Icons.verified_user_rounded),
+                  label: Text(isLoading
+                      ? 'Verifying...'
+                      : hasRun
+                          ? 'Re-verify'
+                          : 'Verify My Transactions'),
+                  style: _goldBtn(),
+                ),
+              ),
+            ),
+            if (errorMessage != null) _errBox(errorMessage!),
+            results.isEmpty
+                ? Padding(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 32, vertical: 40),
+                    child: Text(
+                        hasRun
+                            ? 'No Cashfree orders found for your account.'
+                            : 'Tap "Verify My Transactions" to check all your Cashfree transactions against the payment gateway.',
+                        style: const TextStyle(
+                            color: Colors.white54, fontSize: 14),
+                        textAlign: TextAlign.center),
+                  )
+                : ListView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    itemCount: results.length,
+                    itemBuilder: (_, i) => _auditTile(results[i]),
+                  ),
+          ],
         ),
-        if (errorMessage != null) _errBox(errorMessage!),
-        Expanded(
-          child: results.isEmpty
-              ? Center(
-                  child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 32),
-                  child: Text(
-                      hasRun
-                          ? 'No Cashfree orders found for your account.'
-                          : 'Tap "Verify My Transactions" to check all your Cashfree transactions against the payment gateway.',
-                      style:
-                          const TextStyle(color: Colors.white54, fontSize: 14),
-                      textAlign: TextAlign.center),
-                ))
-              : ListView.builder(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  itemCount: results.length,
-                  itemBuilder: (_, i) => _auditTile(results[i])),
-        ),
-      ]),
+      ),
     );
   }
 

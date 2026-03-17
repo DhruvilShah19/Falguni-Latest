@@ -101,6 +101,7 @@ class _CheckoutPageState extends State<CheckoutPage>
   final uuid = const Uuid();
   String? cashFreeOrderID;
   String? paymentSessionId;
+  Map<String, dynamic>? cashFreeResponseData;
 
   getOneSignalDetails() {
     FirebaseFirestore.instance
@@ -416,7 +417,7 @@ class _CheckoutPageState extends State<CheckoutPage>
         date: '$dayFormatter, $formattedDate $dateDay',
         pickupAddress: pickupAddress,
         confirmationStatus: false,
-        uid: id, // Assuming 'id' is the user's UID
+        uid: uid, // Assuming 'id' is the user's UID
         marketID: currentMarketID,
         orderID: orderID + 1,
         orders: orders,
@@ -424,7 +425,7 @@ class _CheckoutPageState extends State<CheckoutPage>
         deliveryFee: pickupBool == false ? deliveryFee : 0,
         total: subTotal + (deliveryBool == false ? 0 : deliveryFee),
         vendorID: vendorID,
-        paymentType: 'Online',
+        paymentType: 'Cash Free',
         userID: id,
         timeCreated: DateFormat.yMMMMEEEEd().format(DateTime.now()).toString(),
         deliveryAddress: pickupBool == true ? '' : deliveryAddress,
@@ -433,15 +434,16 @@ class _CheckoutPageState extends State<CheckoutPage>
         deliveryBoyID: '',
         status: 'Received',
         accept: false,
+        cashFreeDetails: cashFreeResponseData,
       ),
-      id, // Pass user ID here
+      uid, // Pass user ID here
     );
 
     updateHistoryVendor(HistoryModel(
       message: 'New order alert Order ID #${orderID + 1}',
       amount:
           '$currencySymbol ${subTotal + (deliveryBool == false ? 0 : deliveryFee)}',
-      paymentSystem: 'Online',
+      paymentSystem: 'Cash Free',
       timeCreated: DateTime.now(),
     ));
 
@@ -451,7 +453,8 @@ class _CheckoutPageState extends State<CheckoutPage>
         MaterialPageRoute(
           builder: (context) => OrderSuccessPage(
             orderId: '${orderID + 1}',
-            cashFreeDetails: const {"payment": "online"},
+            cashFreeDetails:
+                cashFreeResponseData ?? const {"payment": "online"},
           ),
         ),
       );
@@ -555,6 +558,7 @@ class _CheckoutPageState extends State<CheckoutPage>
 
       if (response.statusCode == 200) {
         var responseData = jsonDecode(response.body);
+        cashFreeResponseData = responseData;
         cashFreeOrderID = responseData['order_id'];
         paymentSessionId = responseData["payment_session_id"];
 

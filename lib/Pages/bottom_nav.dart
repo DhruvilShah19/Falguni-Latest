@@ -8,7 +8,8 @@ import 'package:list_tile_switch/list_tile_switch.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'package:falguni_app/Pages/cart_page.dart';
+import 'package:falguni_app/Pages/orders.dart';
+import 'package:falguni_app/Pages/notifications.dart';
 import 'package:falguni_app/Pages/favorites.dart';
 import 'package:falguni_app/Pages/home_page.dart';
 import 'package:falguni_app/Pages/profile_home.dart';
@@ -49,6 +50,7 @@ class _BottomNavPageState extends State<BottomNavPage> {
 
   dynamic themeMode;
   bool _lightTheme = true;
+  bool _hasUnreadNotifications = false;
 
   final GlobalKey<ScaffoldState> _scaffoldHome = GlobalKey<ScaffoldState>();
 
@@ -60,6 +62,7 @@ class _BottomNavPageState extends State<BottomNavPage> {
     _getReferralStatus();
     _listenAuth();
     _loadTheme();
+    _checkUnreadNotifications();
   }
 
   // ---------------------------------------------------------------------------
@@ -124,6 +127,43 @@ class _BottomNavPageState extends State<BottomNavPage> {
     setState(() {
       themeMode = lightModeOn ?? true;
       _lightTheme = themeMode;
+    });
+  }
+
+  void _checkUnreadNotifications() {
+    FirebaseAuth.instance.authStateChanges().listen((User? user) {
+      if (user == null) return;
+      FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .collection('Notifications')
+          .orderBy('timeCreated', descending: true)
+          .limit(1)
+          .snapshots()
+          .listen((snapshot) async {
+        if (!mounted) return;
+        if (snapshot.docs.isEmpty) return;
+        final prefs = await SharedPreferences.getInstance();
+        final lastSeen = prefs.getInt('lastSeenNotifications') ?? 0;
+
+        final doc = snapshot.docs.first;
+        final timeData = doc['timeCreated'];
+        int latestTime = 0;
+        if (timeData is Timestamp) {
+          latestTime = timeData.millisecondsSinceEpoch;
+        } else if (timeData is num) {
+          latestTime = timeData.toInt();
+        } else {
+          latestTime =
+              DateTime.now().millisecondsSinceEpoch; // assume new if string
+        }
+
+        if (latestTime > lastSeen) {
+          setState(() {
+            _hasUnreadNotifications = true;
+          });
+        }
+      });
     });
   }
 
@@ -535,11 +575,20 @@ class _BottomNavPageState extends State<BottomNavPage> {
               borderRadius: BorderRadius.circular(30),
               child: BottomNavigationBar(
                 currentIndex: _page,
-                onTap: (index) {
-                  if (!isLogged && (index == 1 || index == 2 || index == 3)) {
+                onTap: (index) async {
+                  if (!isLogged &&
+                      (index == 1 || index == 2 || index == 3 || index == 4)) {
                     setState(() => _page = index);
                     Navigator.pushNamed(context, '/login');
                   } else {
+                    if (index == 3) {
+                      final prefs = await SharedPreferences.getInstance();
+                      await prefs.setInt('lastSeenNotifications',
+                          DateTime.now().millisecondsSinceEpoch);
+                      setState(() {
+                        _hasUnreadNotifications = false;
+                      });
+                    }
                     setState(() => _page = index);
                   }
                 },
@@ -551,23 +600,46 @@ class _BottomNavPageState extends State<BottomNavPage> {
                 showUnselectedLabels: false,
                 elevation: 0,
                 // 🔹 Icons sizes adjusted for a cleaner professional look
-                items: const [
-                  BottomNavigationBarItem(
+                items: [
+                  const BottomNavigationBarItem(
                     icon: Icon(Icons.grid_view_rounded, size: 22),
                     activeIcon: Icon(Icons.grid_view_rounded, size: 24),
                     label: 'Home',
                   ),
-                  BottomNavigationBarItem(
-                    icon: Icon(Icons.shopping_bag_outlined, size: 22),
-                    activeIcon: Icon(Icons.shopping_bag, size: 24),
-                    label: 'Cart',
-                  ),
-                  BottomNavigationBarItem(
+                  const BottomNavigationBarItem(
                     icon: Icon(Icons.favorite_outline_rounded, size: 22),
                     activeIcon: Icon(Icons.favorite_rounded, size: 24),
                     label: 'Favorites',
                   ),
+                  const BottomNavigationBarItem(
+                    icon: Icon(Icons.receipt_long_outlined, size: 22),
+                    activeIcon: Icon(Icons.receipt_long, size: 24),
+                    label: 'Orders',
+                  ),
                   BottomNavigationBarItem(
+                    icon: Stack(
+                      children: [
+                        const Icon(Icons.notifications_none_rounded, size: 22),
+                        if (_hasUnreadNotifications)
+                          Positioned(
+                            right: 0,
+                            top: 0,
+                            child: Container(
+                              width: 8,
+                              height: 8,
+                              decoration: const BoxDecoration(
+                                color: Colors.redAccent,
+                                shape: BoxShape.circle,
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                    activeIcon:
+                        const Icon(Icons.notifications_rounded, size: 24),
+                    label: 'Notifications',
+                  ),
+                  const BottomNavigationBarItem(
                     icon: Icon(Icons.person_2_outlined, size: 22),
                     activeIcon: Icon(Icons.person_2, size: 24),
                     label: 'Profile',
@@ -587,14 +659,18 @@ class _BottomNavPageState extends State<BottomNavPage> {
           : _page == 1
               ? (!isLogged
                   ? const LoadingPage()
-                  : const CartPage(isbottomNav: true))
+                  : const FavoritesPage(isbottomNav: true))
               : _page == 2
                   ? (!isLogged
                       ? const LoadingPage()
-                      : const FavoritesPage(isbottomNav: true))
-                  : (!isLogged
-                      ? const LoadingPage()
-                      : const ProfileHome(isbottomNav: true)),
+                      : const OrdersPage(isbottomNav: true))
+                  : _page == 3
+                      ? (!isLogged
+                          ? const LoadingPage()
+                          : const NotificationsPage(isbottomNav: true))
+                      : (!isLogged
+                          ? const LoadingPage()
+                          : const ProfileHome(isbottomNav: true)),
     );
   }
 }

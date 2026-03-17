@@ -9,13 +9,11 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
-import 'package:flutter_facebook_auth/flutter_facebook_auth.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:random_string/random_string.dart';
 import 'package:rounded_loading_button_plus/rounded_loading_button.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
-import '../Database/database.dart';
 import '../Providers/auth.dart';
 import 'package:flutter_close_app/flutter_close_app.dart';
 
@@ -148,51 +146,51 @@ class _LoginPageState extends State<LoginPage> {
     return user;
   }
 
-  Future<User> signInWithFacebook() async {
-    // Start the sign-in process with Facebook
-    final LoginResult loginResult = await FacebookAuth.instance.login();
+  // Future<User> signInWithFacebook() async {
+  //   // Start the sign-in process with Facebook
+  //   final LoginResult loginResult = await FacebookAuth.instance.login();
 
-    // Authenticate with Firebase using the Facebook credential
-    final AccessToken? accessToken = loginResult.accessToken;
-    final AuthCredential credential =
-        FacebookAuthProvider.credential(accessToken!.token);
-    final User? user = (await auth.signInWithCredential(credential)).user;
-    // Check if the user already exists in Firestore
-    final DocumentSnapshot<Map<String, dynamic>> documentSnapshot =
-        await FirebaseFirestore.instance
-            .collection('users')
-            .doc(user!.uid)
-            .get();
-    if (!documentSnapshot.exists) {
-      await Database(uid: user.uid)
-          .updateUserData(
-              user.email!, user.displayName!, user.phoneNumber!, '', '')
-          .then((value) {});
+  //   // Authenticate with Firebase using the Facebook credential
+  //   final AccessToken? accessToken = loginResult.accessToken;
+  //   final AuthCredential credential =
+  //       FacebookAuthProvider.credential(accessToken!.token);
+  //   final User? user = (await auth.signInWithCredential(credential)).user;
+  //   // Check if the user already exists in Firestore
+  //   final DocumentSnapshot<Map<String, dynamic>> documentSnapshot =
+  //       await FirebaseFirestore.instance
+  //           .collection('users')
+  //           .doc(user!.uid)
+  //           .get();
+  //   if (!documentSnapshot.exists) {
+  //     await Database(uid: user.uid)
+  //         .updateUserData(
+  //             user.email!, user.displayName!, user.phoneNumber!, '', '')
+  //         .then((value) {});
 
-      FirebaseFirestore.instance.collection('users').doc(user.uid).update(
-          {'personalReferralCode': randomAlphaNumeric(8)}).then((value) {
-        Navigator.pushNamed(context, '/bottomNav');
-      });
-      Fluttertoast.showToast(
-          msg: "Your account has been created sucessfully".tr(),
-          toastLength: Toast.LENGTH_SHORT,
-          gravity: ToastGravity.TOP,
-          timeInSecForIosWeb: 1,
-          fontSize: 14.0);
-    } else {
-      Fluttertoast.showToast(
-              msg: "Welcome".tr(),
-              toastLength: Toast.LENGTH_SHORT,
-              gravity: ToastGravity.TOP,
-              timeInSecForIosWeb: 1,
-              fontSize: 14.0)
-          .then((value) {
-        Navigator.pushNamed(context, '/bottomNav');
-      });
-    }
+  //     FirebaseFirestore.instance.collection('users').doc(user.uid).update(
+  //         {'personalReferralCode': randomAlphaNumeric(8)}).then((value) {
+  //       Navigator.pushNamed(context, '/bottomNav');
+  //     });
+  //     Fluttertoast.showToast(
+  //         msg: "Your account has been created sucessfully".tr(),
+  //         toastLength: Toast.LENGTH_SHORT,
+  //         gravity: ToastGravity.TOP,
+  //         timeInSecForIosWeb: 1,
+  //         fontSize: 14.0);
+  //   } else {
+  //     Fluttertoast.showToast(
+  //             msg: "Welcome".tr(),
+  //             toastLength: Toast.LENGTH_SHORT,
+  //             gravity: ToastGravity.TOP,
+  //             timeInSecForIosWeb: 1,
+  //             fontSize: 14.0)
+  //         .then((value) {
+  //       Navigator.pushNamed(context, '/bottomNav');
+  //     });
+  //   }
 
-    return user;
-  }
+  //   return user;
+  // }
 
   void _retrieveToken() async {
     String? token = await FirebaseMessaging.instance.getToken();

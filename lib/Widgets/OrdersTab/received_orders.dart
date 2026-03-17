@@ -85,11 +85,14 @@ class _ReceivedOrdersState extends State<ReceivedOrders> {
             );
           }
 
-          // Sort by uid (timestamp string)
+          // Sort by uid (timestamp string) or orderID
           orders.sort((a, b) {
-            DateTime da = DateTime.parse(a.uid);
-            DateTime db = DateTime.parse(b.uid);
-            return db.compareTo(da); // newest first
+            DateTime? da = DateTime.tryParse(a.uid);
+            DateTime? db = DateTime.tryParse(b.uid);
+            if (da != null && db != null) {
+              return db.compareTo(da); // newest first
+            }
+            return b.orderID.compareTo(a.orderID);
           });
 
           if (mounted) setState(() {});
@@ -251,11 +254,7 @@ class _ReceivedOrdersState extends State<ReceivedOrders> {
                                 color: Colors.white70, fontSize: 12)),
                         const SizedBox(height: 3),
                         Text(
-                          order.paymentType == "Wallet"
-                              ? "Wallet"
-                              : order.paymentType == "Cash Free"
-                                  ? "Cash Free"
-                                  : "Cash on delivery",
+                          "Cash Free".tr(),
                           style: const TextStyle(
                             color: Colors.white,
                             fontSize: 16.5,

@@ -4,7 +4,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
-
 import '../../Model/formatter.dart';
 import '../../Model/order_model.dart';
 import '../../Pages/orders_preview.dart';
@@ -13,8 +12,13 @@ class AllOrders extends StatefulWidget {
   final DateTime? filterStart;
   final DateTime? filterEnd;
   final String? filterStatus;
+  final String? sortOrder;
   const AllOrders(
-      {super.key, this.filterStart, this.filterEnd, this.filterStatus});
+      {super.key,
+      this.filterStart,
+      this.filterEnd,
+      this.filterStatus,
+      this.sortOrder});
 
   @override
   State<AllOrders> createState() => _AllOrdersState();
@@ -84,13 +88,6 @@ class _AllOrdersState extends State<AllOrders> {
               });
             }
           }
-
-          // Sort latest → oldest
-          orders.sort((a, b) {
-            DateTime dateA = DateTime.parse(a.uid);
-            DateTime dateB = DateTime.parse(b.uid);
-            return dateB.compareTo(dateA);
-          });
         });
       }) as DocumentReference?;
     });
@@ -125,8 +122,25 @@ class _AllOrdersState extends State<AllOrders> {
   static const Color kPrimary = Color(0xFF2B1B17); // Deep "Roasted Bean" brown
   static const Color kCard = Color(0xFF5C4033); // Warm "Earth/Clay" brown
 
+  DateTime? _parseDate(dynamic tc) {
+    if (tc == null) return null;
+    if (tc is Timestamp) return tc.toDate();
+    if (tc is DateTime) return tc;
+    if (tc is String) {
+      if (tc.isEmpty) return null;
+      try {
+        return DateTime.parse(tc);
+      } catch (e) {
+        try {
+          return DateFormat.yMMMMEEEEd().parse(tc);
+        } catch (_) {}
+      }
+    }
+    return null;
+  }
+
   List<OrderModel2> get _filtered {
-    return orders.where((o) {
+    List<OrderModel2> result = orders.where((o) {
       // Status filter
       if (widget.filterStatus != null &&
           widget.filterStatus != 'All' &&
@@ -135,16 +149,37 @@ class _AllOrdersState extends State<AllOrders> {
       }
       // Date filter
       if (widget.filterStart != null || widget.filterEnd != null) {
-        try {
-          final d = DateTime.parse(o.uid);
+        final d = _parseDate(o.timeCreated);
+        if (d != null) {
           if (widget.filterStart != null && d.isBefore(widget.filterStart!))
             return false;
           if (widget.filterEnd != null && d.isAfter(widget.filterEnd!))
             return false;
-        } catch (_) {}
+        }
       }
       return true;
     }).toList();
+
+    result.sort((a, b) {
+      DateTime? dateA = _parseDate(a.timeCreated);
+      DateTime? dateB = _parseDate(b.timeCreated);
+
+      if (dateA != null && dateB != null && dateA != dateB) {
+        if (widget.sortOrder == 'Oldest to Newest') {
+          return dateA.compareTo(dateB);
+        } else {
+          return dateB.compareTo(dateA);
+        }
+      } else {
+        if (widget.sortOrder == 'Oldest to Newest') {
+          return a.orderID.compareTo(b.orderID);
+        } else {
+          return b.orderID.compareTo(a.orderID);
+        }
+      }
+    });
+
+    return result;
   }
 
   @override
@@ -287,11 +322,7 @@ class _AllOrdersState extends State<AllOrders> {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          order.paymentType == 'Wallet'
-                              ? 'Wallet'.tr()
-                              : order.paymentType == 'Cash Free'
-                                  ? 'Cash Free'.tr()
-                                  : 'Cash on delivery'.tr(),
+                          'Cash Free'.tr(),
                           style: const TextStyle(
                             color: Colors.white,
                             fontSize: 16,

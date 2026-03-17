@@ -12,7 +12,8 @@ import '../Model/order_model.dart';
 import 'orders_preview.dart';
 
 class NotificationsPage extends StatefulWidget {
-  const NotificationsPage({super.key});
+  final bool isbottomNav;
+  const NotificationsPage({super.key, this.isbottomNav = false});
 
   @override
   State<NotificationsPage> createState() => _NotificationsPageState();
@@ -27,9 +28,6 @@ class _NotificationsPageState extends State<NotificationsPage>
       Color(0xFFD4AF37); // Richer, traditional honey-gold
   static const Color kBgTop = Color(0xFF2B1B17); // Deep "Roasted Bean" brown
   static const Color kBgMid = Color(0xFF5C4033); // Warm "Earth/Clay" brown
-
-  // Which order cards are expanded
-  final Set<String> _expandedOrderIds = {};
 
   // Search + sort
   String _searchQuery = "";
@@ -212,11 +210,14 @@ class _NotificationsPageState extends State<NotificationsPage>
         padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
         child: Row(
           children: [
-            IconButton(
-              icon: Icon(Icons.arrow_back_ios_new_rounded, size: 20),
-              color: Colors.white,
-              onPressed: () => Navigator.of(context).pop(),
-            ),
+            if (!widget.isbottomNav)
+              IconButton(
+                icon: Icon(Icons.arrow_back_ios_new_rounded, size: 20),
+                color: Colors.white,
+                onPressed: () => Navigator.of(context).pop(),
+              )
+            else
+              const SizedBox(width: 48), // Padding equivalent to icon button
             Expanded(
               child: Center(
                 child: Text(
@@ -355,228 +356,167 @@ class _NotificationsPageState extends State<NotificationsPage>
       );
     }
 
-    // Group by order id (or "other")
-    final Map<String, List<HistoryModel>> grouped = {};
+    // Group orders chronologically
+    final List<dynamic> feedItems = [];
+    final Map<String, List<HistoryModel>> orderGroups = {};
+
     for (final notif in data) {
       final key = _extractOrderId(notif.message);
-      grouped.putIfAbsent(key, () => []).add(notif);
+      if (key == 'other') {
+        feedItems.add(notif);
+      } else {
+        if (!orderGroups.containsKey(key)) {
+          orderGroups[key] = [];
+          feedItems.add(orderGroups[key]!);
+        }
+        orderGroups[key]!.add(notif);
+      }
     }
 
-    final entries = grouped.entries.toList();
-
     return ListView.separated(
-      padding: EdgeInsets.fromLTRB(18, 8, 18, 24),
-      itemCount: entries.length,
-      separatorBuilder: (_, __) => SizedBox(height: 14),
+      padding: EdgeInsets.fromLTRB(16, 8, 16, 24),
+      itemCount: feedItems.length,
+      separatorBuilder: (_, __) => SizedBox(height: 12),
       itemBuilder: (_, i) {
-        final entry = entries[i];
-        final list = entry.value;
-        final bool isExpanded = _expandedOrderIds.contains(entry.key);
-
-        return _buildOrderGroup(
-          groupKey: entry.key,
-          notifications: list,
-          isExpanded: isExpanded,
-        );
+        final current = feedItems[i];
+        if (current is HistoryModel) {
+          return _buildNotificationCard(current, 1);
+        } else if (current is List<HistoryModel>) {
+          return _buildNotificationCard(current.first, current.length);
+        }
+        return SizedBox.shrink();
       },
     );
   }
 
   // --------------------------------------------------
-  // GROUP CARD
+  // NOTIFICATION CARD
   // --------------------------------------------------
 
-  Widget _buildOrderGroup({
-    required String groupKey,
-    required List<HistoryModel> notifications,
-    required bool isExpanded,
-  }) {
-    final first = notifications.first;
-    final orderMatch = RegExp(r"Order ID\s*#?(\d+)").firstMatch(first.message);
+  Widget _buildNotificationCard(HistoryModel item, int count) {
+    final rawId = _extractOrderId(item.message);
+    final bool isOrderGroup = rawId != 'other';
 
-    final bool isOrderGroup = groupKey != 'other' && orderMatch != null;
+    final DateTime dt = _parseHistoryDate(item.timeCreated);
+    String formattedTime = "";
+    final Duration diff = DateTime.now().difference(dt);
+    if (diff.inDays == 0 && dt.day == DateTime.now().day) {
+      formattedTime = 'Today, ${DateFormat('h:mm a', 'en_US').format(dt)}';
+    } else if (diff.inDays <= 1 &&
+        dt.day == DateTime.now().subtract(const Duration(days: 1)).day) {
+      formattedTime = 'Yesterday, ${DateFormat('h:mm a', 'en_US').format(dt)}';
+    } else {
+      formattedTime = DateFormat('MMM dd, yyyy • h:mm a', 'en_US').format(dt);
+    }
 
-    final String orderLabel = isOrderGroup
-        ? "Order #${orderMatch.group(1)}"
-        : "General notifications".tr();
+    final IconData icon = isOrderGroup
+        ? Icons.local_shipping_outlined
+        : Icons.notifications_none_rounded;
+    final Color iconColor = isOrderGroup ? Colors.black : Colors.white;
+    final Color iconBg = isOrderGroup ? kGold : Colors.white.withOpacity(0.1);
+    final String label =
+        isOrderGroup ? "Order #$rawId Update".tr() : "Alert".tr();
 
-    return AnimatedContainer(
-      duration: Duration(milliseconds: 200),
+    return Container(
       decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.04),
         borderRadius: BorderRadius.circular(20),
-        border:
-            Border.all(color: isOrderGroup ? kGold : Colors.white24, width: 1),
-        color: Colors.white.withOpacity(0.06),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.30),
-            blurRadius: 18,
-            offset: Offset(0, 6),
-          ),
-        ],
+        border: Border.all(color: Colors.white.withOpacity(0.06)),
       ),
-      child: Column(
-        children: [
-          InkWell(
-            onTap: () {
-              if (isOrderGroup) {
-                // Order group → tap header opens order
-                _openOrderForNotification(first);
-              } else {
-                // General group → tap toggles expand
-                setState(() {
-                  if (isExpanded) {
-                    _expandedOrderIds.remove(groupKey);
-                  } else {
-                    _expandedOrderIds.add(groupKey);
-                  }
-                });
-              }
-            },
-            onLongPress: () {
-              // Long press toggles expand for any group
-              setState(() {
-                if (isExpanded) {
-                  _expandedOrderIds.remove(groupKey);
-                } else {
-                  _expandedOrderIds.add(groupKey);
-                }
-              });
-            },
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-              child: Row(
-                children: [
-                  CircleAvatar(
-                    backgroundColor: Colors.white.withOpacity(0.15),
-                    radius: 22,
-                    child: Icon(
-                      isOrderGroup
-                          ? Icons.shopping_bag_outlined
-                          : Icons.notifications,
-                      color: Colors.white,
-                    ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(20),
+          onTap: isOrderGroup ? () => _openOrderForNotification(item) : null,
+          onLongPress: () => _confirmDelete(item.uid ?? ""),
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  padding: EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: iconBg,
+                    shape: BoxShape.circle,
                   ),
-                  SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          orderLabel,
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w600,
-                            fontSize: 15,
+                  child: Icon(icon, color: iconColor, size: 22),
+                ),
+                SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Expanded(
+                            child: Text(
+                              label.tr(),
+                              style: TextStyle(
+                                color: isOrderGroup ? kGold : Colors.white70,
+                                fontSize: 13,
+                                fontWeight: FontWeight.w700,
+                                letterSpacing: 0.5,
+                              ),
+                            ),
+                          ),
+                          Text(
+                            formattedTime,
+                            style: TextStyle(
+                              color: Colors.white54,
+                              fontSize: 11,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
+                      ),
+                      SizedBox(height: 8),
+                      Text(
+                        item.message,
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 14.5,
+                          height: 1.4,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      if (count > 1) ...[
+                        SizedBox(height: 8),
+                        Container(
+                          padding:
+                              EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: kGold.withOpacity(0.15),
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(color: kGold.withOpacity(0.3)),
+                          ),
+                          child: Text(
+                            "+ ${count - 1} earlier updates",
+                            style: TextStyle(
+                              color: kGold,
+                              fontSize: 11.5,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: 0.3,
+                            ),
                           ),
                         ),
-                        SizedBox(height: 3),
-                        Text(
-                          isOrderGroup
-                              ? "Tap to view order details".tr()
-                              : "Tap to expand details".tr(),
-                          style: TextStyle(
-                            color: Colors.white70,
-                            fontSize: 11.5,
-                          ),
-                        ),
-                      ],
-                    ),
+                      ]
+                    ],
                   ),
-                  if (!isOrderGroup)
-                    AnimatedRotation(
-                      turns: isExpanded ? 0.5 : 0,
-                      duration: Duration(milliseconds: 200),
-                      child: Icon(Icons.keyboard_arrow_down_rounded,
-                          color: Colors.white70),
-                    ),
-                ],
-              ),
+                ),
+                SizedBox(width: 8),
+                GestureDetector(
+                  onTap: () => _confirmDelete(item.uid ?? ""),
+                  child: Padding(
+                    padding: const EdgeInsets.only(top: 2),
+                    child: Icon(Icons.close_rounded,
+                        color: Colors.white30, size: 18),
+                  ),
+                )
+              ],
             ),
           ),
-
-          // EXPANDED CONTENT
-          AnimatedSize(
-            duration: Duration(milliseconds: 220),
-            child: isExpanded || isOrderGroup
-                ? Column(
-                    children: notifications
-                        .map(
-                          (n) => _buildInnerNotification(
-                            n,
-                            isOrderGroup: isOrderGroup,
-                          ),
-                        )
-                        .toList(),
-                  )
-                : SizedBox.shrink(),
-          )
-        ],
-      ),
-    );
-  }
-
-  // --------------------------------------------------
-  // INNER NOTIFICATION ROW
-  // --------------------------------------------------
-
-  Widget _buildInnerNotification(
-    HistoryModel item, {
-    required bool isOrderGroup,
-  }) {
-    return InkWell(
-      onTap: isOrderGroup
-          ? () => _openOrderForNotification(item)
-          : null, // general notification: no navigation
-      onLongPress: () => _confirmDelete(item.uid ?? ""),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              width: 6,
-              height: 6,
-              margin: EdgeInsets.only(top: 6),
-              decoration: BoxDecoration(
-                color: isOrderGroup ? kGold : Colors.white70,
-                shape: BoxShape.circle,
-              ),
-            ),
-            SizedBox(width: 10),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    item.message,
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 14.5,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                  SizedBox(height: 4),
-                  Text(
-                    item.timeCreated.toString(),
-                    style: TextStyle(
-                      color: Colors.white60,
-                      fontSize: 12,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            SizedBox(width: 10),
-            GestureDetector(
-              onTap: () => _confirmDelete(item.uid ?? ""),
-              child: Icon(
-                Icons.delete_outline,
-                color: Colors.redAccent,
-                size: 18,
-              ),
-            ),
-          ],
         ),
       ),
     );

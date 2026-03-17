@@ -677,13 +677,7 @@ class _OrdersPreviewState extends State<OrdersPreview> {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text('Payment Type:'.tr(), style: const TextStyle(fontSize: 13)),
-            Text(
-                widget.orderModel.paymentType == 'Wallet'
-                    ? 'Wallet'.tr()
-                    : widget.orderModel.paymentType == 'Cash Free'
-                        ? 'Cash Free'.tr()
-                        : 'Cash on delivery'.tr(),
-                style: const TextStyle(fontSize: 13)),
+            Text('Cash Free'.tr(), style: const TextStyle(fontSize: 13)),
           ],
         ),
         if (widget.orderModel.deliveryFee > 0)
@@ -755,7 +749,7 @@ class _OrdersPreviewState extends State<OrdersPreview> {
     }
     buffer.writeln('--------------------------------');
     buffer.writeln(
-        'Payment Type: ${widget.orderModel.paymentType == 'Wallet' ? 'Wallet'.tr() : widget.orderModel.paymentType == 'Cash Free' ? 'Cash Free'.tr() : 'Cash on delivery'.tr()}');
+        'Payment Type: ${widget.orderModel.paymentType == 'Wallet' ? 'Wallet'.tr() : 'Cash Free'.tr()}');
     if (widget.orderModel.deliveryFee > 0) {
       buffer.writeln(
           'Delivery Fee: ${widget.currencySymbol}${Formatter().converter(widget.orderModel.deliveryFee.toDouble())}');
@@ -840,7 +834,7 @@ class _OrdersPreviewState extends State<OrdersPreview> {
               ),
               pw.Divider(),
               pw.Text(
-                  'Payment Type: ${widget.orderModel.paymentType == 'Wallet' ? 'Wallet'.tr() : widget.orderModel.paymentType == 'Cash Free' ? 'Cash Free'.tr() : 'Cash on delivery'.tr()}'),
+                  'Payment Type: ${widget.orderModel.paymentType == 'Wallet' ? 'Wallet'.tr() : 'Cash Free'.tr()}'),
               if (widget.orderModel.deliveryFee > 0)
                 pw.Text(
                     'Delivery Fee: ${widget.currencySymbol}${Formatter().converter(widget.orderModel.deliveryFee.toDouble())}'),
@@ -1126,11 +1120,7 @@ class _OrdersPreviewState extends State<OrdersPreview> {
               _buildSummaryItem(
                 icon: Icons.payment,
                 label: 'Payment type'.tr(),
-                value: widget.orderModel.paymentType == 'Wallet'
-                    ? 'Wallet'.tr()
-                    : widget.orderModel.paymentType == 'Cash Free'
-                        ? 'Cash Free'.tr()
-                        : 'Cash on delivery'.tr(),
+                value: 'Cash Free'.tr(),
               ),
               const SizedBox(width: 16),
               _buildSummaryItem(
@@ -1521,9 +1511,7 @@ class _OrdersPreviewState extends State<OrdersPreview> {
                     Text(
                       widget.orderModel.paymentType == 'Wallet'
                           ? 'Wallet'.tr()
-                          : widget.orderModel.paymentType == 'Cash Free'
-                              ? 'Cash Free'.tr()
-                              : 'Cash on delivery'.tr(),
+                          : 'Cash Free'.tr(),
                       style: const TextStyle(
                         color: Colors.white,
                         fontSize: 13.5,

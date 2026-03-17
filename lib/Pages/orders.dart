@@ -6,7 +6,8 @@ import 'package:easy_localization/easy_localization.dart';
 import '../Widgets/OrdersTab/all_orders.dart';
 
 class OrdersPage extends StatefulWidget {
-  const OrdersPage({super.key});
+  final bool isbottomNav;
+  const OrdersPage({super.key, this.isbottomNav = false});
 
   @override
   State<OrdersPage> createState() => _OrdersPageState();
@@ -18,15 +19,21 @@ class _OrdersPageState extends State<OrdersPage> {
   static const Color kBgMid = Color(0xFF5C4033);
 
   // ── FILTERS ──
-  String _selectedStatus = 'Placed';
+  String _selectedStatus = 'All';
   String _selectedDate = 'Last 3 months';
+  String _selectedSort = 'Newest to Oldest';
 
   static const List<String> _statusOptions = [
-    'Placed',
+    'All',
     'Received',
     'Processing',
     'Completed',
     'Cancelled',
+  ];
+
+  static const List<String> _sortOptions = [
+    'Newest to Oldest',
+    'Oldest to Newest',
   ];
 
   static final List<String> _dateOptions = [
@@ -65,13 +72,16 @@ class _OrdersPageState extends State<OrdersPage> {
   }
 
   bool get _hasActiveFilters =>
-      _selectedStatus != 'Placed' || _selectedDate != 'Last 3 months';
+      _selectedStatus != 'All' ||
+      _selectedDate != 'Last 3 months' ||
+      _selectedSort != 'Newest to Oldest';
 
   // ── BOTTOM SHEET ──
   void _showFilterSheet() {
     // Local copies for the sheet so user can preview before applying
     String tempStatus = _selectedStatus;
     String tempDate = _selectedDate;
+    String tempSort = _selectedSort;
 
     showModalBottomSheet(
       context: context,
@@ -119,12 +129,15 @@ class _OrdersPageState extends State<OrdersPage> {
                       ),
                     ),
                     const Spacer(),
-                    if (tempStatus != 'Placed' || tempDate != 'Last 3 months')
+                    if (tempStatus != 'All' ||
+                        tempDate != 'Last 3 months' ||
+                        tempSort != 'Newest to Oldest')
                       GestureDetector(
                         onTap: () {
                           setSheetState(() {
-                            tempStatus = 'Placed';
+                            tempStatus = 'All';
                             tempDate = 'Last 3 months';
+                            tempSort = 'Newest to Oldest';
                           });
                         },
                         child: Text(
@@ -252,6 +265,62 @@ class _OrdersPageState extends State<OrdersPage> {
                 ),
               ),
 
+              const SizedBox(height: 22),
+
+              // ── SORTING ──
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Text(
+                  'SORT BY',
+                  style: TextStyle(
+                    color: kGold.withOpacity(0.6),
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 1.2,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 10),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: _sortOptions.map((s) {
+                    final sel = s == tempSort;
+                    return GestureDetector(
+                      onTap: () => setSheetState(() => tempSort = s),
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 180),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 9),
+                        decoration: BoxDecoration(
+                          gradient: sel
+                              ? const LinearGradient(colors: [
+                                  Color(0xFFD4AF37),
+                                  Color(0xFFE8C252)
+                                ])
+                              : null,
+                          color: sel ? null : Colors.white.withOpacity(0.06),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: sel ? kGold : Colors.white.withOpacity(0.12),
+                          ),
+                        ),
+                        child: Text(
+                          s.tr(),
+                          style: TextStyle(
+                            color: sel ? Colors.black : Colors.white70,
+                            fontSize: 13.5,
+                            fontWeight: sel ? FontWeight.w700 : FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                ),
+              ),
+
               const SizedBox(height: 24),
 
               // ── APPLY BUTTON ──
@@ -265,6 +334,7 @@ class _OrdersPageState extends State<OrdersPage> {
                       setState(() {
                         _selectedStatus = tempStatus;
                         _selectedDate = tempDate;
+                        _selectedSort = tempSort;
                       });
                       Navigator.pop(context);
                     },
@@ -301,6 +371,7 @@ class _OrdersPageState extends State<OrdersPage> {
         elevation: 0,
         backgroundColor: kBgTop,
         centerTitle: true,
+        automaticallyImplyLeading: !widget.isbottomNav,
         iconTheme: const IconThemeData(color: Colors.white),
         title: Text(
           "ORDERS".tr(),
@@ -399,15 +470,24 @@ class _OrdersPageState extends State<OrdersPage> {
                         physics: const BouncingScrollPhysics(),
                         child: Row(
                           children: [
-                            if (_selectedStatus != 'Placed')
+                            if (_selectedStatus != 'All')
                               _filterBadge(_selectedStatus.tr(), () {
-                                setState(() => _selectedStatus = 'Placed');
+                                setState(() => _selectedStatus = 'All');
                               }),
                             if (_selectedDate != 'Last 3 months') ...[
-                              if (_selectedStatus != 'Placed')
+                              if (_selectedStatus != 'All')
                                 const SizedBox(width: 8),
                               _filterBadge(_selectedDate, () {
                                 setState(() => _selectedDate = 'Last 3 months');
+                              }),
+                            ],
+                            if (_selectedSort != 'Newest to Oldest') ...[
+                              if (_selectedStatus != 'All' ||
+                                  _selectedDate != 'Last 3 months')
+                                const SizedBox(width: 8),
+                              _filterBadge(_selectedSort.tr(), () {
+                                setState(
+                                    () => _selectedSort = 'Newest to Oldest');
                               }),
                             ],
                           ],
@@ -423,8 +503,8 @@ class _OrdersPageState extends State<OrdersPage> {
               child: AllOrders(
                 filterStart: _filterCutoff,
                 filterEnd: _filterEnd,
-                filterStatus:
-                    _selectedStatus == 'Placed' ? 'All' : _selectedStatus,
+                filterStatus: _selectedStatus,
+                sortOrder: _selectedSort,
               ),
             ),
           ],

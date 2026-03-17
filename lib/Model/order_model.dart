@@ -126,8 +126,7 @@ class OrderModel2 {
       required this.deliveryBoyID,
       required this.status,
       required this.accept})
-      : paymentType =
-            paymentType == 'Cash on delivery' ? 'Cash Free' : paymentType;
+      : paymentType = 'Cash Free';
 
   OrderModel2.fromMap(
     Map<String, dynamic> data,
@@ -141,9 +140,7 @@ class OrderModel2 {
         deliveryFee = data['deliveryFee'],
         total = data['total'],
         vendorID = data['vendorID'],
-        paymentType = data['paymentType'] == 'Cash on delivery'
-            ? 'Cash Free'
-            : data['paymentType'],
+        paymentType = 'Cash Free',
         userID = data['userID'],
         timeCreated = data['timeCreated'],
         deliveryAddress = data['deliveryAddress'],
