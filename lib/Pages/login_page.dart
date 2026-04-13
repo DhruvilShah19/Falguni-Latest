@@ -14,6 +14,7 @@ import 'package:google_sign_in/google_sign_in.dart';
 import 'package:random_string/random_string.dart';
 import 'package:rounded_loading_button_plus/rounded_loading_button.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
+import 'package:flutter_easyloading/flutter_easyloading.dart';
 import '../Providers/auth.dart';
 import 'package:flutter_close_app/flutter_close_app.dart';
 
@@ -32,6 +33,7 @@ class _LoginPageState extends State<LoginPage> {
   String playerId = '';
   String getOnesignalKey = '';
   bool showPassword = true;
+  bool _isProcessing = false;
 
   static const Color kGold = Color(0xFFD4AF37);
   static const Color kBgTop = Color(0xFF2B1B17);
@@ -77,38 +79,52 @@ class _LoginPageState extends State<LoginPage> {
   final FirebaseAuth auth = FirebaseAuth.instance;
   final FirebaseFirestore firestore = FirebaseFirestore.instance;
 
-  Future<User> _signInWithGoogle() async {
-    // Start the sign-in process with Google
-    final GoogleSignInAccount? googleUser = await googleSignIn.signIn();
+  Future<User?> _signInWithGoogle() async {
+    if (_isProcessing) return null;
+    setState(() {
+      _isProcessing = true;
+    });
+    EasyLoading.show(status: 'Sign in with Google...'.tr());
 
-    // Authenticate with Firebase using the Google credential
-    final GoogleSignInAuthentication googleAuth =
-        await googleUser!.authentication;
-    final AuthCredential credential = GoogleAuthProvider.credential(
-      accessToken: googleAuth.accessToken,
-      idToken: googleAuth.idToken,
-    );
-    UserCredential authResult = await auth.signInWithCredential(credential);
-    User? user = authResult.user;
+    try {
+      // Start the sign-in process with Google
+      final GoogleSignInAccount? googleUser = await googleSignIn.signIn();
 
-    await FirebaseFirestore.instance
-        .collection('users')
-        .doc(user!.uid)
-        .get()
-        .then((value) async {
+      if (googleUser == null) {
+        // User cancelled the sign-in
+        EasyLoading.dismiss();
+        setState(() {
+          _isProcessing = false;
+        });
+        return null;
+      }
+
+      // Authenticate with Firebase using the Google credential
+      final GoogleSignInAuthentication googleAuth =
+          await googleUser.authentication;
+      final AuthCredential credential = GoogleAuthProvider.credential(
+        accessToken: googleAuth.accessToken,
+        idToken: googleAuth.idToken,
+      );
+      UserCredential authResult = await auth.signInWithCredential(credential);
+      User? user = authResult.user;
+
+      DocumentSnapshot value = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user!.uid)
+          .get();
+
       if (value.exists) {
         Fluttertoast.showToast(
-                msg: "Welcome.".tr(),
-                toastLength: Toast.LENGTH_SHORT,
-                gravity: ToastGravity.TOP,
-                timeInSecForIosWeb: 1,
-                fontSize: 14.0)
-            .then((value) {
-          Navigator.pushNamed(context, '/bottomNav');
-        });
+            msg: "Welcome.".tr(),
+            toastLength: Toast.LENGTH_SHORT,
+            gravity: ToastGravity.TOP,
+            timeInSecForIosWeb: 1,
+            fontSize: 14.0);
+        Navigator.pushNamed(context, '/bottomNav');
       } else {
         print('User name is ${user.uid}');
-        FirebaseFirestore.instance.collection('users').doc(user.uid).set({
+        await FirebaseFirestore.instance.collection('users').doc(user.uid).set({
           'email': user.email,
           'fullname': user.displayName,
           'created': DateFormat.yMMMMEEEEd().format(DateTime.now()).toString(),
@@ -130,10 +146,13 @@ class _LoginPageState extends State<LoginPage> {
           'Coupon Reward': 0
         });
 
-        FirebaseFirestore.instance.collection('users').doc(user.uid).update(
-            {'personalReferralCode': randomAlphaNumeric(8)}).then((value) {
-          Navigator.pushNamed(context, '/bottomNav');
-        });
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(user.uid)
+            .update({'personalReferralCode': randomAlphaNumeric(8)});
+
+        Navigator.pushNamed(context, '/bottomNav');
+
         Fluttertoast.showToast(
             msg: "Please update your phone number in your profile".tr(),
             toastLength: Toast.LENGTH_SHORT,
@@ -141,9 +160,21 @@ class _LoginPageState extends State<LoginPage> {
             timeInSecForIosWeb: 1,
             fontSize: 14.0);
       }
-    });
-
-    return user;
+      EasyLoading.dismiss();
+      setState(() {
+        _isProcessing = false;
+      });
+      return user;
+    } catch (e) {
+      EasyLoading.dismiss();
+      setState(() {
+        _isProcessing = false;
+      });
+      print('Error during Google sign-in: $e');
+      Fluttertoast.showToast(
+          msg: "Google sign-in failed. Please try again.".tr());
+      return null;
+    }
   }
 
   // Future<User> signInWithFacebook() async {
@@ -220,6 +251,12 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   Future<void> signInWithApple() async {
+    if (_isProcessing) return;
+    setState(() {
+      _isProcessing = true;
+    });
+    EasyLoading.show(status: 'Sign in with Apple...'.tr());
+
     try {
       // To prevent replay attacks with the credential returned from Apple, we
       // include a nonce in the credential request.
@@ -241,64 +278,73 @@ class _LoginPageState extends State<LoginPage> {
         accessToken: appleCredential.authorizationCode,
         rawNonce: rawNonce,
       );
-      // return await FirebaseAuth.instance.signInWithCredential(oauthCredential);
+
       // Sign in the user with Firebase.
       final UserCredential userCredential =
           await FirebaseAuth.instance.signInWithCredential(oauthCredential);
 
       // Get the authenticated user
       final User? user = userCredential.user;
-      await FirebaseFirestore.instance
+      DocumentSnapshot value = await FirebaseFirestore.instance
           .collection('users')
           .doc(user!.uid)
-          .get()
-          .then((value) {
-        if (value.exists) {
-          Fluttertoast.showToast(
-                  msg: "Welcome.".tr(),
-                  toastLength: Toast.LENGTH_SHORT,
-                  gravity: ToastGravity.TOP,
-                  timeInSecForIosWeb: 1,
-                  fontSize: 14.0)
-              .then((value) {
-            Navigator.pushNamed(context, '/bottomNav');
-          });
-        } else {
-          print('User name is ${user.uid}');
-          FirebaseFirestore.instance.collection('users').doc(user.uid).set({
-            'email': user.email,
-            'fullname': user.displayName,
-            'created':
-                DateFormat.yMMMMEEEEd().format(DateTime.now()).toString(),
-            'id': user.uid,
-            'phone': '',
-            'photoUrl': '',
-            'address': '',
-            'DeliveryAddress': '',
-            'HouseNumber': '',
-            'ClosestBustStop': '',
-            'DeliveryAddressID': '',
-            'CurrentMarketID': '',
-            'deliveryFee': 0,
-            'wallet': 0,
-            'tokenID': playerId,
-            'referralCode': '',
-            'awardReferral': false,
-            'personalReferralCode': randomAlphaNumeric(8),
-            'Coupon Reward': 0
-          }).then((value) {
-            Navigator.pushNamed(context, '/bottomNav');
-          });
-          Fluttertoast.showToast(
-              msg: "Please update your phone number in your profile".tr(),
-              toastLength: Toast.LENGTH_SHORT,
-              gravity: ToastGravity.TOP,
-              timeInSecForIosWeb: 1,
-              fontSize: 14.0);
-        }
+          .get();
+
+      if (value.exists) {
+        Fluttertoast.showToast(
+            msg: "Welcome.".tr(),
+            toastLength: Toast.LENGTH_SHORT,
+            gravity: ToastGravity.TOP,
+            timeInSecForIosWeb: 1,
+            fontSize: 14.0);
+        Navigator.pushNamed(context, '/bottomNav');
+      } else {
+        print('User name is ${user.uid}');
+        await FirebaseFirestore.instance.collection('users').doc(user.uid).set({
+          'email': user.email,
+          'fullname': user.displayName,
+          'created': DateFormat.yMMMMEEEEd().format(DateTime.now()).toString(),
+          'id': user.uid,
+          'phone': '',
+          'photoUrl': '',
+          'address': '',
+          'DeliveryAddress': '',
+          'HouseNumber': '',
+          'ClosestBustStop': '',
+          'DeliveryAddressID': '',
+          'CurrentMarketID': '',
+          'deliveryFee': 0,
+          'wallet': 0,
+          'tokenID': playerId,
+          'referralCode': '',
+          'awardReferral': false,
+          'personalReferralCode': randomAlphaNumeric(8),
+          'Coupon Reward': 0
+        });
+        Navigator.pushNamed(context, '/bottomNav');
+        Fluttertoast.showToast(
+            msg: "Please update your phone number in your profile".tr(),
+            toastLength: Toast.LENGTH_SHORT,
+            gravity: ToastGravity.TOP,
+            timeInSecForIosWeb: 1,
+            fontSize: 14.0);
+      }
+      EasyLoading.dismiss();
+      setState(() {
+        _isProcessing = false;
       });
     } catch (e) {
+      EasyLoading.dismiss();
+      setState(() {
+        _isProcessing = false;
+      });
       print('Error during Apple sign-in or Firestore save: $e');
+      if (e.toString().contains('canceled')) {
+        Fluttertoast.showToast(msg: "Sign-in cancelled".tr());
+      } else {
+        Fluttertoast.showToast(
+            msg: "Apple sign-in failed: ${e.toString()}".tr());
+      }
     }
   }
 
@@ -496,8 +542,8 @@ class _LoginPageState extends State<LoginPage> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       InkWell(
-                        onTap: () {
-                          _signInWithGoogle();
+                        onTap: () async {
+                          await _signInWithGoogle();
                         },
                         borderRadius: BorderRadius.circular(50),
                         child: Container(
@@ -509,8 +555,8 @@ class _LoginPageState extends State<LoginPage> {
                             border: Border.all(color: Colors.white12),
                           ),
                           child: Center(
-                            child: Image.network(
-                              'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c1/Google_%22G%22_logo.svg/240px-Google_%22G%22_logo.svg.png',
+                            child: Image.asset(
+                              'assets/image/google.png',
                               height: 24,
                             ),
                           ),
@@ -518,7 +564,9 @@ class _LoginPageState extends State<LoginPage> {
                       ),
                       const SizedBox(width: 24),
                       InkWell(
-                        onTap: signInWithApple,
+                        onTap: () async {
+                          await signInWithApple();
+                        },
                         borderRadius: BorderRadius.circular(50),
                         child: Container(
                           width: 56,
