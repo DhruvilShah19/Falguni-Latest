@@ -518,6 +518,7 @@ import 'package:gap/gap.dart';
 import '../Model/formatter.dart';
 import '../Model/products.dart';
 import '../Pages/product_detail.dart';
+import '../Providers/global_config.dart';
 
 class ProductsIntro extends StatefulWidget {
   const ProductsIntro({super.key});
@@ -558,15 +559,7 @@ class _ProductsIntroState extends State<ProductsIntro> {
   }
 
   void getCurrencySymbol() {
-    FirebaseFirestore.instance
-        .collection('Currency Settings')
-        .doc('Currency Settings')
-        .get()
-        .then((value) {
-      if (mounted) {
-        setState(() => currencySymbol = value['Currency symbol'] ?? "");
-      }
-    });
+    setState(() { currencySymbol = GlobalConfig.currencySymbol; });
   }
 
   Future<void> _getUserDoc() async {

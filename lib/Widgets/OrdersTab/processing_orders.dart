@@ -4,6 +4,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
+import '../../Providers/global_config.dart';
+import '../premium_empty_state.dart';
 
 import '../../Model/formatter.dart';
 import '../../Model/order_model.dart';
@@ -118,14 +120,8 @@ class _ProcessingOrdersState extends State<ProcessingOrders> {
   }
 
   getCurrencyDetails() {
-    FirebaseFirestore.instance
-        .collection('Currency Settings')
-        .doc('Currency Settings')
-        .get()
-        .then((value) {
-      setState(() {
-        currencySymbol = value['Currency symbol'];
-      });
+    setState(() {
+      currencySymbol = GlobalConfig.currencySymbol;
     });
   }
 
@@ -161,11 +157,10 @@ class _ProcessingOrdersState extends State<ProcessingOrders> {
         children: [
           const SizedBox(height: 16),
           display.isEmpty
-              ? Center(
-                  child: Image.asset(
-                    'assets/image/empty.png',
-                    height: MediaQuery.of(context).size.height / 2.5,
-                  ),
+              ? const PremiumEmptyState(
+                  icon: Icons.receipt_long_rounded,
+                  title: 'No Orders Found',
+                  subtitle: 'There are no orders in this category yet.',
                 )
               : ListView.builder(
                   shrinkWrap: true,

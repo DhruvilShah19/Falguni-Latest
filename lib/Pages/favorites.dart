@@ -9,6 +9,8 @@ import '../Model/formatter.dart';
 import '../Model/products.dart';
 import '../Pages/product_detail.dart';
 import '../Providers/analytics.dart';
+import '../Providers/global_config.dart';
+import '../Widgets/premium_empty_state.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 class FavoritesPage extends StatefulWidget {
@@ -67,14 +69,8 @@ class _FavoritesPageState extends State<FavoritesPage> {
   }
 
   getCurrencySymbol() {
-    FirebaseFirestore.instance
-        .collection('Currency Settings')
-        .doc('Currency Settings')
-        .get()
-        .then((value) {
-      setState(() {
-        currencySymbol = value['Currency symbol'];
-      });
+    setState(() {
+      currencySymbol = GlobalConfig.currencySymbol;
     });
   }
 
@@ -206,19 +202,12 @@ class _FavoritesPageState extends State<FavoritesPage> {
                     // EMPTY STATE
                     if (items.isEmpty)
                       Center(
-                        child: Column(
-                          children: [
-                            SizedBox(height: 80),
-                            Image.asset("assets/image/empty.png", height: 150),
-                            SizedBox(height: 12),
-                            Text(
-                              "No favorites found",
-                              style: TextStyle(
-                                  color: Colors.white54, fontSize: 14),
-                            ),
-                          ],
-                        ),
-                      )
+                      child: const PremiumEmptyState(
+                        icon: Icons.favorite_border_rounded,
+                        title: 'No Favorites',
+                        subtitle: 'You have not added any items to your wishlist yet.',
+                      ),
+                    )
                     else
                       isGridView
                           ? _buildGridView(items)

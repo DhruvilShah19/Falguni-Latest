@@ -3,6 +3,7 @@
 import 'package:animations/animations.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'premium_empty_state.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_countdown_timer/flutter_countdown_timer.dart';
@@ -212,7 +213,11 @@ class _FlashSalesState extends State<FlashSales> {
             );
           } else {
             return snapshot.data?.isEmpty ?? true
-                ? Center(child: Image.asset('assets/image/empty.png'))
+                ? const PremiumEmptyState(
+                    icon: Icons.flash_off_rounded,
+                    title: 'No Flash Sales',
+                    subtitle: 'There are no active flash sales at the moment.',
+                  )
                 : ListView.builder(
                     itemCount: snapshot.data!.length,
                     physics: const BouncingScrollPhysics(),

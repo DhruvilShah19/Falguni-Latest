@@ -4,6 +4,7 @@ import 'package:animations/animations.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'premium_empty_state.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
@@ -234,7 +235,11 @@ class _ProductListState extends State<ProductList> {
             );
           } else {
             return snapshot.data?.isEmpty ?? true
-                ? Center(child: Image.asset('assets/image/empty.png'))
+                ? const PremiumEmptyState(
+                    icon: Icons.inventory_2_outlined,
+                    title: 'No Products',
+                    subtitle: 'No products found in this category.',
+                  )
                 : ListView.builder(
                     itemCount: snapshot.data!.length,
                     physics: const BouncingScrollPhysics(),

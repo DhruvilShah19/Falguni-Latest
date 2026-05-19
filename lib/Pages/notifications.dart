@@ -2,6 +2,8 @@
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:easy_localization/easy_localization.dart';
+import '../Providers/global_config.dart';
+import '../Widgets/premium_empty_state.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
@@ -53,20 +55,9 @@ class _NotificationsPageState extends State<NotificationsPage>
   }
 
   Future<void> _loadCurrencySettings() async {
-    try {
-      final snap = await FirebaseFirestore.instance
-          .collection('Currency Settings')
-          .doc('Currency Settings')
-          .get();
-
-      if (snap.exists) {
-        setState(() {
-          _currencySymbol = (snap.data()?['Currency symbol'] ?? '').toString();
-        });
-      }
-    } catch (_) {
-      // ignore
-    }
+    setState(() {
+      _currencySymbol = GlobalConfig.currencySymbol;
+    });
   }
 
   Future<List<HistoryModel>> getHistory() async {
@@ -345,14 +336,10 @@ class _NotificationsPageState extends State<NotificationsPage>
     }
 
     if (data.isEmpty) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.only(top: 60),
-          child: Image.asset(
-            "assets/image/notifications.jpg",
-            width: 260,
-          ),
-        ),
+      return const PremiumEmptyState(
+        icon: Icons.notifications_none_rounded,
+        title: 'No Notifications',
+        subtitle: 'You have no new notifications.',
       );
     }
 

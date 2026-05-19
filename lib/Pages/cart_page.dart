@@ -7,6 +7,7 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:falguni_app/Providers/analytics.dart';
+import 'package:falguni_app/Providers/global_config.dart';
 
 import '../Model/formatter.dart';
 import '../Model/products.dart';
@@ -95,14 +96,8 @@ class _CartPageState extends State<CartPage> {
   }
 
   getCurrencySymbol() {
-    FirebaseFirestore.instance
-        .collection('Currency Settings')
-        .doc('Currency Settings')
-        .get()
-        .then((value) {
-      setState(() {
-        currencySymbol = value['Currency symbol'];
-      });
+    setState(() {
+      currencySymbol = GlobalConfig.currencySymbol;
     });
   }
 

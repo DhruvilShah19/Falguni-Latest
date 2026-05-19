@@ -831,6 +831,7 @@ import '../../Model/products.dart';
 import '../Model/formatter.dart';
 import '../Pages/product_detail.dart';
 import '../Providers/analytics.dart';
+import '../Providers/global_config.dart';
 
 class RecentlyPurchasedProducts extends StatefulWidget {
   const RecentlyPurchasedProducts({super.key});
@@ -876,17 +877,7 @@ class _RecentlyPurchasedProductsState extends State<RecentlyPurchasedProducts> {
   }
 
   void getCurrencySymbol() {
-    FirebaseFirestore.instance
-        .collection('Currency Settings')
-        .doc('Currency Settings')
-        .get()
-        .then((value) {
-      if (mounted && value.exists) {
-        setState(() {
-          currencySymbol = value['Currency symbol'] ?? "";
-        });
-      }
-    });
+    setState(() { currencySymbol = GlobalConfig.currencySymbol; });
   }
 
   @override

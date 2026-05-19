@@ -24,6 +24,7 @@ import 'route_generator.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'package:firebase_analytics/firebase_analytics.dart';
 import 'firebase_options.dart';
+import 'Providers/global_config.dart';
 
 int? initScreen;
 @pragma('vm:entry-point')
@@ -127,6 +128,7 @@ void main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+  await GlobalConfig.init();
   FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
   requestFCMPermission();
   if (!kIsWeb) {

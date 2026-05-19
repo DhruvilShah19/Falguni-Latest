@@ -3,6 +3,7 @@
 import 'package:badges/badges.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:easy_localization/easy_localization.dart';
+import '../Widgets/premium_empty_state.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart' hide Badge;
 import 'package:flutter_countdown_timer/flutter_countdown_timer.dart';
@@ -183,7 +184,11 @@ class _FlashSalesPageState extends State<FlashSalesPage> {
               );
             } else {
               return snapshot.data?.isEmpty ?? true
-                  ? Center(child: Image.asset('assets/image/empty.png'))
+                  ? const PremiumEmptyState(
+                      icon: Icons.flash_off_rounded,
+                      title: 'No Flash Sales',
+                      subtitle: 'There are no active flash sales at the moment.',
+                    )
                   : GridView.builder(
                       //controller: _scrollController,
                       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(

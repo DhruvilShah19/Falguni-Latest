@@ -4,6 +4,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
+import '../../Providers/global_config.dart';
+import '../premium_empty_state.dart';
 import '../../Model/formatter.dart';
 import '../../Model/order_model.dart';
 import '../../Pages/orders_preview.dart';
@@ -105,14 +107,8 @@ class _AllOrdersState extends State<AllOrders> {
   String getcurrencySymbol = '';
 
   getCurrencyDetails() {
-    FirebaseFirestore.instance
-        .collection('Currency Settings')
-        .doc('Currency Settings')
-        .get()
-        .then((value) {
-      setState(() {
-        getcurrencySymbol = value['Currency symbol'];
-      });
+    setState(() {
+      getcurrencySymbol = GlobalConfig.currencySymbol;
     });
   }
 
@@ -202,14 +198,10 @@ class _AllOrdersState extends State<AllOrders> {
         physics: const BouncingScrollPhysics(),
         children: [
           display.isEmpty
-              ? Center(
-                  child: Padding(
-                    padding: const EdgeInsets.only(top: 50),
-                    child: Image.asset(
-                      'assets/image/empty.png',
-                      height: 280,
-                    ),
-                  ),
+              ? const PremiumEmptyState(
+                  icon: Icons.receipt_long_rounded,
+                  title: 'No Orders Found',
+                  subtitle: 'There are no orders in this category yet.',
                 )
               : ListView.builder(
                   physics: const NeverScrollableScrollPhysics(),

@@ -9,6 +9,7 @@ import 'package:easy_localization/easy_localization.dart';
 
 import '../Model/history.dart';
 import '../Model/formatter.dart';
+import '../Providers/global_config.dart';
 
 enum RangeFilter { all, last10, last30 }
 
@@ -47,14 +48,9 @@ class _WalletHistoryState extends State<WalletHistory> {
   // --- Data Fetching ---
 
   Future<void> _getCurrencySymbol() async {
-    try {
-      final snap = await FirebaseFirestore.instance
-          .collection('Currency Settings')
-          .doc('Currency Settings')
-          .get();
-      if (mounted)
-        setState(() => currencySymbol = snap['Currency symbol'] ?? '');
-    } catch (_) {}
+    if (mounted) {
+      setState(() => currencySymbol = GlobalConfig.currencySymbol);
+    }
   }
 
   Future<void> _getUserDocAndHistory() async {
