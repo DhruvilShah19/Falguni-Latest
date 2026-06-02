@@ -1,0 +1,72 @@
+@import "tailwindcss";
+
+/* ── Brand design tokens (mirrors Flutter AppColors + ThemeData) ── */
+@theme inline {
+  /* Brand palette */
+  --color-gold:        #D4AF37;
+  --color-gold-light:  #E5D1B2;
+  --color-gold-pale:   #F9EED2;
+  --color-brown-dark:  #2B1B17;
+  --color-brown-mid:   #5C4033;
+  --color-primary:     #2F2525;
+
+  /* Semantic tokens – light mode defaults */
+  --color-bg:          #FFFFFF;
+  --color-surface:     #F5F5F5;
+  --color-fg:          #1A1A1A;
+  --color-fg-muted:    #6B6B6B;
+  --color-border:      #E5E5E5;
+  --color-card:        #FFFFFF;
+
+  /* Font */
+  --font-sans: 'Chivo', sans-serif;
+}
+
+/* ── Dark mode overrides ── */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-bg:       #1D1B1B;
+    --color-surface:  #2A2424;
+    --color-fg:       #F0F0F0;
+    --color-fg-muted: #9A9A9A;
+    --color-border:   #3A3232;
+    --color-card:     #252020;
+  }
+}
+
+/* ── Base styles ── */
+*, *::before, *::after { box-sizing: border-box; }
+
+html {
+  scroll-behavior: smooth;
+  -webkit-font-smoothing: antialiased;
+}
+
+body {
+  background: var(--color-bg);
+  color: var(--color-fg);
+  font-family: var(--font-sans);
+  min-height: 100dvh;
+}
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--color-border); border-radius: 99px; }
+
+/* ── Swiper overrides ── */
+.swiper-pagination-bullet-active { background: var(--color-gold) !important; }
+.swiper-button-next,
+.swiper-button-prev { color: var(--color-gold) !important; }
+
+/* ── Utility: gold gradient (brand hero) ── */
+.gradient-brand {
+  background: linear-gradient(135deg, var(--color-brown-dark) 0%, var(--color-brown-mid) 100%);
+}
+
+/* ── Line clamp helpers ── */
+.line-clamp-1 { overflow:hidden; display:-webkit-box; -webkit-line-clamp:1; -webkit-box-orient:vertical; }
+.line-clamp-2 { overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; }
+
+/* ── Safe area bottom (mobile web) ── */
+.pb-safe { padding-bottom: env(safe-area-inset-bottom, 0px); }
