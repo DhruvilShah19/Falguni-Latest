@@ -952,6 +952,7 @@ class _OrdersPreviewState extends State<OrdersPreview> {
   Color get _statusColor {
     if (_isCancelled) return Colors.redAccent;
     if (orderStatus == 'Completed') return Colors.greenAccent;
+    if (orderStatus == 'Pending Payment') return Colors.orangeAccent;
     return kGold;
   }
 
@@ -1008,6 +1009,40 @@ class _OrdersPreviewState extends State<OrdersPreview> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 _buildOrderSummaryCard(),
+                if (orderStatus == 'Pending Payment') ...[
+                  const Gap(16),
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Colors.orangeAccent.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(18),
+                      border: Border.all(color: Colors.orangeAccent.withOpacity(0.3), width: 1),
+                    ),
+                    child: Column(
+                      children: [
+                        const Icon(Icons.payment_outlined, color: Colors.orangeAccent, size: 32),
+                        const SizedBox(height: 8),
+                        const Text(
+                          'Awaiting Payment',
+                          style: TextStyle(
+                            color: Colors.orangeAccent,
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ).tr(),
+                        const SizedBox(height: 4),
+                        const Text(
+                          'This order was not fully paid and has not been confirmed. It will not be processed until payment is received.',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: Colors.white70,
+                            fontSize: 13,
+                          ),
+                        ).tr(),
+                      ],
+                    ),
+                  ),
+                ],
                 const Gap(16),
                 _buildTrackingCard(),
                 const Gap(16),

@@ -71,10 +71,8 @@ class _CheckoutPageState extends State<CheckoutPage>
   bool isAddressEmpty = false;
   num wallet = 0;
   bool walletBool = false;
-  bool payWithCard = false;
-  bool cashOnDeliveryBool = false;
+  bool payWithCard = true;
   bool selectedStepper3 = false;
-  bool cashDatabase = false;
   String currentMarketID = '';
   String deliveryAddress = '';
   String houseNumber = '';
@@ -384,7 +382,6 @@ class _CheckoutPageState extends State<CheckoutPage>
     }
     getCurrencySymbol();
     getDeliveryFee();
-    getCashOnDeliveryStatus();
     getOneSignalDetails();
     getCouponStatus();
   }
@@ -425,7 +422,7 @@ class _CheckoutPageState extends State<CheckoutPage>
         deliveryFee: pickupBool == false ? deliveryFee : 0,
         total: subTotal + (deliveryBool == false ? 0 : deliveryFee),
         vendorID: vendorID,
-        paymentType: 'Cash Free',
+        paymentType: 'Online',
         userID: id,
         timeCreated: DateFormat.yMMMMEEEEd().format(DateTime.now()).toString(),
         deliveryAddress: pickupBool == true ? '' : deliveryAddress,
@@ -443,7 +440,7 @@ class _CheckoutPageState extends State<CheckoutPage>
       message: 'New order alert Order ID #${orderID + 1}',
       amount:
           '$currencySymbol ${subTotal + (deliveryBool == false ? 0 : deliveryFee)}',
-      paymentSystem: 'Cash Free',
+      paymentSystem: 'Online',
       timeCreated: DateTime.now(),
     ));
 
@@ -636,18 +633,6 @@ class _CheckoutPageState extends State<CheckoutPage>
         .then((value) {
       setState(() {
         currencySymbol = value['Currency symbol'];
-      });
-    });
-  }
-
-  getCashOnDeliveryStatus() {
-    return FirebaseFirestore.instance
-        .collection('Payment System')
-        .doc('Cash on delivery')
-        .get()
-        .then((val) {
-      setState(() {
-        cashDatabase = val['Cash on delivery'];
       });
     });
   }
@@ -895,8 +880,6 @@ class _CheckoutPageState extends State<CheckoutPage>
       return CheckoutStep2Payment(
         walletBool: walletBool,
         payWithCard: payWithCard,
-        cashOnDeliveryBool: cashOnDeliveryBool,
-        cashDatabase: cashDatabase,
         wallet: wallet,
         subTotal: subTotal,
         deliveryFee: deliveryFee,
@@ -905,7 +888,6 @@ class _CheckoutPageState extends State<CheckoutPage>
         onWalletChanged: (val) {
           setState(() {
             walletBool = true;
-            cashOnDeliveryBool = false;
             payWithCard = false;
           });
         },
@@ -913,14 +895,6 @@ class _CheckoutPageState extends State<CheckoutPage>
           setState(() {
             walletBool = false;
             payWithCard = true;
-            cashOnDeliveryBool = false;
-          });
-        },
-        onCashOnDeliveryChanged: (val) {
-          setState(() {
-            walletBool = false;
-            cashOnDeliveryBool = true;
-            payWithCard = false;
           });
         },
         onWalletTap: () {
@@ -1086,221 +1060,186 @@ class _CheckoutPageState extends State<CheckoutPage>
                                                           icon: Icons
                                                               .location_on_outlined,
                                                         );
-                                                      } else {
-                                                        // First check if wallet has negative balance
-                                                        // if (wallet < 0) {
-                                                        //   _showAlertDialog(
-                                                        //     title:
-                                                        //         'Account Balance Negative',
-                                                        //     message:
-                                                        //         'Your wallet has a negative balance of $currencySymbol${Formatter().converter(wallet.abs().toDouble())}.\n\nYou must settle this amount before placing new orders.\n\nPlease contact support for payment options.',
-                                                        //     buttonText: 'Close',
-                                                        //     accentColor: const Color(
-                                                        //         0xFFE74C3C),
-                                                        //     icon: Icons.error_outline,
-                                                        //   );
-                                                        // } else if (walletBool ==
-                                                        if (walletBool ==
-                                                                false &&
-                                                            cashOnDeliveryBool ==
-                                                                false &&
-                                                            payWithCard ==
-                                                                false) {
-                                                          _showAlertDialog(
-                                                            title:
-                                                                'Payment Method Required',
-                                                            message:
-                                                                'Please select a payment method to proceed with your order.',
-                                                            buttonText:
-                                                                'Got It',
-                                                            accentColor:
-                                                                const Color(
-                                                                    0xFFC9A86A),
-                                                            icon: Icons
-                                                                .payment_outlined,
-                                                          );
-                                                        } else if (walletBool ==
-                                                                true &&
-                                                            wallet <
-                                                                (subTotal +
-                                                                    (deliveryBool ==
-                                                                            false
-                                                                        ? 0
-                                                                        : deliveryFee)) &&
-                                                            payWithCard ==
-                                                                false &&
-                                                            cashOnDeliveryBool ==
-                                                                false) {
-                                                          // Wallet selected but insufficient balance and no other payment method
-                                                          num shortfall = (subTotal +
+                                                      } else if (!walletBool &&
+                                                          !payWithCard) {
+                                                        Fluttertoast.showToast(
+                                                            msg:
+                                                                'Select Payment Method',
+                                                            toastLength: Toast
+                                                                .LENGTH_SHORT,
+                                                            gravity:
+                                                                ToastGravity
+                                                                    .BOTTOM,
+                                                            timeInSecForIosWeb:
+                                                                1,
+                                                            backgroundColor:
+                                                                Colors.black,
+                                                            textColor:
+                                                                Colors.white,
+                                                            fontSize: 16.0);
+                                                      } else if (walletBool ==
+                                                              true &&
+                                                          wallet <
+                                                              (subTotal +
                                                                   (deliveryBool ==
                                                                           false
                                                                       ? 0
-                                                                      : deliveryFee)) -
-                                                              wallet;
-                                                          _showAlertDialog(
-                                                            title:
-                                                                'Insufficient Wallet Balance',
-                                                            message:
-                                                                'Your wallet has $currencySymbol${Formatter().converter(wallet.toDouble())}, but you need $currencySymbol${Formatter().converter(shortfall.toDouble())} more.\n\nYou can:\n• Add funds to your wallet\n• Select another payment method (Online Payment or Cash on Delivery)',
-                                                            buttonText:
-                                                                'Understood',
-                                                            accentColor:
-                                                                const Color(
-                                                                    0xFFE74C3C),
-                                                            icon: Icons
-                                                                .warning_outlined,
-                                                          );
-                                                        } else if (payWithCard ==
-                                                            true) {
-                                                          _initiateOnlinePayment();
-                                                        } else if (cashOnDeliveryBool ==
-                                                            true) {
-                                                          Week currentWeek =
-                                                              Week.current();
-
-                                                          // Get the current date and time
-                                                          var day =
-                                                              DateTime.now();
-                                                          var dateDay =
-                                                              DateTime.now()
-                                                                  .day;
-                                                          var month =
-                                                              DateTime.now();
-                                                          // Format the date as a string
-                                                          String formattedDate =
-                                                              DateFormat('MMMM')
-                                                                  .format(
-                                                                      month);
-                                                          String dayFormatter =
-                                                              DateFormat('EEEE')
-                                                                  .format(day);
-                                                          deleteCartCollection();
-                                                          deleteVendorsID();
-                                                          updateVendorOrderID();
-
-                                                          if (walletBool ==
-                                                              true) {
-                                                            num totalAmount = subTotal +
+                                                                      : deliveryFee)) &&
+                                                          payWithCard ==
+                                                              false) {
+                                                        // Wallet selected but insufficient balance
+                                                        num shortfall = (subTotal +
                                                                 (deliveryBool ==
                                                                         false
                                                                     ? 0
-                                                                    : deliveryFee);
-                                                            num amountDeducted =
-                                                                wallet >=
-                                                                        totalAmount
-                                                                    ? totalAmount
-                                                                    : wallet;
-                                                            updateWallet();
-                                                            updateHistory(HistoryModel(
-                                                                timeCreated:
-                                                                    DateTime
-                                                                        .now(),
-                                                                message:
-                                                                    'Placed an order'
-                                                                        .tr(),
-                                                                amount:
-                                                                    '-$currencySymbol${Formatter().converter(amountDeducted.toDouble())}',
-                                                                paymentSystem:
-                                                                    ''));
-                                                          }
-                                                          DateTime now =
-                                                              DateTime.now();
-                                                          int currentMonth =
-                                                              now.month;
-                                                          int currentYear =
-                                                              now.year;
-                                                          addToOrder(
-                                                              OrderModel(
-                                                                  month: currentMonth
-                                                                      .toString(),
-                                                                  year: currentYear
-                                                                      .toString(),
-                                                                  weekNumber: currentWeek
-                                                                      .weekNumber,
-                                                                  day:
-                                                                      dayFormatter,
-                                                                  date:
-                                                                      '$dayFormatter, $formattedDate $dateDay',
-                                                                  pickupAddress:
-                                                                      pickupAddress,
-                                                                  confirmationStatus:
-                                                                      false,
-                                                                  uid: id,
-                                                                  marketID:
-                                                                      currentMarketID,
-                                                                  orderID: orderID +
-                                                                      1,
-                                                                  orders:
-                                                                      orders,
-                                                                  acceptDelivery:
-                                                                      false,
-                                                                  deliveryFee: pickupBool == false
-                                                                      ? deliveryFee
-                                                                      : 0,
-                                                                  total: subTotal +
-                                                                      (deliveryBool == false
-                                                                          ? 0
-                                                                          : deliveryFee),
-                                                                  vendorID:
-                                                                      vendorID,
-                                                                  paymentType: cashOnDeliveryBool ==
-                                                                          true
-                                                                      ? 'Cash on delivery'
-                                                                      : 'Wallet',
-                                                                  userID: id,
-                                                                  timeCreated: DateFormat
-                                                                          .yMMMMEEEEd()
-                                                                      .format(DateTime
-                                                                          .now())
-                                                                      .toString(),
-                                                                  deliveryAddress:
-                                                                      pickupBool ==
-                                                                              true
-                                                                          ? ''
-                                                                          : deliveryAddress,
-                                                                  houseNumber:
-                                                                      pickupBool ==
-                                                                              true
-                                                                          ? ''
-                                                                          : houseNumber,
-                                                                  closesBusStop:
-                                                                      pickupBool ==
-                                                                              true
-                                                                          ? ''
-                                                                          : closestBustStop,
-                                                                  deliveryBoyID:
-                                                                      '',
-                                                                  status:
-                                                                      'Received',
-                                                                  accept:
-                                                                      false),
-                                                              id);
-                                                          updateHistoryVendor(HistoryModel(
-                                                              message:
-                                                                  'New order alert Order ID #${orderID + 1}',
-                                                              amount:
-                                                                  '$currencySymbol ${subTotal + (deliveryBool == false ? 0 : deliveryFee)}',
-                                                              paymentSystem: '',
-                                                              timeCreated:
-                                                                  DateTime
-                                                                      .now()));
-                                                          // _handleSendNotification(
-                                                          //     vendorToken,
-                                                          //     'New order alert Order ID #${orderID + 1}',
-                                                          //     'New order alert');
-                                                          setState(() {
-                                                            _index = 2;
-                                                            selectedStepper3 =
-                                                                true;
-                                                            selectedStepper1 =
-                                                                false;
-                                                            selectedStepper2 =
-                                                                false;
-                                                          });
-                                                          _animationController!
-                                                              .forward();
-                                                        }
+                                                                    : deliveryFee)) -
+                                                            wallet;
+                                                        _showAlertDialog(
+                                                          title:
+                                                              'Insufficient Wallet Balance',
+                                                          message:
+                                                              'Your wallet has $currencySymbol${Formatter().converter(wallet.toDouble())}, but you need $currencySymbol${Formatter().converter(shortfall.toDouble())} more.\n\nYou can:\n• Add funds to your wallet\n• Select Online Payment',
+                                                          buttonText:
+                                                              'Understood',
+                                                          accentColor:
+                                                              const Color(
+                                                                  0xFFE74C3C),
+                                                          icon: Icons
+                                                              .warning_outlined,
+                                                        );
+                                                      } else if (payWithCard ==
+                                                          true) {
+                                                        _initiateOnlinePayment();
+                                                      } else if (walletBool ==
+                                                          true) {
+                                                        // Logic for Wallet Payment Only
+                                                        Week currentWeek =
+                                                            Week.current();
+                                                        var day =
+                                                            DateTime.now();
+                                                        var dateDay =
+                                                            DateTime.now()
+                                                                .day;
+                                                        var month =
+                                                            DateTime.now();
+                                                        String formattedDate =
+                                                            DateFormat('MMMM')
+                                                                .format(month);
+                                                        String dayFormatter =
+                                                            DateFormat('EEEE')
+                                                                .format(day);
+                                                        deleteCartCollection();
+                                                        deleteVendorsID();
+                                                        updateVendorOrderID();
+                                                        num totalAmount = subTotal +
+                                                            (deliveryBool == false
+                                                                ? 0
+                                                                : deliveryFee);
+                                                        num amountDeducted =
+                                                            wallet >= totalAmount
+                                                                ? totalAmount
+                                                                : wallet;
+                                                        updateWallet();
+                                                        updateHistory(HistoryModel(
+                                                            timeCreated:
+                                                                DateTime.now(),
+                                                            message:
+                                                                'Placed an order'
+                                                                    .tr(),
+                                                            amount:
+                                                                '-$currencySymbol${Formatter().converter(amountDeducted.toDouble())}',
+                                                            paymentSystem:
+                                                                'Wallet'));
+                                                        DateTime now =
+                                                            DateTime.now();
+                                                        int currentMonth =
+                                                            now.month;
+                                                        int currentYear =
+                                                            now.year;
+                                                        addToOrder(
+                                                            OrderModel(
+                                                                month: currentMonth
+                                                                    .toString(),
+                                                                year: currentYear
+                                                                    .toString(),
+                                                                weekNumber:
+                                                                    currentWeek
+                                                                        .weekNumber,
+                                                                day: dayFormatter,
+                                                                date:
+                                                                    '$dayFormatter, $formattedDate $dateDay',
+                                                                pickupAddress:
+                                                                    pickupAddress,
+                                                                confirmationStatus:
+                                                                    false,
+                                                                uid: id,
+                                                                marketID:
+                                                                    currentMarketID,
+                                                                orderID:
+                                                                    orderID + 1,
+                                                                orders: orders,
+                                                                acceptDelivery:
+                                                                    false,
+                                                                deliveryFee:
+                                                                    pickupBool ==
+                                                                            false
+                                                                        ? deliveryFee
+                                                                        : 0,
+                                                                total: subTotal +
+                                                                    (deliveryBool ==
+                                                                            false
+                                                                        ? 0
+                                                                        : deliveryFee),
+                                                                vendorID: vendorID,
+                                                                paymentType:
+                                                                    'Online',
+                                                                userID: id,
+                                                                timeCreated: DateFormat
+                                                                        .yMMMMEEEEd()
+                                                                    .format(DateTime
+                                                                        .now())
+                                                                    .toString(),
+                                                                deliveryAddress:
+                                                                    pickupBool ==
+                                                                            true
+                                                                        ? ''
+                                                                        : deliveryAddress,
+                                                                houseNumber:
+                                                                    pickupBool ==
+                                                                            true
+                                                                        ? ''
+                                                                        : houseNumber,
+                                                                closesBusStop:
+                                                                    pickupBool ==
+                                                                            true
+                                                                        ? ''
+                                                                        : closestBustStop,
+                                                                deliveryBoyID:
+                                                                    '',
+                                                                status:
+                                                                    'Received',
+                                                                accept: false),
+                                                            id);
+                                                        updateHistoryVendor(HistoryModel(
+                                                            message:
+                                                                'New order alert Order ID #${orderID + 1}',
+                                                            amount:
+                                                                '$currencySymbol ${subTotal + (deliveryBool == false ? 0 : deliveryFee)}',
+                                                            paymentSystem:
+                                                                'Wallet',
+                                                            timeCreated:
+                                                                DateTime.now()));
+                                                        setState(() {
+                                                          _index = 2;
+                                                          selectedStepper3 =
+                                                              true;
+                                                          selectedStepper1 =
+                                                              false;
+                                                          selectedStepper2 =
+                                                              false;
+                                                        });
+                                                        _animationController!
+                                                            .forward();
                                                       }
                                                     },
                                               child: isProcessingPayment

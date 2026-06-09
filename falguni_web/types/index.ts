@@ -60,7 +60,6 @@ export interface UserModel {
   email: string;
   phone?: string;
   userPic?: string;
-  wallet?: number;
   deliveryAddress?: string;
 }
 
@@ -90,9 +89,9 @@ export interface OrderModel {
 // ─── Coupon ───────────────────────────────────────────────────────────────────
 export interface CouponModel {
   uid?: string;
-  couponCode: string;
+  coupon: string;
   percentage: number;
-  status: boolean;
+  title?: string;
 }
 
 // ─── Banner/Slider ────────────────────────────────────────────────────────────
@@ -100,4 +99,39 @@ export interface BannerModel {
   uid?: string;
   image: string;
   title?: string;
+}
+
+// ─── Courier ─────────────────────────────────────────────────────────────────
+export interface CourierModel {
+  uid?: string;
+  userUID: string;
+  parcelID: number;
+  parcelName: string;
+  parcelDescription: string;
+  parcelImage: string;
+  sendersName: string;
+  sendersPhone: string;
+  sendersAddress: string;
+  recipientName: string;
+  recipientPhone: string;
+  recipientAddress: string;
+  deliveryDate: string;
+  deliveryBoyID: string;
+  deliveryBoysName: string;
+  deliveryBoysPhone: string;
+  deliveryBoysAddress: string;
+  weight: number;
+  price: number;
+  km: number;
+  comission: number;
+  status: boolean;
+}
+
+// ─── Address ─────────────────────────────────────────────────────────────────
+export interface AddressModel {
+  uid?: string;
+  id: string;
+  address: string;        // Mapped from 'Addresses' in Firestore
+  houseNumber: string;
+  closestbusStop: string;
 }

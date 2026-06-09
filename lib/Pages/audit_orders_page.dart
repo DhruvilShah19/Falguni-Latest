@@ -1,4 +1,4 @@
-// ignore_for_file: curly_braces_in_flow_control_structures, avoid_print, deprecated_member_use
+// ignore_for_file: unnecessary_cast, curly_braces_in_flow_control_structures, avoid_print, deprecated_member_use
 
 import 'dart:convert';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -595,10 +595,12 @@ class _AuditOrdersPageState extends State<AuditOrdersPage>
           displayStatus = "Pending";
         }
 
+        var walletDeduction = doc.data() as Map<String, dynamic>;
+        walletDeduction['paymentType'] == 'Wallet'
+            ? (walletDeduction['total'] as num).toDouble()
+            : 0;
+
         String paymentType = data['paymentType'] ?? '';
-        if (paymentType == 'Cash on delivery') {
-          paymentType = 'Cash Free';
-        }
 
         if (paymentType == 'Cash Free') {
           items.add(_CashfreeTxItem(

@@ -59,6 +59,7 @@ class _AllOrdersState extends State<AllOrders> {
             .listen((data) {
           orders.clear();
           for (var doc in data.docs) {
+            if (doc.data()['status'] == 'Pending Payment' || doc.data()['status'] == 'Pending') continue; // Hide incomplete/abandoned checkouts
             if (mounted) {
               setState(() {
                 orders.add(OrderModel2(

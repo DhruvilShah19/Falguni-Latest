@@ -2,7 +2,7 @@
 import { useEffect } from 'react';
 import { onAuthStateChanged } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
-import { getUserDoc } from '@/lib/firestore';
+import { getUserDoc, subscribeToUserDoc } from '@/lib/firestore';
 import { useAuthStore } from '@/store/authStore';
 import { subscribeToCart } from '@/lib/firestore';
 import { useCartStore } from '@/store/cartStore';
@@ -14,17 +14,23 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
   useEffect(() => {
     let cartUnsub: (() => void) | null = null;
 
+    let userDocUnsub: (() => void) | null = null;
+
     const unsub = onAuthStateChanged(auth, async (user) => {
       setFirebaseUser(user);
 
       if (user) {
-        const doc = await getUserDoc(user.uid);
-        setUserDoc(doc as any);
-        // Subscribe to cart in real-time (mirrors Flutter's Cart stream)
+        // Subscribe to user document for real-time updates (like default address changes)
+        userDocUnsub = subscribeToUserDoc(user.uid, (doc) => {
+          setUserDoc(doc as any);
+        });
+        
+        // Subscribe to cart in real-time
         cartUnsub = subscribeToCart(user.uid, setItems);
       } else {
         setUserDoc(null);
         setItems([]);
+        userDocUnsub?.();
         cartUnsub?.();
       }
 
@@ -33,6 +39,7 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
 
     return () => {
       unsub();
+      userDocUnsub?.();
       cartUnsub?.();
     };
   }, []);

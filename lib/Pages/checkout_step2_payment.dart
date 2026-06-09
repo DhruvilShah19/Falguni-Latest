@@ -14,8 +14,6 @@ class CheckoutStep2Payment extends StatelessWidget {
 
   final bool walletBool;
   final bool payWithCard;
-  final bool cashOnDeliveryBool;
-  final bool cashDatabase;
   final num wallet;
   final num subTotal;
   final num deliveryFee;
@@ -23,7 +21,6 @@ class CheckoutStep2Payment extends StatelessWidget {
   final String currencySymbol;
   final Function(bool?) onWalletChanged;
   final Function(bool?) onOnlinePaymentChanged;
-  final Function(bool?) onCashOnDeliveryChanged;
   final Function() onWalletTap;
   final List<Map<String, dynamic>> orders;
   final Function() getMyCartToOrders;
@@ -32,8 +29,6 @@ class CheckoutStep2Payment extends StatelessWidget {
     super.key,
     required this.walletBool,
     required this.payWithCard,
-    required this.cashOnDeliveryBool,
-    required this.cashDatabase,
     required this.wallet,
     required this.subTotal,
     required this.deliveryFee,
@@ -41,7 +36,6 @@ class CheckoutStep2Payment extends StatelessWidget {
     required this.currencySymbol,
     required this.onWalletChanged,
     required this.onOnlinePaymentChanged,
-    required this.onCashOnDeliveryChanged,
     required this.onWalletTap,
     required this.orders,
     required this.getMyCartToOrders,

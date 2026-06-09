@@ -31,6 +31,11 @@ export async function getProductsByCategory(category: string): Promise<ProductsM
   return snap.docs.map(d => ({ ...d.data(), uid: d.id } as ProductsModel));
 }
 
+export async function getRecentPurchasedProducts(userId: string): Promise<ProductsModel[]> {
+  const snap = await getDocs(collection(db, 'users', userId, 'Recent Purchased Products'));
+  return snap.docs.map(d => ({ ...d.data(), uid: d.id } as ProductsModel));
+}
+
 export async function getProductById(id: string): Promise<ProductsModel | null> {
   const snap = await getDoc(doc(db, 'Products', id));
   if (!snap.exists()) return null;
@@ -50,10 +55,28 @@ export async function getCategories(): Promise<CategoriesModel[]> {
 }
 
 // ─── Banners / Sliders ────────────────────────────────────────────────────────
+// Mirrors Flutter: collection('Feeds').where('slider', isEqualTo: true).limit(10)
 
+export interface SliderFeed {
+  uid: string;
+  image: string;
+  title: string;
+  detail: string;
+  category: string;
+  subCategory: string;
+  slider: boolean;
+}
+
+export async function getSliderFeeds(): Promise<SliderFeed[]> {
+  const snap = await getDocs(
+    query(collection(db, 'Feeds'), where('slider', '==', true), limit(10))
+  );
+  return snap.docs.map(d => ({ uid: d.id, ...d.data() } as SliderFeed));
+}
+
+// Legacy – kept for backward compat
 export async function getBanners(): Promise<BannerModel[]> {
-  const snap = await getDocs(collection(db, 'Sliders'));
-  return snap.docs.map(d => ({ ...d.data(), uid: d.id } as BannerModel));
+  return getSliderFeeds() as any;
 }
 
 // ─── Cart ─────────────────────────────────────────────────────────────────────
@@ -100,10 +123,17 @@ export async function getDeliveryFee(): Promise<number> {
 
 export async function validateCoupon(code: string): Promise<CouponModel | null> {
   const snap = await getDocs(
-    query(collection(db, 'Coupons'), where('couponCode', '==', code), where('status', '==', true))
+    query(collection(db, 'Coupons'), where('coupon', '==', code))
   );
   if (snap.empty) return null;
   return { ...snap.docs[0].data(), uid: snap.docs[0].id } as CouponModel;
+}
+
+export async function getCoupons(limitCount = 3): Promise<CouponModel[]> {
+  const snap = await getDocs(
+    query(collection(db, 'Coupons'), limit(limitCount))
+  );
+  return snap.docs.map(d => ({ ...d.data(), uid: d.id } as CouponModel));
 }
 
 // ─── User ─────────────────────────────────────────────────────────────────────
@@ -116,4 +146,46 @@ export async function getUserDoc(userId: string) {
 
 export async function updateUserDoc(userId: string, data: Record<string, unknown>) {
   await updateDoc(doc(db, 'users', userId), data);
+}
+
+export function subscribeToUserDoc(
+  userId: string,
+  callback: (userDoc: any) => void
+): Unsubscribe {
+  return onSnapshot(
+    doc(db, 'users', userId),
+    (snap) => {
+      if (snap.exists()) {
+        callback({ uid: snap.id, ...snap.data() });
+      } else {
+        callback(null);
+      }
+    }
+  );
+}
+
+// ─── Favorites ────────────────────────────────────────────────────────────────
+
+export function subscribeToFavorites(
+  userId: string,
+  callback: (items: ProductsModel[]) => void
+): Unsubscribe {
+  return onSnapshot(
+    collection(db, 'users', userId, 'Favorite'),
+    (snap) => {
+      const items = snap.docs.map(d => ({ ...d.data(), uid: d.id } as ProductsModel));
+      callback(items);
+    }
+  );
+}
+
+export async function addToFavorites(userId: string, item: ProductsModel) {
+  // Use productID or uid as the document ID inside the Favorite subcollection
+  const docId = item.productID || item.uid;
+  if (!docId) return;
+  await setDoc(doc(db, 'users', userId, 'Favorite', docId), item);
+}
+
+export async function removeFromFavorites(userId: string, productId: string) {
+  await deleteDoc(doc(db, 'users', userId, 'Favorite', productId));
 }

@@ -24,7 +24,7 @@ export default function BottomNav() {
   if (['/login', '/signup', '/forgot-password'].includes(pathname)) return null;
 
   return (
-    <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-[var(--color-brown-dark)] border-t border-white/10 pb-safe">
+    <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-[var(--color-bg)] border-t border-[var(--color-border)] pb-safe">
       <div className="flex">
         {navItems.map(({ href, icon: Icon, label, badge }) => {
           const isActive = pathname === href;
@@ -39,7 +39,7 @@ export default function BottomNav() {
               className={`flex-1 flex flex-col items-center justify-center py-2.5 gap-0.5 relative transition-colors ${
                 isActive
                   ? 'text-[var(--color-gold)]'
-                  : 'text-white/50 hover:text-white/80'
+                  : 'text-[var(--color-fg-muted)] hover:text-[var(--color-fg)]'
               }`}
             >
               <div className="relative">

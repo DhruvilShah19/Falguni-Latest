@@ -1,4 +1,4 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import { Chivo } from 'next/font/google';
 import './globals.css';
 import AuthProvider from '@/components/layout/AuthProvider';
@@ -16,10 +16,16 @@ export const metadata: Metadata = {
   icons: { icon: '/favicon.ico' },
 };
 
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 5,
+};
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={chivo.className}>
-      <body className="min-h-dvh flex flex-col bg-[var(--color-bg)] text-[var(--color-fg)]">
+      <body className="min-h-dvh flex flex-col bg-[var(--color-bg)] text-[var(--color-fg)] overflow-x-hidden w-full">
         <AuthProvider>
           <OnboardingGuard>{children}</OnboardingGuard>
         </AuthProvider>
