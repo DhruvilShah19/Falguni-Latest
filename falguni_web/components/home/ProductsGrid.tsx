@@ -1,0 +1,77 @@
+'use client';
+import { useEffect, useState } from 'react';
+import Image from 'next/image';
+import Link from 'next/link';
+import ProductCard from '@/components/ui/ProductCard';
+import SectionHeader from '@/components/ui/SectionHeader';
+import { getProducts } from '@/lib/firestore';
+import type { ProductsModel } from '@/types';
+import LoadingSpinner from '@/components/ui/LoadingSpinner';
+
+interface Props {
+  title?: string;
+  subtitle?: string;
+  viewAllHref?: string;
+  limitCount?: number;
+  products?: ProductsModel[]; // optional: pass pre-fetched
+  sliceStart?: number;
+  sliceEnd?: number;
+}
+
+export default function ProductsGrid({
+  title = 'Curated For You',
+  subtitle = 'Handpicked',
+  viewAllHref = '/products',
+  limitCount = 20, // We will still fetch up to this, but only slice the top 5 for the bento grid
+  products: propProducts,
+  sliceStart = 0,
+  sliceEnd = 12,
+}: Props) {
+  const [products, setProducts] = useState<ProductsModel[]>(propProducts ?? []);
+  const [loading, setLoading] = useState(!propProducts);
+
+  useEffect(() => {
+    if (propProducts) return;
+    getProducts(limitCount).then(p => { setProducts(p); setLoading(false); });
+  }, [limitCount, propProducts]);
+
+  if (loading) return <LoadingSpinner />;
+  if (products.length === 0) return null;
+
+  const displayProducts = products.slice(sliceStart, sliceEnd);
+
+  return (
+    <section className="mb-24">
+      <SectionHeader
+        title={title}
+        subtitle={subtitle}
+        viewAllHref={viewAllHref}
+      />
+
+      {/* Clean, Minimalist Horizontal Slider */}
+      <div className="relative w-full">
+         <div className="hidden md:block absolute left-0 top-0 bottom-0 w-12 bg-gradient-to-r from-[var(--color-bg)] to-transparent z-10 pointer-events-none" />
+         <div className="hidden md:block absolute right-0 top-0 bottom-0 w-12 bg-gradient-to-l from-[var(--color-bg)] to-transparent z-10 pointer-events-none" />
+         
+         <div 
+           className="overflow-x-auto scrollbar-hide"
+           style={{ padding: '0 20px' }}
+         >
+           <div className="flex gap-4 md:gap-6 pb-6 pt-2 snap-x snap-mandatory" style={{ width: 'max-content' }}>
+             {displayProducts.map((p, idx) => (
+               <div 
+                  key={p.uid} 
+                  className="snap-start shrink-0 w-[110px] md:w-[180px] h-full transition-transform duration-500 hover:scale-[1.02]"
+                  style={{ 
+                    animation: `fadeUp 0.5s ease-out ${idx * 50}ms both`
+                  }}
+               >
+                  <ProductCard product={p} variant="rect-small" />
+               </div>
+             ))}
+           </div>
+         </div>
+      </div>
+    </section>
+  );
+}

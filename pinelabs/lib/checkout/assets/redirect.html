@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pine Labs | Edge | Checkout</title>
+</head>
+
+<body>
+
+    <form id="PostForm" name="PostForm" action="https://uat.pinepg.in/PinePGRedirect" method="POST">
+        <input type="submit" value="submit">
+        <input type="hidden" name="ppc_DIA_SECRET_TYPE" value="SHA256">
+        <input type="hidden" name="ppc_LPC_SEQ" value="1">
+        <input type="hidden" name="ppc_UniqueMerchantTxnID" value="4322342423424323242342">
+        <input type="hidden" name="ppc_DIA_SECRET"
+            value="691B610A72B844C98FD40D487073E17F">
+        <input type="hidden" name="ppc_MerchantAccessCode" value="8212304e-59b4-446c-97ba-17b30d8afb18">
+        <input type="hidden" name="ppc_CustomerAddressPIN" value="201301">
+        <input type="hidden" name="ppc_CustomerId" value="786">
+        <input type="hidden" name="ppc_CustomerMobile" value="8447358656">
+        <input type="hidden" name="ppc_PayModeOnLandingPage" value="1,2,3,4,5,6,7,10,11,12,13">
+        <input type="hidden" name="ppc_NavigationMode" value="2">
+        <input type="hidden" name="ppc_CustomerAddress1" value="hno 15">
+        <input type="hidden" name="ppc_Product_Code" value="40">
+        <input type="hidden" name="ppc_MerchantID" value="107249">
+        <input type="hidden" name="ppc_MerchantReturnURL" value="https://uat.pinepg.in/mobileapp/index">
+        <input type="hidden" name="ppc_request_agent_app" value="1">
+        <input type="hidden" name="ppc_Amount" value="100">
+        <input type="hidden" name="ppc_CustomerEmail" value="abhishek.shakya@pinelabs.com">
+        <input type="hidden" name="ppc_TransactionType" value="1">
+    </form>
+
+    <script language="javascript">
+        // Print.postMessage('Hello!');
+        // function scanBarcode(message) {
+        //     if (window.Print && window.Print.postMessage) {
+        //         Print.postMessage(message);
+        //     }
+        // }
+        // scanBarcode("hello")
+
+        // var vPostForm = document.PostForm;
+        // vPostForm.submit();
+    </script>
+
+
+</body>
+
+</html>

@@ -1,0 +1,45 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "user_app",
+            "request": "launch",
+            "type": "dart"
+        },
+        {
+            "name": "user_app (profile mode)",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "profile"
+        },
+        {
+            "name": "user_app (release mode)",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "release"
+        },
+        {
+            "name": "pinelabs",
+            "cwd": "pinelabs",
+            "request": "launch",
+            "type": "dart"
+        },
+        {
+            "name": "pinelabs (profile mode)",
+            "cwd": "pinelabs",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "profile"
+        },
+        {
+            "name": "pinelabs (release mode)",
+            "cwd": "pinelabs",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "release"
+        }
+    ]
+}

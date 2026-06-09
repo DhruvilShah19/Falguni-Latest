@@ -1,0 +1,32 @@
+{
+  "firestore": {
+    "rules": "firestore.rules"
+  },
+  "flutter": {
+    "platforms": {
+      "android": {
+        "default": {
+          "projectId": "falguni-admin",
+          "appId": "1:7031551502:android:9a9ac6901f35a9f23c6e5f",
+          "fileOutput": "android/app/google-services.json"
+        }
+      },
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "falguni-admin",
+          "configurations": {
+            "ios": "1:7031551502:ios:a4c3b1dd8cf2e9e93c6e5f"
+          }
+        }
+      },
+      "ios": {
+        "default": {
+          "projectId": "falguni-admin",
+          "appId": "1:7031551502:ios:a4c3b1dd8cf2e9e93c6e5f",
+          "uploadDebugSymbols": false,
+          "fileOutput": "ios/Runner/GoogleService-Info.plist"
+        }
+      }
+    }
+  }
+}
