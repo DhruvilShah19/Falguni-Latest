@@ -68,13 +68,16 @@ export default function CheckoutPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          order_amount: Number(total.toFixed(2)),
           order_id: cashfreeOrderId,
           customer_details: {
             customer_id: firebaseUser.uid,
             customer_name: fullName || 'Guest User',
             customer_email: firebaseUser.email || 'guest@example.com',
             customer_phone: phone.replace(/\D/g, '').slice(-10) || '9999999999',
+          },
+          cart_details: {
+            isPickup: pickupBool,
+            couponCode: couponCode || ''
           },
           order_meta: {
             return_url: `${window.location.origin}/checkout/success?order_id={order_id}`
