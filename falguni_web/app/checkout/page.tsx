@@ -148,6 +148,7 @@ export default function CheckoutPage() {
       if (cashfree && paymentSessionId) {
         cashfree.checkout({
           paymentSessionId: paymentSessionId,
+          redirectTarget: "_modal"
         }).then((result: any) => {
           if (result.error) {
             alert(result.error.message || 'Payment Failed or Cancelled');
