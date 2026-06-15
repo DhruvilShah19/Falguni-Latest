@@ -76,6 +76,9 @@ export default function CheckoutPage() {
             customer_email: firebaseUser.email || 'guest@example.com',
             customer_phone: phone.replace(/\D/g, '').slice(-10) || '9999999999',
           },
+          order_meta: {
+            return_url: `${window.location.origin}/checkout/success?order_id={order_id}`
+          },
           order_note: 'Falguni Web Order',
         })
       });
@@ -144,11 +147,12 @@ export default function CheckoutPage() {
         createdAt: serverTimestamp(),
       });
 
-      // 2. Trigger Cashfree Embedded Checkout UI (Seamless Modal Overlay)
+      // 2. Trigger Cashfree Embedded Checkout UI (Seamless Modal Overlay or Mobile Redirect)
       if (cashfree && paymentSessionId) {
+        const isMobile = window.innerWidth < 768;
         cashfree.checkout({
           paymentSessionId: paymentSessionId,
-          redirectTarget: "_modal"
+          redirectTarget: isMobile ? "_self" : "_modal"
         }).then((result: any) => {
           if (result.error) {
             alert(result.error.message || 'Payment Failed or Cancelled');
