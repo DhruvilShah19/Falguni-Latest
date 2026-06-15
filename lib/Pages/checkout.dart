@@ -524,21 +524,19 @@ class _CheckoutPageState extends State<CheckoutPage>
 
     Map<String, String> headers = {
       'Content-Type': 'application/json',
-      'x-client-id': clientId,
-      'x-client-secret': clientSecret,
-      'x-api-version': '2023-08-01',
-      'x-request-id': 'flutter_request',
     };
 
     Map<String, dynamic> requestBody = {
-      "order_amount": calculatedAmount.toDouble(),
       "order_id": uuid.v1(),
-      "order_currency": "INR",
       "customer_details": {
         "customer_id": id.isEmpty ? uuid.v1() : id,
         "customer_name": fullname,
         "customer_email": email,
         "customer_phone": "+91$cleanPhone"
+      },
+      "cart_details": {
+        "isPickup": pickupBool,
+        "isApp": true
       },
       "order_meta": {"notify_url": notifyUrl},
       "order_note": "Falguni Application Order",
@@ -546,7 +544,7 @@ class _CheckoutPageState extends State<CheckoutPage>
 
     try {
       final http.Response response = await http.post(
-        Uri.parse(apiUrl),
+        Uri.parse('https://falguni-latest.vercel.app/api/cashfree/create-order'),
         headers: headers,
         body: jsonEncode(requestBody),
       );

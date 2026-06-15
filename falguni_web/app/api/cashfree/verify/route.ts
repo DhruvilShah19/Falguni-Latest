@@ -74,11 +74,10 @@ export async function GET(request: Request) {
     if (isPaid) {
       try {
         const draftOrdersRef = adminDb.collection('DraftOrders');
-        const draftSnapshot = await draftOrdersRef.where('cashfreeOrderId', '==', orderId).limit(1).get();
+        const draftDoc = await draftOrdersRef.doc(orderId).get();
         
-        if (!draftSnapshot.empty) {
+        if (draftDoc.exists) {
           // ── WE HAVE A DRAFT ORDER! ──
-          const draftDoc = draftSnapshot.docs[0];
           const draftData = draftDoc.data();
           
           // Create the Official Order in the Orders collection

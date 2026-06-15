@@ -77,7 +77,10 @@ export default function CheckoutPage() {
           },
           cart_details: {
             isPickup: pickupBool,
-            couponCode: couponCode || ''
+            couponCode: couponCode || '',
+            deliveryAddress: address,
+            phone: phone,
+            fullName: fullName,
           },
           order_meta: {
             return_url: `${window.location.origin}/checkout/success?order_id={order_id}`
@@ -95,60 +98,7 @@ export default function CheckoutPage() {
       cashfreeOrderId = data.order_id;
       paymentSessionId = data.payment_session_id;
 
-      const now = new Date();
-      const dateStr = now.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-      
-      // 1. Create the Pending Order in the isolated DraftOrders collection!
-      await addDoc(collection(db, 'DraftOrders'), {
-        uid: firebaseUser.uid,
-        userID: firebaseUser.uid,
-        userId: firebaseUser.uid,
-        userEmail: firebaseUser.email,
-        userName: fullName,
-        orderID: generatedOrderId,
-        orders: items.map(i => ({
-          name: i.name,
-          productName: i.name,
-          image1: i.image1,
-          quantity: i.quantity,
-          price: i.price,
-          selectedPrice: i.selectedPrice,
-          selected: i.selected || '',
-          vendorId: i.vendorId || '',
-          productID: i.productID || '',
-        })),
-        items: items.map(i => ({ // Keeping items for web backwards compatibility
-          name: i.name,
-          image1: i.image1,
-          quantity: i.quantity,
-          price: i.price,
-          selected: i.selected,
-          vendorId: i.vendorId,
-          productID: i.productID,
-        })),
-        subTotal: subTotal(),
-        couponCode: couponCode || null,
-        couponDiscount: couponDiscount || 0,
-        discountedSubTotal: discounted,
-        deliveryFee: pickupBool ? 0 : deliveryFee,
-        total,
-        deliveryAddress: pickupBool ? '' : address,
-        pickupAddress: pickupBool ? 'Pick Up' : '',
-        houseNumber: '',
-        closesBusStop: '',
-        phone,
-        paymentType: 'Online',
-        paymentMethod: 'Online',
-        cashfreeOrderId,
-        status: 'Pending Payment',
-        confirmationStatus: false,
-        acceptDelivery: false,
-        accept: false,
-        month: (now.getMonth() + 1).toString(),
-        year: now.getFullYear().toString(),
-        timeCreated: dateStr,
-        createdAt: serverTimestamp(),
-      });
+      // DraftOrder is now securely constructed on the backend inside create-order!
 
       // 2. Trigger Cashfree Embedded Checkout UI (Seamless Modal Overlay or Mobile Redirect)
       if (cashfree && paymentSessionId) {

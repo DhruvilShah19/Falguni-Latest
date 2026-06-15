@@ -41,10 +41,9 @@ export async function POST(req: Request) {
 
       if (orderId && paymentStatus === 'SUCCESS') {
         const draftOrdersRef = adminDb.collection('DraftOrders');
-        const draftSnapshot = await draftOrdersRef.where('cashfreeOrderId', '==', orderId).limit(1).get();
+        const draftDoc = await draftOrdersRef.doc(orderId).get();
         
-        if (!draftSnapshot.empty) {
-          const draftDoc = draftSnapshot.docs[0];
+        if (draftDoc.exists) {
           const draftData = draftDoc.data();
           
           // Move to Real Orders

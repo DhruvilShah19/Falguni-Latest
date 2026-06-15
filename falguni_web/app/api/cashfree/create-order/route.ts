@@ -25,7 +25,15 @@ export async function POST(req: Request) {
 
     // 2. Validate and Apply Server-Side Coupon
     let discountedTotal = subTotal;
-    if (cart_details?.couponCode) {
+    if (cart_details?.isApp) {
+      const userSnap = await adminDb.collection('users').doc(customerId).get();
+      if (userSnap.exists) {
+        const couponReward = Number(userSnap.data()?.['Coupon Reward'] || 0);
+        if (couponReward > 0) {
+          discountedTotal = subTotal - (subTotal * couponReward) / 100;
+        }
+      }
+    } else if (cart_details?.couponCode) {
       const couponSnap = await adminDb.collection('Coupons').where('coupon', '==', cart_details.couponCode).limit(1).get();
       if (!couponSnap.empty) {
         const couponData = couponSnap.docs[0].data();
@@ -51,6 +59,86 @@ export async function POST(req: Request) {
     if (order_amount <= 0) {
       return NextResponse.json({ message: 'Invalid order amount calculated.' }, { status: 400 });
     }
+
+    // 5. Securely Build the Draft Order on the Server
+    const items: any[] = [];
+    cartSnapshot.forEach((doc) => items.push(doc.data()));
+
+    const generatedOrderId = Math.floor(Math.random() * 900000) + 100000;
+    const now = new Date();
+    const dateStr = now.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+
+    let discountPercentage = 0;
+    if (cart_details?.couponCode) {
+      const couponSnap = await adminDb.collection('Coupons').where('coupon', '==', cart_details.couponCode).limit(1).get();
+      if (!couponSnap.empty) {
+        discountPercentage = Number(couponSnap.docs[0].data().discount || 0);
+      }
+    } else if (cart_details?.isApp) {
+      const userSnap = await adminDb.collection('users').doc(customerId).get();
+      if (userSnap.exists) {
+        discountPercentage = Number(userSnap.data()?.['Coupon Reward'] || 0);
+      }
+    }
+
+    let fee = 0;
+    if (cart_details && !cart_details.isPickup) {
+      const deliverySnap = await adminDb.collection('Delivery Fee').doc('Delivery Fee').get();
+      if (deliverySnap.exists) {
+        fee = Number(deliverySnap.data()?.['Delivery Fee'] || 0);
+      }
+    }
+
+    await adminDb.collection('DraftOrders').doc(order_id).set({
+      uid: customerId,
+      userID: customerId,
+      userId: customerId,
+      userEmail: customer_details.customer_email || '',
+      userName: cart_details?.fullName || customer_details.customer_name || '',
+      orderID: generatedOrderId,
+      orders: items.map(i => ({
+        name: i.name || '',
+        productName: i.name || '',
+        image1: i.image1 || '',
+        quantity: i.quantity || 1,
+        price: i.price || 0,
+        selectedPrice: i.selectedPrice || 0,
+        selected: i.selected || '',
+        vendorId: i.vendorId || '',
+        productID: i.productID || '',
+      })),
+      items: items.map(i => ({
+        name: i.name || '',
+        image1: i.image1 || '',
+        quantity: i.quantity || 1,
+        price: i.price || 0,
+        selected: i.selected || '',
+        vendorId: i.vendorId || '',
+        productID: i.productID || '',
+      })),
+      subTotal: subTotal,
+      couponCode: cart_details?.couponCode || null,
+      couponDiscount: discountPercentage,
+      discountedSubTotal: discountedTotal,
+      deliveryFee: fee,
+      total: order_amount,
+      deliveryAddress: cart_details?.isPickup ? '' : (cart_details?.deliveryAddress || ''),
+      pickupAddress: cart_details?.isPickup ? 'Pick Up' : '',
+      houseNumber: '',
+      closesBusStop: '',
+      phone: cart_details?.phone || customer_details.customer_phone || '',
+      paymentType: 'Online',
+      paymentMethod: 'Online',
+      cashfreeOrderId: order_id,
+      status: 'Pending Payment',
+      confirmationStatus: false,
+      acceptDelivery: false,
+      accept: false,
+      month: (now.getMonth() + 1).toString(),
+      year: now.getFullYear().toString(),
+      timeCreated: dateStr,
+      createdAt: new Date(),
+    });
 
     const apiUrl = process.env.CASHFREE_API_URL?.endsWith('/orders') 
       ? process.env.CASHFREE_API_URL 
