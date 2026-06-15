@@ -37,7 +37,7 @@ export async function POST(req: Request) {
       const couponSnap = await adminDb.collection('Coupons').where('coupon', '==', cart_details.couponCode).limit(1).get();
       if (!couponSnap.empty) {
         const couponData = couponSnap.docs[0].data();
-        const discountPercentage = Number(couponData.discount || 0);
+        const discountPercentage = Number(couponData.percentage || 0);
         if (discountPercentage > 0) {
           discountedTotal = subTotal - (subTotal * discountPercentage) / 100;
         }
@@ -72,7 +72,7 @@ export async function POST(req: Request) {
     if (cart_details?.couponCode) {
       const couponSnap = await adminDb.collection('Coupons').where('coupon', '==', cart_details.couponCode).limit(1).get();
       if (!couponSnap.empty) {
-        discountPercentage = Number(couponSnap.docs[0].data().discount || 0);
+        discountPercentage = Number(couponSnap.docs[0].data().percentage || 0);
       }
     } else if (cart_details?.isApp) {
       const userSnap = await adminDb.collection('users').doc(customerId).get();
