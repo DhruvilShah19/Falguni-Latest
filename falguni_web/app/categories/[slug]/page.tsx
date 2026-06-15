@@ -68,7 +68,7 @@ export default function CategoryProductsPage() {
   return (
     <PageShell>
       {/* ── Premium Dynamic Header Banner ── */}
-      <div className="relative w-full overflow-hidden bg-[#2B1B17] border-b border-[#D4AF37]/20 py-16 md:py-24 flex flex-col items-center justify-center mb-0">
+      <div className="relative w-full overflow-hidden bg-[#2B1B17] border-b border-[#D4AF37]/20 py-12 md:py-24 flex flex-col items-center justify-center mb-0">
          
          {/* Dynamic Background Image */}
          {categoryImage && (
@@ -79,10 +79,10 @@ export default function CategoryProductsPage() {
          )}
          
          {/* Top Controls: Back & Breadcrumbs */}
-         <div className="absolute top-6 left-5 right-5 md:top-8 md:left-8 md:right-8 z-20 flex items-center justify-between">
+         <div className="absolute top-4 left-4 right-4 md:top-8 md:left-8 md:right-8 z-20 flex items-center justify-between">
            <button onClick={() => router.back()} className="flex items-center gap-2 text-[#D4AF37] hover:text-white transition-colors group">
-             <div className="w-8 h-8 rounded-full border border-[#D4AF37]/40 flex items-center justify-center group-hover:border-[#D4AF37] group-hover:bg-[#D4AF37]/20 transition-all bg-[#2B1B17]/50 backdrop-blur-md">
-               <ChevronLeft size={16} />
+             <div className="w-6 h-6 md:w-8 md:h-8 rounded-full border border-[#D4AF37]/40 flex items-center justify-center group-hover:border-[#D4AF37] group-hover:bg-[#D4AF37]/20 transition-all bg-[#2B1B17]/50 backdrop-blur-md">
+               <ChevronLeft size={14} className="md:w-4 md:h-4" />
              </div>
              <span className="font-bold tracking-widest uppercase text-[10px] hidden sm:block mt-0.5">Back</span>
            </button>
@@ -100,17 +100,17 @@ export default function CategoryProductsPage() {
          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(212,175,55,0.2),transparent_70%)] pointer-events-none z-10" />
          
          {/* Title Area */}
-         <div className="relative z-20 text-center px-4 max-w-3xl mt-4">
-            <div className="animate-fade-up text-[10px] md:text-xs tracking-[0.4em] font-bold text-[#D4AF37] mb-5 flex items-center justify-center gap-4">
-               <span className="w-12 h-px bg-[#D4AF37]/50" />
+         <div className="relative z-20 text-center px-4 max-w-3xl mt-2 md:mt-4">
+            <div className="animate-fade-up text-[9px] md:text-xs tracking-[0.2em] md:tracking-[0.4em] font-bold text-[#D4AF37] mb-3 md:mb-5 flex items-center justify-center gap-2 md:gap-4">
+               <span className="w-8 md:w-12 h-px bg-[#D4AF37]/50" />
                EXPLORE COLLECTION
-               <span className="w-12 h-px bg-[#D4AF37]/50" />
+               <span className="w-8 md:w-12 h-px bg-[#D4AF37]/50" />
             </div>
-            <h1 className="animate-fade-up font-serif text-5xl md:text-6xl lg:text-7xl text-white mb-6 drop-shadow-[0_0_20px_rgba(212,175,55,0.3)]" style={{ animationDelay: '100ms' }}>
+            <h1 className="animate-fade-up font-serif text-3xl md:text-6xl lg:text-7xl text-white mb-2 md:mb-6 drop-shadow-[0_0_20px_rgba(212,175,55,0.3)]" style={{ animationDelay: '100ms' }}>
               {category}
             </h1>
             {!loading && products.length > 0 && (
-              <p className="animate-fade-up text-white/70 font-medium text-sm tracking-[0.15em] uppercase" style={{ animationDelay: '200ms' }}>
+              <p className="animate-fade-up text-white/70 font-medium text-xs md:text-sm tracking-[0.1em] md:tracking-[0.15em] uppercase" style={{ animationDelay: '200ms' }}>
                 {products.length} {products.length === 1 ? 'Item' : 'Items'} Available
               </p>
             )}
@@ -119,17 +119,17 @@ export default function CategoryProductsPage() {
 
       {/* ── Sub-category Pills & Filters Bar ── */}
       {!loading && products.length > 0 && (
-        <div className="sticky top-[64px] md:top-[80px] z-40 w-full bg-[#2B1B17]/95 backdrop-blur-xl border-b border-white/5 shadow-lg">
-          <div className="max-w-[1400px] mx-auto px-5 lg:px-8 py-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="sticky top-[56px] md:top-[80px] z-40 w-full bg-[#2B1B17]/95 backdrop-blur-xl border-b border-white/5 shadow-lg">
+          <div className="max-w-[1400px] mx-auto px-4 md:px-5 lg:px-8 py-3 md:py-4 flex flex-col md:flex-row md:items-center justify-between gap-3 md:gap-4">
             
             {/* Left: Scrollable Pills */}
-            <div className="flex-1 overflow-x-auto scrollbar-hide -mx-5 px-5 md:mx-0 md:px-0">
+            <div className="flex-1 overflow-x-auto scrollbar-hide -mx-4 px-4 md:mx-0 md:px-0">
               <div className="flex items-center gap-2 w-max pb-1">
                 {subcategories.map(sub => (
                   <button
                     key={sub}
                     onClick={() => setActiveSub(sub)}
-                    className={`px-4 py-2 rounded-full text-xs font-bold tracking-wider transition-all ${
+                    className={`px-3 py-1.5 md:px-4 md:py-2 rounded-full text-[10px] md:text-xs font-bold tracking-wider transition-all ${
                       activeSub === sub 
                         ? 'bg-[#D4AF37] text-[#2B1B17] shadow-[0_0_15px_rgba(212,175,55,0.3)]' 
                         : 'bg-white/5 text-white/70 hover:bg-white/10 hover:text-white border border-white/5'
@@ -142,23 +142,23 @@ export default function CategoryProductsPage() {
             </div>
 
             {/* Right: Sort Controls */}
-            <div className="flex items-center gap-3 shrink-0 ml-auto md:ml-0">
-              <div className="flex items-center gap-2 text-white/50">
-                <SlidersHorizontal size={14} />
-                <span className="text-xs font-bold tracking-wider uppercase">Sort:</span>
+            <div className="flex items-center gap-2 md:gap-3 shrink-0 ml-auto md:ml-0">
+              <div className="flex items-center gap-1.5 md:gap-2 text-white/50">
+                <SlidersHorizontal size={12} className="md:w-3.5 md:h-3.5" />
+                <span className="text-[10px] md:text-xs font-bold tracking-wider uppercase">Sort:</span>
               </div>
               <div className="relative group">
                 <select 
                   value={sortBy}
                   onChange={(e) => setSortBy(e.target.value)}
-                  className="appearance-none bg-[#2B1B17] border border-white/10 text-white text-xs font-bold tracking-wider uppercase rounded-xl pl-4 pr-10 py-2.5 outline-none focus:border-[#D4AF37]/50 cursor-pointer hover:bg-white/5 transition-colors"
+                  className="appearance-none bg-[#2B1B17] border border-white/10 text-white text-[10px] md:text-xs font-bold tracking-wider uppercase rounded-lg md:rounded-xl pl-3 pr-8 py-2 md:pl-4 md:pr-10 md:py-2.5 outline-none focus:border-[#D4AF37]/50 cursor-pointer hover:bg-white/5 transition-colors"
                 >
                   <option value="featured">Featured</option>
                   <option value="price-low">Price: Low to High</option>
                   <option value="price-high">Price: High to Low</option>
                   <option value="rating">Highest Rated</option>
                 </select>
-                <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-white/50 pointer-events-none group-hover:text-white transition-colors" />
+                <ChevronDown size={12} className="absolute right-2.5 md:right-3 top-1/2 -translate-y-1/2 text-white/50 pointer-events-none group-hover:text-white transition-colors" />
               </div>
             </div>
 
@@ -182,10 +182,10 @@ export default function CategoryProductsPage() {
           </div>
         ) : (
           <div className="flex flex-col">
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5 md:gap-8">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-8">
               {paginatedProducts.map((p, idx) => (
                 <div key={p.uid} className="animate-fade-up" style={{ animationDelay: `${(idx % 10) * 30}ms` }}>
-                  <ProductCard product={p} variant="rect-large" />
+                  <ProductCard product={p} variant="default" />
                 </div>
               ))}
             </div>

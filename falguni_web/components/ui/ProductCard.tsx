@@ -52,7 +52,7 @@ export default function ProductCard({
 
   return (
     <Link
-      href={`/products/${product.uid}`}
+      href={`/products/${product.productID || product.uid}`}
       className="group relative flex flex-col overflow-hidden h-full"
       style={{
         borderRadius: variant === 'rect-large' ? 40 : variant === 'squircle-small' ? 32 : variant === 'rect-small' ? 24 : variant === 'square-small' ? 12 : 16,
@@ -140,45 +140,42 @@ export default function ProductCard({
       {/* ════════════════════════════
           INFO BLOCK
       ════════════════════════════ */}
-      <div className="flex flex-col flex-1 p-3 gap-2">
+      <div className="flex flex-col flex-1 p-2.5 gap-1.5">
 
         {/* Brand accent line + name */}
         <div className="flex items-start gap-2">
-          <div className="flex-shrink-0 mt-1" style={{ width: 2, height: 12, borderRadius: 99, background: '#D4AF37' }} />
+          <div className="flex-shrink-0 mt-0.5" style={{ width: 2, height: 10, borderRadius: 99, background: '#D4AF37' }} />
           <div className="min-w-0">
-            <p style={{ color: 'rgba(212,175,55,0.9)', fontSize: 8.5, fontWeight: 700, letterSpacing: '0.15em', lineHeight: 1 }}>
+            <p style={{ color: 'rgba(212,175,55,0.9)', fontSize: 7.5, fontWeight: 700, letterSpacing: '0.15em', lineHeight: 1 }}>
               {(product.brandName || product.category).toUpperCase()}
             </p>
-            <h3 className="line-clamp-2 leading-snug mt-0.5"
-              style={{ color: 'var(--color-fg)', fontSize: 12.5, fontWeight: 600 }}>
-              {product.name}
+            <h3 className="line-clamp-2 leading-snug mt-0.5 capitalize"
+              style={{ color: 'var(--color-fg)', fontSize: 11, fontWeight: 500, letterSpacing: '0.01em' }}>
+              {product.name?.toLowerCase()}
             </h3>
           </div>
         </div>
 
         {/* Stars */}
-        {rating !== null && (
-          <div className="flex items-center gap-1">
-            {[1,2,3,4,5].map(s => (
-              <Star key={s} size={9} style={{
-                color: s <= Math.round(rating) ? '#D4AF37' : 'rgba(0,0,0,0.1)',
-                fill:  s <= Math.round(rating) ? '#D4AF37' : 'rgba(0,0,0,0.1)',
-              }} />
-            ))}
-            <span style={{ color: 'var(--color-fg-muted)', fontSize: 9, marginLeft: 2 }}>
-              {product.totalNumberOfUserRating}
-            </span>
-          </div>
-        )}
+        <div className="flex items-center gap-1">
+          {[1,2,3,4,5].map(s => (
+            <Star key={s} size={9} style={{
+              color: rating !== null && s <= Math.round(rating) ? '#D4AF37' : 'rgba(0,0,0,0.1)',
+              fill:  rating !== null && s <= Math.round(rating) ? '#D4AF37' : 'rgba(0,0,0,0.1)',
+            }} />
+          ))}
+          <span style={{ color: 'var(--color-fg-muted)', fontSize: 9, marginLeft: 2 }}>
+            {rating !== null ? product.totalNumberOfUserRating : 'NEW'}
+          </span>
+        </div>
 
-        {/* Price row — price is the hero */}
         <div className="flex items-end justify-between mt-auto pt-1">
           <div className="flex items-baseline gap-1.5">
-            <span style={{ color: '#D4AF37', fontSize: 17, fontWeight: 900, lineHeight: 1 }}>
+            <span style={{ color: '#D4AF37', fontSize: 13, fontWeight: 700, lineHeight: 1 }}>
               ₹{price}
             </span>
             {hasDiscount && (
-              <span style={{ color: 'var(--color-fg-muted)', fontSize: 11, textDecoration: 'line-through' }}>
+              <span style={{ color: 'var(--color-fg-muted)', fontSize: 9, textDecoration: 'line-through' }}>
                 ₹{oldPrice}
               </span>
             )}
@@ -194,15 +191,15 @@ export default function ProductCard({
         <button
           onClick={handleAdd}
           disabled={adding || !firebaseUser}
-          className="md:hidden flex items-center justify-center gap-1.5 rounded-xl transition-all duration-200 disabled:opacity-40"
+          className="md:hidden flex items-center justify-center gap-1 rounded-md transition-all duration-200 disabled:opacity-40"
           style={{
-            padding: '8px 12px',
-            fontSize: 11,
-            fontWeight: 700,
-            letterSpacing: '0.04em',
-            background: added ? '#16a34a' : 'rgba(212,175,55,0.1)',
+            padding: '4px 6px',
+            fontSize: 8.5,
+            fontWeight: 600,
+            letterSpacing: '0.05em',
+            background: added ? '#16a34a' : 'rgba(212,175,55,0.15)',
             color: added ? 'white' : '#D4AF37',
-            border: `1px solid ${added ? 'transparent' : 'rgba(212,175,55,0.25)'}`,
+            border: `1px solid ${added ? 'transparent' : 'rgba(212,175,55,0.4)'}`,
           }}
         >
           {added

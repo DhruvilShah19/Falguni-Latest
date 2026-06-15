@@ -16,8 +16,7 @@ interface Props {
 export default function SectionHeader({ title, subtitle, viewAllHref }: Props) {
   return (
     <div
-      className="flex items-end justify-between max-w-7xl mx-auto w-full mb-8"
-      style={{ padding: '0 20px' }}
+      className="flex items-end justify-between max-w-7xl mx-auto w-full mb-6 md:mb-8 px-4 md:px-8 lg:px-12"
     >
       {/* Left: subtitle + title */}
       <div className="flex flex-col gap-2">
@@ -33,7 +32,7 @@ export default function SectionHeader({ title, subtitle, viewAllHref }: Props) {
         </div>
 
         {/* Title */}
-        <h2 className="text-3xl md:text-5xl font-serif text-[var(--color-fg)] drop-shadow-sm leading-tight mt-1">
+        <h2 className="text-xl md:text-3xl lg:text-4xl font-serif text-[var(--color-fg)] drop-shadow-sm leading-tight mt-1">
            {title}
         </h2>
       </div>

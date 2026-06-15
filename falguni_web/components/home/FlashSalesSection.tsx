@@ -27,11 +27,10 @@ export default function FlashSalesSection() {
 
       {/* Mobile: horizontal scroll strip — same height/feel as Flutter FlashSalesSlidesHome */}
       <div
-        className="flex gap-3 overflow-x-auto pb-2 md:hidden scrollbar-hide"
-        style={{ padding: '0 20px' }}
+        className="flex gap-3 overflow-x-auto pb-2 md:hidden scrollbar-hide px-4 md:px-8 lg:px-12"
       >
         {products.slice(0, 10).map(p => (
-          <div key={p.uid} className="flex-shrink-0 w-40">
+          <div key={p.uid} className="flex-shrink-0 w-[140px] md:w-40">
             <ProductCard product={p} />
           </div>
         ))}
@@ -39,8 +38,7 @@ export default function FlashSalesSection() {
 
       {/* Desktop: 5-column grid with 3D card-hover effect */}
       <div
-        className="hidden md:grid grid-cols-4 lg:grid-cols-5 gap-4"
-        style={{ padding: '0 20px' }}
+        className="hidden md:grid grid-cols-4 lg:grid-cols-5 gap-4 px-4 md:px-8 lg:px-12"
       >
         {products.slice(0, 10).map(p => (
           <ProductCard key={p.uid} product={p} />

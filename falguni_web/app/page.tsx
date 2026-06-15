@@ -16,7 +16,7 @@ export default function HomePage() {
       <div className="flex flex-col pb-8 md:pb-16">
 
         {/* ── Hero banner (SliderWidget) ── */}
-        <div style={{ padding: '0 20px 0' }}>
+        <div className="px-4 md:px-8 lg:px-12 pt-4 md:pt-6">
           <HeroBanner />
         </div>
 

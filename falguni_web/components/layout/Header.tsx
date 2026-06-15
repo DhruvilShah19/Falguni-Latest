@@ -72,14 +72,14 @@ export default function Header() {
             : 'bg-[#2B1B17]/80 backdrop-blur-lg border-white/5'
         }`}
       >
-        <div className="max-w-[1400px] mx-auto px-5 lg:px-8 h-16 md:h-20 flex items-center justify-between gap-4 md:gap-8">
+        <div className="max-w-[1400px] mx-auto px-4 md:px-5 lg:px-8 h-14 md:h-20 flex items-center justify-between gap-3 md:gap-8">
 
           {/* ── Left Section: Logo & Global Address ── */}
           <div className="flex items-center gap-4 md:gap-6 lg:gap-8 flex-shrink-0">
             {/* Logo */}
-            <Link href="/" className="flex-shrink-0 flex items-center gap-3 group">
-              <div className="w-10 h-10 md:w-12 md:h-12 rounded-2xl overflow-hidden flex-shrink-0 border border-[#D4AF37]/30 group-hover:border-[#D4AF37] transition-colors shadow-lg">
-                <Image src="/logo.png" alt="Falguni" width={48} height={48} className="object-cover" />
+            <Link href="/" className="flex-shrink-0 flex items-center gap-2 md:gap-3 group">
+              <div className="w-8 h-8 md:w-12 md:h-12 rounded-xl md:rounded-2xl overflow-hidden flex-shrink-0 border border-[#D4AF37]/30 group-hover:border-[#D4AF37] transition-colors shadow-lg">
+                <Image src="/logo.png" alt="Falguni" width={48} height={48} className="object-cover w-full h-full" />
               </div>
               <div className="hidden sm:flex flex-col leading-none">
                 <span className="font-serif text-[#D4AF37] text-lg md:text-xl font-bold tracking-wide">Falguni</span>
@@ -94,9 +94,9 @@ export default function Header() {
                 href={firebaseUser ? (userDoc?.DeliveryAddress ? "/profile/addresses" : "/profile/addresses/add") : "/login"}
                 className="flex flex-col justify-center group py-1"
               >
-                <div className="flex items-center gap-2">
-                  <MapPin size={16} className="text-[#D4AF37] shrink-0 group-hover:-translate-y-0.5 transition-transform" />
-                  <span className="text-sm md:text-base font-serif italic tracking-[0.15em] text-white group-hover:text-[#D4AF37] transition-colors drop-shadow-md">
+                <div className="flex items-center gap-1.5 md:gap-2">
+                  <MapPin size={16} className="w-3.5 h-3.5 md:w-4 md:h-4 text-[#D4AF37] shrink-0 group-hover:-translate-y-0.5 transition-transform" />
+                  <span className="text-xs md:text-base font-serif italic tracking-[0.1em] md:tracking-[0.15em] text-white group-hover:text-[#D4AF37] transition-colors drop-shadow-md">
                     {(() => {
                       if (!userDoc?.DeliveryAddress) return 'Set Location';
                       const match = userDoc.DeliveryAddress.match(/\b\d{6}\b/);
@@ -105,10 +105,10 @@ export default function Header() {
                       return parts.length > 1 ? parts[parts.length - 2].trim() : 'Location Set';
                     })()}
                   </span>
-                  <ChevronDown size={14} className="text-[#D4AF37]/50 shrink-0 group-hover:translate-y-0.5 transition-transform ml-1" />
+                  <ChevronDown size={14} className="w-3 h-3 md:w-3.5 md:h-3.5 text-[#D4AF37]/50 shrink-0 group-hover:translate-y-0.5 transition-transform ml-0.5 md:ml-1" />
                 </div>
                 {userDoc?.DeliveryAddress && (
-                  <span className="text-[7px] md:text-[8px] font-bold text-white/40 tracking-[0.25em] uppercase mt-0.5 ml-6 group-hover:text-[#D4AF37]/80 transition-colors">
+                  <span className="text-[6px] md:text-[8px] font-bold text-white/40 tracking-[0.2em] md:tracking-[0.25em] uppercase mt-0.5 ml-5 md:ml-6 group-hover:text-[#D4AF37]/80 transition-colors">
                     Click to view full address
                   </span>
                 )}
@@ -144,20 +144,20 @@ export default function Header() {
             {/* Search */}
             <Link
               href="/search"
-              className="p-2.5 md:p-3 rounded-2xl text-white/70 hover:text-[#D4AF37] hover:bg-white/5 transition-all"
+              className="p-1.5 md:p-3 rounded-xl md:rounded-2xl text-white/70 hover:text-[#D4AF37] hover:bg-white/5 transition-all"
             >
-              <Search size={22} />
+              <Search size={22} className="w-[18px] h-[18px] md:w-[22px] md:h-[22px]" />
             </Link>
 
             {/* Cart */}
             <Link
               href="/cart"
-              className="relative p-2.5 md:p-3 rounded-2xl text-white/70 hover:text-[#D4AF37] hover:bg-white/5 transition-all"
+              className="relative p-1.5 md:p-3 rounded-xl md:rounded-2xl text-white/70 hover:text-[#D4AF37] hover:bg-white/5 transition-all"
             >
-              <ShoppingCart size={22} />
+              <ShoppingCart size={22} className="w-[18px] h-[18px] md:w-[22px] md:h-[22px]" />
               {cartCount > 0 && (
                 <span
-                  className="absolute top-1.5 right-1.5 w-4.5 h-4.5 rounded-full text-[10px] font-black flex items-center justify-center animate-pulse-gold shadow-lg"
+                  className="absolute top-1 right-1 md:top-1.5 md:right-1.5 w-4 h-4 md:w-4.5 md:h-4.5 rounded-full text-[9px] md:text-[10px] font-black flex items-center justify-center animate-pulse-gold shadow-lg"
                   style={{ background: '#D4AF37', color: '#1a100e' }}
                 >
                   {cartCount > 9 ? '9+' : cartCount}
@@ -168,9 +168,9 @@ export default function Header() {
             {/* Wishlist */}
             <Link
               href="/favorites"
-              className="p-2.5 md:p-3 rounded-2xl text-white/70 hover:text-[#D4AF37] hover:bg-white/5 transition-all"
+              className="p-1.5 md:p-3 rounded-xl md:rounded-2xl text-white/70 hover:text-[#D4AF37] hover:bg-white/5 transition-all"
             >
-              <Heart size={22} />
+              <Heart size={22} className="w-[18px] h-[18px] md:w-[22px] md:h-[22px]" />
             </Link>
 
             {/* User (desktop) */}
@@ -214,9 +214,9 @@ export default function Header() {
             {/* Mobile hamburger */}
             <button
               onClick={() => setMenuOpen(v => !v)}
-              className="md:hidden p-2.5 rounded-xl text-white/70 hover:text-[#D4AF37] hover:bg-white/5 transition-all ml-1"
+              className="md:hidden p-1.5 rounded-lg text-white/70 hover:text-[#D4AF37] hover:bg-white/5 transition-all ml-0.5"
             >
-              {menuOpen ? <X size={24} /> : <Menu size={24} />}
+              {menuOpen ? <X size={20} /> : <Menu size={20} />}
             </button>
           </div>
         </div>

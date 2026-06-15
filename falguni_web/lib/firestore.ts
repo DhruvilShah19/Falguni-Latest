@@ -12,10 +12,11 @@ import {
   updateDoc,
   deleteDoc,
   addDoc,
+  increment,
   Unsubscribe,
 } from 'firebase/firestore';
 import { db } from './firebase';
-import type { ProductsModel, CategoriesModel, BannerModel, CartItem, CouponModel } from '@/types';
+import type { ProductsModel, CategoriesModel, BannerModel, CartItem, CouponModel, RatingModel, UserModel } from '@/types';
 
 // ─── Products ─────────────────────────────────────────────────────────────────
 
@@ -33,7 +34,23 @@ export async function getProductsByCategory(category: string): Promise<ProductsM
 
 export async function getRecentPurchasedProducts(userId: string): Promise<ProductsModel[]> {
   const snap = await getDocs(collection(db, 'users', userId, 'Recent Purchased Products'));
-  return snap.docs.map(d => ({ ...d.data(), uid: d.id } as ProductsModel));
+  const products = snap.docs.map(d => {
+    const data = d.data();
+    return {
+      ...data,
+      uid: data.productID || data.uid || d.id,
+    } as ProductsModel;
+  });
+
+  const uniqueProducts: ProductsModel[] = [];
+  const seenIds = new Set<string>();
+  for (const p of products) {
+    if (!seenIds.has(p.uid)) {
+      seenIds.add(p.uid);
+      uniqueProducts.push(p);
+    }
+  }
+  return uniqueProducts;
 }
 
 export async function getProductById(id: string): Promise<ProductsModel | null> {
@@ -45,6 +62,50 @@ export async function getProductById(id: string): Promise<ProductsModel | null> 
 export async function getFlashSaleProducts(): Promise<ProductsModel[]> {
   const snap = await getDocs(collection(db, 'Flash Sales Products'));
   return snap.docs.map(d => ({ ...d.data(), uid: d.id } as ProductsModel));
+}
+
+export async function getProductReviews(productId: string): Promise<RatingModel[]> {
+  const snap = await getDocs(collection(db, 'Products', productId, 'Ratings'));
+  return snap.docs.map(d => ({ uid: d.id, ...d.data() } as RatingModel));
+}
+
+export async function setProductReview(productId: string, rating: number, review: string, user: UserModel, oldRating: number = 0) {
+  const options: Intl.DateTimeFormatOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+  const timeCreated = new Date().toLocaleDateString('en-US', options);
+  
+  if (!user.uid) throw new Error("User UID is missing");
+
+  await setDoc(doc(db, 'Products', productId, 'Ratings', user.uid), {
+    rating,
+    review,
+    fullname: user.fullname || 'Anonymous',
+    profilePicture: user.userPic || '',
+    timeCreated
+  });
+
+  if (oldRating === 0) {
+    // New Review
+    await updateDoc(doc(db, 'Products', productId), {
+      totalRating: increment(rating),
+      totalNumberOfUserRating: increment(1)
+    });
+  } else {
+    // Edit Review
+    const difference = rating - oldRating;
+    if (difference !== 0) {
+      await updateDoc(doc(db, 'Products', productId), {
+        totalRating: increment(difference)
+      });
+    }
+  }
+}
+
+export async function deleteProductReview(productId: string, userUid: string, oldRating: number) {
+  await deleteDoc(doc(db, 'Products', productId, 'Ratings', userUid));
+  await updateDoc(doc(db, 'Products', productId), {
+    totalRating: increment(-oldRating),
+    totalNumberOfUserRating: increment(-1)
+  });
 }
 
 // ─── Categories ───────────────────────────────────────────────────────────────

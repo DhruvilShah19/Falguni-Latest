@@ -1,0 +1,23 @@
+# Strip dependency/build artifacts everywhere (Vercel reinstalls/rebuilds)
+node_modules
+.next
+.git
+.dart_tool
+
+# Flutter / native app dirs — only the falguni_web Next.js app is deployed.
+# Leading slash anchors these to the repo root so falguni_web/* is untouched.
+/build
+/ios
+/macos
+/android
+/linux
+/windows
+/web
+/assets
+/lib
+/test
+/functions
+/pinelabs
+/.idea
+/.vscode
+/.code-review-graph

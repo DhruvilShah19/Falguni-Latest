@@ -21,21 +21,21 @@ export default function CategoriesPage() {
   return (
     <PageShell>
       {/* Premium Header Banner */}
-      <div className="relative w-full overflow-hidden bg-[#2B1B17] border-b border-[#D4AF37]/10 py-12 md:py-20 flex flex-col items-center justify-center mb-8 md:mb-12">
+      <div className="relative w-full overflow-hidden bg-[#2B1B17] border-b border-[#D4AF37]/10 py-8 md:py-20 flex flex-col items-center justify-center mb-6 md:mb-12">
          
          {/* Ambient Glows */}
          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(212,175,55,0.15),transparent_70%)] pointer-events-none" />
          
          <div className="relative z-10 text-center px-4">
-            <div className="animate-fade-up text-[10px] md:text-xs tracking-[0.3em] font-bold text-[#D4AF37] mb-4 flex items-center justify-center gap-3">
-               <span className="w-8 h-px bg-[#D4AF37]/50" />
+            <div className="animate-fade-up text-[9px] md:text-xs tracking-[0.25em] md:tracking-[0.3em] font-bold text-[#D4AF37] mb-3 md:mb-4 flex items-center justify-center gap-2 md:gap-3">
+               <span className="w-6 md:w-8 h-px bg-[#D4AF37]/50" />
                EXPLORE OUR MENU
-               <span className="w-8 h-px bg-[#D4AF37]/50" />
+               <span className="w-6 md:w-8 h-px bg-[#D4AF37]/50" />
             </div>
-            <h1 className="animate-fade-up font-serif text-4xl md:text-5xl lg:text-6xl text-white mb-4 drop-shadow-[0_0_15px_rgba(212,175,55,0.2)]" style={{ animationDelay: '100ms' }}>
+            <h1 className="animate-fade-up font-serif text-2xl md:text-5xl lg:text-6xl text-white mb-2 md:mb-4 drop-shadow-[0_0_15px_rgba(212,175,55,0.2)]" style={{ animationDelay: '100ms' }}>
               All Categories
             </h1>
-            <p className="animate-fade-up text-[var(--color-fg-muted)] max-w-lg mx-auto text-sm md:text-base leading-relaxed" style={{ animationDelay: '200ms' }}>
+            <p className="animate-fade-up text-[var(--color-fg-muted)] max-w-lg mx-auto text-[11px] md:text-base leading-relaxed px-2" style={{ animationDelay: '200ms' }}>
               Discover our authentic range of handcrafted snacks, premium sweets, and traditional Gujarati delicacies prepared with absolute purity.
             </p>
          </div>
@@ -81,10 +81,10 @@ export default function CategoriesPage() {
                 
                 {/* Text underneath */}
                 <div className="flex flex-col items-center">
-                  <span className="text-[11px] md:text-sm font-bold tracking-wide text-white text-center line-clamp-2 leading-tight uppercase group-hover:text-[#D4AF37] transition-colors">
-                    {cat.category}
+                  <span className="text-[10px] md:text-sm font-medium md:font-bold tracking-wide md:tracking-wider text-[var(--color-fg-muted)] md:text-white text-center line-clamp-2 leading-tight capitalize group-hover:text-[#D4AF37] transition-colors">
+                    {cat.category?.toLowerCase()}
                   </span>
-                  <div className="w-0 h-px bg-[#D4AF37] mt-1.5 transition-all duration-500 group-hover:w-6" />
+                  <div className="w-0 h-px bg-[#D4AF37] mt-1 md:mt-1.5 transition-all duration-500 group-hover:w-4 md:group-hover:w-6" />
                 </div>
               </Link>
             ))}

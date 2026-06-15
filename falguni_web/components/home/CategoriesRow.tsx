@@ -18,28 +18,29 @@ export default function CategoriesRow() {
   if (cats.length === 0) return null;
 
   return (
-    <section className="mb-24">
+    <section className="mb-12 md:mb-24">
       <SectionHeader title="Categories" subtitle="Explore by" viewAllHref="/categories" />
 
       {/* ══════════════════════════════
           MOBILE — minimalist sleek cards
       ══════════════════════════════ */}
-      <div className="md:hidden overflow-x-auto scrollbar-hide" style={{ padding: '0 20px' }}>
+      <div className="md:hidden overflow-x-auto scrollbar-hide px-4 md:px-8 lg:px-12">
         <div className="flex gap-4 pb-4" style={{ width: 'max-content' }}>
           {cats.map((cat) => (
             <Link
               key={cat.uid ?? cat.category}
               href={`/categories/${encodeURIComponent(cat.category)}`}
-              className="group flex flex-col gap-3"
-              style={{ width: 110 }}
+              className="group flex flex-col items-center gap-2"
+              style={{ width: 76 }}
             >
               <div 
-                className="relative overflow-hidden rounded-[20px]"
+                className="relative overflow-hidden rounded-full shrink-0"
                 style={{
-                  height: 140,
+                  width: 76,
+                  height: 76,
                   background: 'var(--color-surface)',
-                  border: '1px solid var(--color-border)',
-                  boxShadow: '0 4px 20px rgba(0,0,0,0.05)'
+                  border: '1px solid rgba(212,175,55,0.2)',
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.03)'
                 }}
               >
                 {cat.image
@@ -47,18 +48,14 @@ export default function CategoriesRow() {
                       className="object-cover transition-transform duration-700 ease-out group-hover:scale-105" />
                   : <div className="w-full h-full flex items-center justify-center text-xs text-gray-500">No Img</div>
                 }
-                {/* Subtle gradient overlay to enhance depth */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/10 via-transparent to-transparent opacity-60" />
+                <div className="absolute inset-0 bg-black/5 opacity-0 group-hover:opacity-100 transition-opacity" />
               </div>
               
-              <div className="flex flex-col px-1">
-                <p className="font-medium text-[var(--color-fg)] transition-colors duration-300 group-hover:text-[#D4AF37] line-clamp-1"
-                  style={{ fontSize: 12, letterSpacing: '0.04em', opacity: 0.9 }}>
+              <div className="flex flex-col items-center px-1 text-center w-full">
+                <p className="font-medium text-[var(--color-fg)] transition-colors duration-300 group-hover:text-[#D4AF37] line-clamp-2 leading-tight"
+                  style={{ fontSize: 10, letterSpacing: '0.02em', opacity: 0.9 }}>
                   {cat.category}
                 </p>
-                <span style={{ fontSize: 10, color: 'var(--color-fg-muted)', marginTop: 2, letterSpacing: '0.02em' }}>
-                  Explore
-                </span>
               </div>
             </Link>
           ))}
@@ -68,7 +65,7 @@ export default function CategoriesRow() {
       {/* ══════════════════════════════
           DESKTOP — elegant minimalistic portrait cards
       ══════════════════════════════ */}
-      <div className="hidden md:block overflow-x-auto scrollbar-hide" style={{ padding: '0 20px' }}>
+      <div className="hidden md:block overflow-x-auto scrollbar-hide px-4 md:px-8 lg:px-12">
         <div className="flex gap-6 pb-6" style={{ width: 'max-content' }}>
           {cats.map((cat) => (
             <Link
@@ -115,7 +112,7 @@ export default function CategoriesRow() {
 function Skeleton() {
   return (
     <section>
-      <div style={{ padding: '25px 20px 15px' }} className="flex items-end justify-between">
+      <div className="flex items-end justify-between px-4 md:px-8 lg:px-12 pt-[25px] pb-[15px]">
         <div className="flex flex-col gap-2">
           <div className="h-2.5 w-20 rounded skeleton" />
           <div className="h-5 w-36 rounded skeleton" />
@@ -130,12 +127,11 @@ function Skeleton() {
           </div>
         ))}
       </div>
-      <div className="flex gap-4 px-5 md:hidden">
-        {Array.from({ length: 4 }).map((_, i) => (
-          <div key={i} className="flex flex-col gap-3" style={{ width: 110 }}>
-            <div className="rounded-[20px] skeleton w-full" style={{ height: 140 }} />
-            <div className="h-3 w-16 rounded skeleton" />
-            <div className="h-2 w-10 rounded skeleton" />
+      <div className="flex gap-4 px-4 md:hidden">
+        {Array.from({ length: 5 }).map((_, i) => (
+          <div key={i} className="flex flex-col items-center gap-2" style={{ width: 76 }}>
+            <div className="rounded-full skeleton shrink-0" style={{ width: 76, height: 76 }} />
+            <div className="h-2 w-12 rounded skeleton" />
           </div>
         ))}
       </div>

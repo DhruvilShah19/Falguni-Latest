@@ -135,3 +135,13 @@ export interface AddressModel {
   houseNumber: string;
   closestbusStop: string;
 }
+
+// ─── Rating ──────────────────────────────────────────────────────────────────
+export interface RatingModel {
+  uid?: string;
+  review: string;
+  rating: number;
+  fullname: string;
+  profilePicture: string;
+  timeCreated: string;
+}

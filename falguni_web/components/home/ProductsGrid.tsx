@@ -41,7 +41,7 @@ export default function ProductsGrid({
   const displayProducts = products.slice(sliceStart, sliceEnd);
 
   return (
-    <section className="mb-24">
+    <section className="mb-12 md:mb-24">
       <SectionHeader
         title={title}
         subtitle={subtitle}
@@ -53,20 +53,17 @@ export default function ProductsGrid({
          <div className="hidden md:block absolute left-0 top-0 bottom-0 w-12 bg-gradient-to-r from-[var(--color-bg)] to-transparent z-10 pointer-events-none" />
          <div className="hidden md:block absolute right-0 top-0 bottom-0 w-12 bg-gradient-to-l from-[var(--color-bg)] to-transparent z-10 pointer-events-none" />
          
-         <div 
-           className="overflow-x-auto scrollbar-hide"
-           style={{ padding: '0 20px' }}
-         >
+         <div className="overflow-x-auto scrollbar-hide px-4 md:px-8 lg:px-12">
            <div className="flex gap-4 md:gap-6 pb-6 pt-2 snap-x snap-mandatory" style={{ width: 'max-content' }}>
              {displayProducts.map((p, idx) => (
                <div 
                   key={p.uid} 
-                  className="snap-start shrink-0 w-[110px] md:w-[180px] h-full transition-transform duration-500 hover:scale-[1.02]"
+                  className="snap-start shrink-0 w-[140px] md:w-[200px] h-full transition-transform duration-500 hover:scale-[1.02]"
                   style={{ 
                     animation: `fadeUp 0.5s ease-out ${idx * 50}ms both`
                   }}
                >
-                  <ProductCard product={p} variant="rect-small" />
+                  <ProductCard product={p} variant="default" />
                </div>
              ))}
            </div>

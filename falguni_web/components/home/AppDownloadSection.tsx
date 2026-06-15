@@ -145,7 +145,7 @@ export default function AppDownloadSection() {
   };
 
   return (
-    <div className="relative w-full overflow-hidden bg-[var(--color-bg)] text-white py-24 lg:py-32" style={{ borderTop: '1px solid rgba(212,175,55,0.08)' }}>
+    <div className="relative w-full overflow-hidden bg-[var(--color-bg)] text-white py-12 md:py-24 lg:py-32" style={{ borderTop: '1px solid rgba(212,175,55,0.08)' }}>
       {/* Background ambient glow */}
       <div className="absolute inset-0 pointer-events-none" style={{ background: 'radial-gradient(circle at 75% 50%, rgba(212,175,55,0.06) 0%, transparent 50%)' }} />
 
@@ -157,12 +157,11 @@ export default function AppDownloadSection() {
              <span className="w-12 h-px bg-[#D4AF37]/50" />
              GET THE APP
           </div>
-          <h2 className="animate-fade-up font-serif text-5xl lg:text-7xl leading-[1.05] mb-8" style={{ animationDelay: '100ms' }}>
-            Experience <br/>
-            <span className="text-[#D4AF37]">Falguni</span> on <br/>
-            Mobile
+          <h2 className="animate-fade-up font-serif text-4xl md:text-5xl lg:text-7xl leading-[1.05] mb-6 md:mb-8" style={{ animationDelay: '100ms' }}>
+            Experience <br className="hidden md:block" />
+            <span className="text-[#D4AF37]">Falguni</span> on Mobile
           </h2>
-          <p className="animate-fade-up text-lg text-white/70 mb-12 max-w-md leading-relaxed" style={{ animationDelay: '200ms' }}>
+          <p className="animate-fade-up text-base md:text-lg text-white/70 mb-8 md:mb-12 max-w-md leading-relaxed" style={{ animationDelay: '200ms' }}>
             Savor the authentic taste of Indian snacks, anytime, anywhere. Order your favorites with a tap.
           </p>
 

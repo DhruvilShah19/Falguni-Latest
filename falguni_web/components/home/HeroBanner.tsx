@@ -64,10 +64,9 @@ export default function HeroBanner() {
     <div
       onMouseEnter={pause}
       onMouseLeave={resume}
-      className="relative w-full overflow-hidden select-none"
+      className="relative w-full overflow-hidden select-none min-h-[420px] md:min-h-[500px] lg:min-h-[580px]"
       style={{
         borderRadius: 24,
-        minHeight: 'clamp(480px, 60vw, 580px)',
         background: 'linear-gradient(155deg, var(--color-bg) 0%, var(--color-surface) 50%, var(--color-bg) 100%)',
       }}
     >
@@ -200,55 +199,65 @@ export default function HeroBanner() {
       </div>
 
       {/* ════════════════════════════════════
-          MOBILE — matches app exactly
+          MOBILE — Elegant Full-Bleed Style
       ════════════════════════════════════ */}
-      <div className="md:hidden flex flex-col absolute inset-0">
-
-        {/* Image top */}
+      <div className="md:hidden absolute inset-0 group">
         <Link 
           href={slide?.category ? `/categories/${encodeURIComponent(slide.category)}` : '/products'}
-          className="relative overflow-hidden flex-shrink-0 block cursor-pointer" 
-          style={{ height: '56%' }}
+          className="relative block w-full h-full overflow-hidden cursor-pointer" 
         >
           {slide && (
-            <Image
-              src={slide.image} alt={slide.title || ''}
-              fill sizes="100vw" className="object-cover" priority
-              style={{ animation: 'kenBurns 12s ease-in-out alternate infinite' }}
-            />
+            <>
+              {/* Blurred background layer to fill empty space */}
+              <Image
+                src={slide.image} alt=""
+                fill sizes="100vw" className="object-cover blur-3xl opacity-40 scale-125 saturate-150" priority
+              />
+              {/* Main image uncropped */}
+              <Image
+                src={slide.image} alt={slide.title || ''}
+                fill sizes="100vw" className="object-contain p-4 pb-48" priority
+                style={{ animation: 'kenBurns 12s ease-in-out alternate infinite' }}
+              />
+            </>
           )}
-          <div className="absolute inset-x-0 bottom-0 h-24 pointer-events-none"
-            style={{ background: 'linear-gradient(to top, var(--color-bg), transparent)' }} />
+          {/* Smooth dark gradient overlay for text readability */}
+          <div className="absolute inset-0 pointer-events-none"
+            style={{ background: 'linear-gradient(to top, rgba(26,16,14,0.95) 0%, rgba(26,16,14,0.5) 60%, transparent 100%)' }} />
         </Link>
 
-        {/* Text bottom */}
-        <div className="flex-1 flex flex-col justify-between" style={{ padding: '12px 20px 20px' }}>
-          <div key={`m-${idx}`} className="animate-fade-up flex flex-col gap-1.5">
-            <span style={{ color: '#D4AF37', fontSize: 9, fontWeight: 700, letterSpacing: '0.2em' }}>
-              {(slide?.category || 'FRESH PICKS').toUpperCase()}
+        {/* Text overlay at the bottom */}
+        <div className="absolute inset-x-0 bottom-0 p-5 md:p-6 flex flex-col gap-4 pointer-events-none">
+          <div key={`m-${idx}`} className="animate-fade-up flex flex-col gap-2">
+            <span style={{ color: '#D4AF37', fontSize: 10, fontWeight: 800, letterSpacing: '0.25em', textTransform: 'uppercase' }}>
+              {slide?.category || 'FRESH PICKS'}
             </span>
-            <h2 className="font-black text-[var(--color-fg)] leading-tight" style={{ fontSize: 18 }}>
+            <h2 className="font-serif text-white leading-[1.15] drop-shadow-md" style={{ fontSize: 28, textShadow: '0 2px 10px rgba(0,0,0,0.5)' }}>
               {slide?.title || 'Authentic Homemade Snacks'}
             </h2>
+            <p className="text-white/80 text-xs line-clamp-2 leading-relaxed">
+              {slide?.detail || 'Premium, Handcrafted Indian Treats from our Kitchen to Yours.'}
+            </p>
           </div>
-          <div className="flex items-center justify-between">
+          
+          <div className="flex items-center justify-between pointer-events-auto">
             <div className="flex items-center gap-1.5">
               {slides.map((_, i) => (
-                <button key={i} onClick={() => goTo(i)}
+                <button key={i} onClick={(e) => { e.preventDefault(); goTo(i); }}
                   className="rounded-full transition-all duration-400"
                   style={{
-                    width: i === idx ? 22 : 7, height: 7,
-                    background: i === idx ? '#D4AF37' : 'rgba(255,255,255,0.2)',
+                    width: i === idx ? 24 : 8, height: 8,
+                    background: i === idx ? '#D4AF37' : 'rgba(255,255,255,0.3)',
                     border: 'none', cursor: 'pointer',
                   }} />
               ))}
             </div>
             <Link
               href={slide?.category ? `/categories/${encodeURIComponent(slide.category)}` : '/products'}
-              className="flex items-center gap-1.5 rounded-xl font-bold btn-gold"
-              style={{ fontSize: 12, padding: '8px 14px' }}
+              className="flex items-center gap-2 rounded-full font-bold transition-transform active:scale-95 shadow-lg shadow-[#D4AF37]/20"
+              style={{ fontSize: 12, padding: '10px 18px', background: 'linear-gradient(135deg, #D4AF37, #C9A227)', color: '#2B1B17' }}
             >
-              <ShoppingBag size={12} /> Shop Now
+              <ShoppingBag size={14} /> Shop Now
             </Link>
           </div>
         </div>
@@ -275,7 +284,7 @@ export default function HeroBanner() {
 
 function Skeleton() {
   return (
-    <div className="relative w-full overflow-hidden skeleton"
-      style={{ borderRadius: 24, minHeight: 'clamp(480px,60vw,580px)' }} />
+    <div className="relative w-full overflow-hidden skeleton min-h-[420px] md:min-h-[500px] lg:min-h-[580px]"
+      style={{ borderRadius: 24 }} />
   );
 }

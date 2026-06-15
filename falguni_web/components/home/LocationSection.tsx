@@ -48,20 +48,20 @@ const VectorMapBackground = () => (
 
 export default function LocationSection() {
   return (
-    <section className="mb-24 px-5">
+    <section className="mb-12 md:mb-24 px-4 md:px-8 lg:px-12">
       <SectionHeader title="Find Us" subtitle="Store Location" />
 
-      <div className="relative max-w-7xl mx-auto w-full rounded-[2rem] overflow-hidden bg-[var(--color-surface)] border border-[var(--color-border)] flex flex-col md:flex-row items-stretch shadow-2xl group">
+      <div className="relative max-w-7xl mx-auto w-full rounded-3xl lg:rounded-[2rem] overflow-hidden bg-[var(--color-surface)] border border-[var(--color-border)] flex flex-col md:flex-row items-stretch shadow-2xl group">
         
         {/* LEFT / TOP: Vector Map & Pin */}
-        <div className="relative flex-1 min-h-[300px] bg-[#221512] flex flex-col items-center justify-center p-8 overflow-hidden">
+        <div className="relative flex-1 min-h-[200px] md:min-h-[300px] bg-[#221512] flex flex-col items-center justify-center p-6 md:p-8 overflow-hidden">
           <VectorMapBackground />
           
           {/* Animated Glowing Pin */}
           <div className="relative z-10 flex flex-col items-center">
-            <div className="absolute inset-0 bg-[#D4AF37] blur-[40px] opacity-20 rounded-full animate-pulse-gold w-32 h-32 -m-8" />
-            <div className="w-20 h-20 bg-gradient-to-br from-[#D4AF37] to-[#B8952A] rounded-full flex items-center justify-center shadow-xl mb-4 transform group-hover:scale-110 group-hover:-translate-y-2 transition-all duration-500">
-              <MapPin size={36} color="#2B1B17" className="animate-bounce mt-1" />
+            <div className="absolute inset-0 bg-[#D4AF37] blur-[30px] md:blur-[40px] opacity-20 rounded-full animate-pulse-gold w-24 h-24 md:w-32 md:h-32 -m-6 md:-m-8" />
+            <div className="w-16 h-16 md:w-20 md:h-20 bg-gradient-to-br from-[#D4AF37] to-[#B8952A] rounded-full flex items-center justify-center shadow-xl mb-3 md:mb-4 transform group-hover:scale-110 group-hover:-translate-y-2 transition-all duration-500">
+              <MapPin size={28} color="#2B1B17" className="animate-bounce mt-1 md:w-9 md:h-9" />
             </div>
             
             <div className="w-16 h-2 bg-black/40 blur-sm rounded-[100%] mx-auto scale-x-125" />
@@ -69,13 +69,13 @@ export default function LocationSection() {
         </div>
 
         {/* RIGHT / BOTTOM: Store Details */}
-        <div className="flex-1 flex flex-col justify-center p-8 md:p-12 lg:p-16 relative z-10 bg-gradient-to-r from-[var(--color-surface)] to-[var(--color-bg)]">
-          <div className="w-12 h-1 bg-[#D4AF37] mb-6 rounded-full" />
+        <div className="flex-1 flex flex-col justify-center p-6 md:p-12 lg:p-16 relative z-10 bg-gradient-to-r from-[var(--color-surface)] to-[var(--color-bg)]">
+          <div className="w-10 md:w-12 h-1 bg-[#D4AF37] mb-4 md:mb-6 rounded-full" />
           
-          <h3 className="text-3xl lg:text-4xl font-serif text-white mb-2 tracking-wide">Falguni Gruh Udhyog</h3>
-          <p className="text-[#D4AF37] font-bold tracking-widest text-xs uppercase mb-8">Vastrapur • Ahmedabad</p>
+          <h3 className="text-2xl md:text-3xl lg:text-4xl font-serif text-white mb-1.5 md:mb-2 tracking-wide">Falguni Gruh Udhyog</h3>
+          <p className="text-[#D4AF37] font-bold tracking-widest text-[10px] md:text-xs uppercase mb-6 md:mb-8">Vastrapur • Ahmedabad</p>
           
-          <p className="text-[var(--color-fg-muted)] leading-relaxed text-sm lg:text-base mb-8 max-w-sm">
+          <p className="text-[var(--color-fg-muted)] leading-relaxed text-xs md:text-sm lg:text-base mb-6 md:mb-8 max-w-sm">
             Visit our flagship store to experience the rich aroma of freshly prepared Gujarati snacks and authentic traditional sweets, crafted daily with love and purity.
           </p>
 
@@ -83,9 +83,9 @@ export default function LocationSection() {
             href="https://www.google.com/maps/place/Falguni+Gruh+Udhyog+(Vastrapur)/@23.035607,72.5251858,17z/data=!3m2!4b1!5s0x395e84b609751615:0xa08aadf19342b162!4m6!3m5!1s0x395e84b646aaaaab:0x7acfa7e161f5e01a!8m2!3d23.035607!4d72.5277607!16s%2Fg%2F11jygkzsly?entry=ttu&g_ep=EgoyMDI2MDUzMS4wIKXMDSoASAFQAw%3D%3D"
             target="_blank"
             rel="noopener noreferrer"
-            className="btn-gold inline-flex items-center justify-center gap-3 px-8 py-4 rounded-xl text-sm w-max"
+            className="btn-gold inline-flex items-center justify-center gap-2 md:gap-3 px-6 py-3 md:px-8 md:py-4 rounded-xl text-xs md:text-sm w-max font-bold"
           >
-            <Navigation size={18} />
+            <Navigation size={16} className="md:w-[18px] md:h-[18px]" />
             GET DIRECTIONS
           </a>
         </div>
