@@ -78,8 +78,8 @@ export default function Header() {
           <div className="flex items-center gap-4 md:gap-6 lg:gap-8 flex-shrink-0">
             {/* Logo */}
             <Link href="/" className="flex-shrink-0 flex items-center gap-2 md:gap-3 group">
-              <div className="w-8 h-8 md:w-12 md:h-12 rounded-xl md:rounded-2xl overflow-hidden flex-shrink-0 border border-[#D4AF37]/30 group-hover:border-[#D4AF37] transition-colors shadow-lg">
-                <Image src="/logo.png" alt="Falguni" width={48} height={48} className="object-cover w-full h-full" />
+              <div className="w-8 h-8 md:w-12 md:h-12 rounded-full overflow-hidden flex-shrink-0 border-2 border-[#D4AF37]/50 group-hover:border-[#D4AF37] transition-colors shadow-[0_0_15px_rgba(212,175,55,0.2)]">
+                <Image src="/falguni-logo.png" alt="Falguni" width={48} height={48} className="object-cover w-full h-full scale-[1.15]" />
               </div>
               <div className="hidden sm:flex flex-col leading-none">
                 <span className="font-serif text-[#D4AF37] text-lg md:text-xl font-bold tracking-wide">Falguni</span>

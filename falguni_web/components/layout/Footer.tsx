@@ -15,8 +15,8 @@ export default function Footer() {
         {/* Brand col */}
         <div className="col-span-4">
           <div className="flex items-center gap-3 mb-4">
-            <div className="w-10 h-10 rounded-xl overflow-hidden border border-black/5 flex-shrink-0">
-              <Image src="/logo.png" alt="Falguni" width={40} height={40} className="object-cover" />
+            <div className="w-12 h-12 rounded-full overflow-hidden flex items-center justify-center border-2 border-[#D4AF37]/50 shadow-[0_0_20px_rgba(212,175,55,0.15)] flex-shrink-0">
+              <Image src="/falguni-logo.png" alt="Falguni" width={48} height={48} className="object-cover w-full h-full scale-[1.15]" />
             </div>
             <div>
               <p className="text-[var(--color-fg)] font-black text-lg leading-none">Falguni</p>
