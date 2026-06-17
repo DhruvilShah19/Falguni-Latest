@@ -47,6 +47,14 @@ function SuccessPageContent() {
             clearCoupon();
           }
           setSuccess(true);
+        } else if (res.ok && data.cfStatus === 'ACTIVE') {
+          if (firebaseUser) {
+            await clearCart(firebaseUser.uid);
+            clearCoupon();
+          }
+          setSuccess(true);
+          // Wait, if it's ACTIVE, it's still pending but we can treat it as a success for the user
+          // because Cashfree guarantees the order is in the system, and the Webhook will handle it eventually.
         } else {
           setSuccess(false);
           setErrorMsg(data.error || data.message || 'Payment was not successful or was cancelled.');

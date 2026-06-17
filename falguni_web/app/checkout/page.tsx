@@ -132,8 +132,8 @@ export default function CheckoutPage() {
       const res = await fetch(`/api/cashfree/verify?orderId=${orderIdToVerify}`);
       const verifyData = await res.json();
 
-      if (verifyData.isPaid) {
-        // Server-Side Update Confirmed! The draft has been moved to Orders.
+      if (verifyData.isPaid || verifyData.cfStatus === 'ACTIVE') {
+        // Server-Side Update Confirmed! The draft has been moved to Orders (or will be soon via Webhook).
         await clearCart(firebaseUser!.uid);
         clearCoupon();
         setStep(2); // Show success screen

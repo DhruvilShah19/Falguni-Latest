@@ -49,15 +49,20 @@ export async function GET(request: Request) {
       customerPhone = orderData.customer_details.customer_phone || '';
     }
 
+    let hasSuccessPayment = false;
+
     // 2. Fetch Payment Details
     try {
       const payRes = await fetch(`${baseUrl}/orders/${orderId}/payments`, { headers });
       if (payRes.ok) {
         const payList = await payRes.json();
         if (Array.isArray(payList) && payList.length > 0) {
-          const successPayment = payList.find(p => p.payment_status === 'SUCCESS') || payList[0];
-          paymentMethod = successPayment.payment_group || '';
-          cfPaymentTime = successPayment.payment_time || '';
+          const successPayment = payList.find((p: any) => p.payment_status === 'SUCCESS');
+          if (successPayment) {
+            hasSuccessPayment = true;
+            paymentMethod = successPayment.payment_group || '';
+            cfPaymentTime = successPayment.payment_time || '';
+          }
         }
       }
     } catch (e) {
@@ -68,7 +73,7 @@ export async function GET(request: Request) {
     const amount = Number(orderData.order_amount) || 0;
     const status = orderData.order_status || 'UNKNOWN';
 
-    const isPaid = status === 'PAID';
+    const isPaid = status === 'PAID' || hasSuccessPayment;
 
     // 3. Update Firestore securely from the backend if payment is successful
     if (isPaid) {
@@ -99,9 +104,9 @@ export async function GET(request: Request) {
           console.log(`[Admin] Successfully moved draft ${orderId} to real Order ${newOrderRef.id}.`);
           
         } else {
-          // Fallback just in case they used the old flow where it was directly inserted into Orders
+          // Fallback just in case webhook already moved it or old flow
           const ordersRef = adminDb.collection('Orders');
-          const querySnapshot = await ordersRef.where('cashfreeOrderId', '==', orderId).limit(1).get();
+          const querySnapshot = await ordersRef.where('cashfreeDetails.cf_order_id', '==', orderId).limit(1).get();
           
           if (!querySnapshot.empty) {
             const docRef = querySnapshot.docs[0].ref;
