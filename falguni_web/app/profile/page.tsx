@@ -11,7 +11,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { 
   Package, Heart, MapPin, LogOut, ChevronRight, 
-  ShieldAlert, Gift, Tag, HelpCircle, Bell, Truck, UserCircle
+  ShieldAlert, Gift, Tag, HelpCircle, Bell, Truck, UserCircle, Phone
 } from 'lucide-react';
 
 export default function ProfilePage() {
@@ -123,6 +123,7 @@ export default function ProfilePage() {
                   <DashboardCard href="/referral-page" icon={Gift} label="Share & Earn" description="Invite friends" />
                   <DashboardCard href="/coupon" icon={Tag} label="Promo Codes" description="Manage discounts" />
                   <DashboardCard href="/faq" icon={HelpCircle} label="F.A.Q." description="Common inquiries" />
+                  <DashboardCard href="/contact" icon={Phone} label="Contact Us" description="Get in touch" />
                   <DashboardCard href="/notifications" icon={Bell} label="Notifications" description="Manage alerts" />
                 </div>
               </div>
