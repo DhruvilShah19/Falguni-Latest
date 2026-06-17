@@ -276,7 +276,7 @@ export default function OrdersPage() {
                         <div className="flex items-end justify-between border-t border-white/5 pt-6 mt-auto">
                           <div>
                             <p className="text-white/40 text-[10px] font-bold tracking-[0.2em] uppercase mb-1">Total Value</p>
-                            <p className="text-white font-serif text-2xl">₹{total.toFixed(0)}</p>
+                            <p className="text-white font-serif text-2xl">₹{total.toFixed(2)}</p>
                           </div>
                           
                           <p className="text-[#D4AF37] text-[10px] font-bold tracking-[0.3em] uppercase opacity-0 group-hover:opacity-100 transition-opacity duration-300">

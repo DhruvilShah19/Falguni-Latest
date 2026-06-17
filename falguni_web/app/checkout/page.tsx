@@ -20,7 +20,7 @@ const STEPS = [
 
 export default function CheckoutPage() {
   const router = useRouter();
-  const { firebaseUser } = useAuthStore();
+  const { firebaseUser, loading: authLoading } = useAuthStore();
   const { items, subTotal, discountedTotal, couponCode, couponDiscount, clearCoupon } = useCartStore();
 
   const [step, setStep] = useState(0);
@@ -41,6 +41,7 @@ export default function CheckoutPage() {
   // Using Cashfree embedded Drop-in UI. Validation is handled via Promise.
 
   useEffect(() => {
+    if (authLoading) return;
     if (!firebaseUser) { router.push('/login'); return; }
     if (items.length === 0) { router.push('/cart'); return; }
     getDeliveryFee().then(setDeliveryFee);
@@ -50,7 +51,7 @@ export default function CheckoutPage() {
       if (doc?.phone) setPhone(doc.phone as string);
       if (doc?.fullname) setFullName(doc.fullname as string);
     });
-  }, [firebaseUser, items.length, router]);
+  }, [firebaseUser, authLoading, items.length, router]);
 
   const discounted = discountedTotal();
   const total = discounted + (pickupBool ? 0 : deliveryFee);
@@ -148,7 +149,7 @@ export default function CheckoutPage() {
     }
   };
 
-  if (!firebaseUser || items.length === 0) return <PageShell><div className="min-h-screen bg-[#2B1B17] flex items-center justify-center"><LoadingSpinner /></div></PageShell>;
+  if (authLoading || !firebaseUser || items.length === 0) return <PageShell><div className="min-h-screen bg-[#2B1B17] flex items-center justify-center"><LoadingSpinner /></div></PageShell>;
 
   return (
     <PageShell>
@@ -156,6 +157,14 @@ export default function CheckoutPage() {
         
         {/* ── Ultra Premium Editorial Hero ── */}
         <div className="relative w-full flex flex-col items-center justify-center pt-32 pb-12 px-4 border-b border-[#D4AF37]/10 mb-12 z-10">
+           {/* Back to Cart Button */}
+           <button 
+             onClick={() => router.push('/cart')}
+             className="absolute top-24 left-4 md:left-8 z-50 flex items-center gap-2 text-white/50 hover:text-[#D4AF37] transition-colors font-bold text-xs uppercase tracking-widest"
+           >
+             <ArrowRight size={16} className="rotate-180" /> Back to Cart
+           </button>
+
            <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(212,175,55,0.05),transparent_60%)] pointer-events-none" />
 
            <div className="relative z-10 text-center flex flex-col items-center max-w-4xl mx-auto animate-fade-up w-full">
@@ -346,7 +355,7 @@ export default function CheckoutPage() {
                 <div className="w-full h-px bg-gradient-to-r from-transparent via-[#D4AF37]/30 to-transparent my-8" />
                 <div className="flex justify-between items-end">
                   <span className="text-white/80 font-black text-sm uppercase tracking-widest">Total Amount</span>
-                  <span className="text-[#D4AF37] text-5xl font-black tracking-tight drop-shadow-md">₹{total.toFixed(0)}</span>
+                  <span className="text-[#D4AF37] text-5xl font-black tracking-tight drop-shadow-md">₹{total.toFixed(2)}</span>
                 </div>
               </div>
 

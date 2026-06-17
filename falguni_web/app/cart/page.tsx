@@ -207,7 +207,7 @@ export default function CartPage() {
 
                     <div className="flex justify-between items-center mb-5 relative z-10">
                       <span className="text-white/60 font-medium text-sm">Subtotal</span>
-                      <span className="text-white font-bold tracking-wide">₹{sub.toFixed(0)}</span>
+                      <span className="text-white font-bold tracking-wide">₹{sub.toFixed(2)}</span>
                     </div>
                     
                     <div className="flex justify-between items-center mb-6 relative z-10">
@@ -222,11 +222,11 @@ export default function CartPage() {
                       <div className="flex flex-col items-end">
                         {couponDiscount > 0 && (
                           <span className="text-white/40 text-sm font-bold line-through decoration-red-400/50 mb-1">
-                            ₹{(sub + deliveryFee).toFixed(0)}
+                            ₹{(sub + deliveryFee).toFixed(2)}
                           </span>
                         )}
                         <span className="text-[#D4AF37] text-4xl font-black tracking-tight drop-shadow-md">
-                          ₹{total.toFixed(0)}
+                          ₹{total.toFixed(2)}
                         </span>
                       </div>
                     </div>
