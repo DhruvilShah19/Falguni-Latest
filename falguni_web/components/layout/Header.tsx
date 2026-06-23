@@ -226,67 +226,89 @@ export default function Header() {
       {/* ── Full Screen Mobile Menu ── */}
       {menuOpen && (
         <div className="md:hidden fixed inset-0 top-14 md:top-20 z-40 bg-[#1a100e] flex flex-col animate-fade-in overflow-hidden">
-          <div className="flex-1 px-6 py-8 flex flex-col gap-2 overflow-y-auto pb-24">
-            <div className="flex flex-col mb-4">
-              {navLinks.map(({ href, label, icon: Icon }) => (
-                <Link key={href} href={href}
-                  className="py-3 border-b border-white/5 text-base font-serif tracking-wide text-white/70 hover:text-[#D4AF37] transition-all flex items-center justify-between group">
-                  <div className="flex items-center gap-4">
-                    <Icon size={20} className="text-[#D4AF37]" />
-                    {label}
-                  </div>
-                  <ChevronDown size={16} className="-rotate-90 opacity-0 group-hover:opacity-100 transition-all text-[#D4AF37]" />
-                </Link>
-              ))}
+          
+          {/* Giant Watermark Background Icon */}
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-[0.03]">
+            <Image src="/falguni-logo.png" alt="Watermark" width={400} height={400} className="w-[120vw] h-[120vw] object-cover grayscale rounded-full mix-blend-screen blur-[2px]" />
+          </div>
+
+          <div className="flex-1 px-6 py-8 flex flex-col gap-2 overflow-y-auto relative z-10 pb-24">
+              <Link href="/" className="py-4 border-b border-white/5 text-base font-serif tracking-wide text-white/80 hover:text-[#D4AF37] transition-all flex items-center justify-between group">
+                <div className="flex items-center gap-4">
+                  <Home size={20} className="text-white/20 group-hover:text-[#D4AF37] transition-colors" />
+                  Home
+                </div>
+                <ChevronDown size={16} className="-rotate-90 opacity-0 group-hover:opacity-100 transition-all text-[#D4AF37]" />
+              </Link>
+              <Link href="/search" className="py-4 border-b border-white/5 text-base font-serif tracking-wide text-white/80 hover:text-[#D4AF37] transition-all flex items-center justify-between group">
+                <div className="flex items-center gap-4">
+                  <Search size={20} className="text-white/20 group-hover:text-[#D4AF37] transition-colors" />
+                  Search
+                </div>
+                <ChevronDown size={16} className="-rotate-90 opacity-0 group-hover:opacity-100 transition-all text-[#D4AF37]" />
+              </Link>
+              <Link href="/categories" className="py-4 border-b border-white/5 text-base font-serif tracking-wide text-white/80 hover:text-[#D4AF37] transition-all flex items-center justify-between group">
+                <div className="flex items-center gap-4">
+                  <LayoutGrid size={20} className="text-white/20 group-hover:text-[#D4AF37] transition-colors" />
+                  Categories
+                </div>
+                <ChevronDown size={16} className="-rotate-90 opacity-0 group-hover:opacity-100 transition-all text-[#D4AF37]" />
+              </Link>
+              <Link href="/products" className="py-4 border-b border-white/5 text-base font-serif tracking-wide text-white/80 hover:text-[#D4AF37] transition-all flex items-center justify-between group">
+                <div className="flex items-center gap-4">
+                  <ShoppingBag size={20} className="text-white/20 group-hover:text-[#D4AF37] transition-colors" />
+                  Products
+                </div>
+                <ChevronDown size={16} className="-rotate-90 opacity-0 group-hover:opacity-100 transition-all text-[#D4AF37]" />
+              </Link>
+
+              <div className="my-2" />
+
+              <Link href="/cart" className="py-4 border-b border-white/5 text-base font-serif tracking-wide text-white/80 hover:text-[#D4AF37] transition-all flex items-center justify-between group">
+                <div className="flex items-center gap-4">
+                  <ShoppingCart size={20} className="text-white/20 group-hover:text-[#D4AF37] transition-colors" />
+                  Cart
+                  {cartCount > 0 && <span className="bg-[#D4AF37] text-[#1a100e] text-xs font-bold px-2 py-0.5 rounded-full ml-1">{cartCount}</span>}
+                </div>
+                <ChevronDown size={16} className="-rotate-90 opacity-0 group-hover:opacity-100 transition-all text-[#D4AF37]" />
+              </Link>
+              <Link href="/favorites" className="py-4 border-b border-white/5 text-base font-serif tracking-wide text-white/80 hover:text-[#D4AF37] transition-all flex items-center justify-between group">
+                <div className="flex items-center gap-4">
+                  <Heart size={20} className="text-white/20 group-hover:text-[#D4AF37] transition-colors" />
+                  Favourites
+                </div>
+                <ChevronDown size={16} className="-rotate-90 opacity-0 group-hover:opacity-100 transition-all text-[#D4AF37]" />
+              </Link>
+              <Link href="/orders" className="py-4 border-b border-white/5 text-base font-serif tracking-wide text-white/80 hover:text-[#D4AF37] transition-all flex items-center justify-between group">
+                <div className="flex items-center gap-4">
+                  <Package size={20} className="text-white/20 group-hover:text-[#D4AF37] transition-colors" />
+                  My Orders
+                </div>
+                <ChevronDown size={16} className="-rotate-90 opacity-0 group-hover:opacity-100 transition-all text-[#D4AF37]" />
+              </Link>
+              <Link href="/profile" className="py-4 border-b border-white/5 text-base font-serif tracking-wide text-white/80 hover:text-[#D4AF37] transition-all flex items-center justify-between group">
+                <div className="flex items-center gap-4">
+                  <User size={20} className="text-white/20 group-hover:text-[#D4AF37] transition-colors" />
+                  My Profile
+                </div>
+                <ChevronDown size={16} className="-rotate-90 opacity-0 group-hover:opacity-100 transition-all text-[#D4AF37]" />
+              </Link>
+
             </div>
 
-            <div className="flex flex-col mb-4 border-b border-white/10 pb-4">
-              <Link href="/search" className="py-3 text-base font-serif tracking-wide text-white/70 hover:text-[#D4AF37] transition-all flex items-center gap-4">
-                <Search size={20} className="text-[#D4AF37]" /> Search
-              </Link>
-              <Link href="/cart" className="py-3 text-base font-serif tracking-wide text-white/70 hover:text-[#D4AF37] transition-all flex items-center gap-4">
-                <ShoppingCart size={20} className="text-[#D4AF37]" /> Cart 
-                {cartCount > 0 && <span className="bg-[#D4AF37] text-[#1a100e] text-xs font-bold px-2 py-0.5 rounded-full ml-auto">{cartCount}</span>}
-              </Link>
-              <Link href="/favorites" className="py-3 text-base font-serif tracking-wide text-white/70 hover:text-[#D4AF37] transition-all flex items-center gap-4">
-                <Heart size={20} className="text-[#D4AF37]" /> Favourites
-              </Link>
-              
-              {firebaseUser && (
-                <>
-                  <Link href="/profile" className="py-3 text-base font-serif tracking-wide text-white/70 hover:text-[#D4AF37] transition-all flex items-center gap-4">
-                    <User size={20} className="text-[#D4AF37]" /> My Profile
-                  </Link>
-                  <Link href="/orders" className="py-3 text-base font-serif tracking-wide text-white/70 hover:text-[#D4AF37] transition-all flex items-center gap-4">
-                    <Package size={20} className="text-[#D4AF37]" /> My Orders
-                  </Link>
-                </>
+            <div className="relative z-10 bg-gradient-to-t from-[#1a100e] via-[#1a100e]/90 to-transparent pt-10 pb-8 px-6">
+              {!firebaseUser ? (
+                <Link href="/login" className="block text-center py-4 rounded-xl text-base font-bold btn-gold shadow-[0_0_20px_rgba(212,175,55,0.15)]">
+                  Sign In
+                </Link>
+              ) : (
+                <button onClick={handleSignOut} className="w-full py-4 rounded-xl text-base font-bold text-red-400 hover:bg-red-500/10 transition-all text-center border border-red-500/20">
+                  Sign Out
+                </button>
               )}
             </div>
-
-            {!firebaseUser ? (
-              <Link href="/login" className="mt-2 text-center py-4 rounded-xl text-base font-bold btn-gold mx-2 shadow-[0_0_20px_rgba(212,175,55,0.15)]">
-                Sign In
-              </Link>
-            ) : (
-              <button onClick={handleSignOut} className="mt-2 py-4 px-4 rounded-xl text-base font-bold text-red-400 hover:bg-red-500/10 transition-all text-center mx-2 border border-red-500/20">
-                Sign Out
-              </button>
-            )}
           </div>
-          
-          {/* Bottom Logo Area */}
-          <div className="absolute bottom-0 w-full px-6 py-8 border-t border-white/5 flex items-center gap-4 bg-gradient-to-t from-[#1a100e] via-[#1a100e] to-transparent">
-            <div className="w-12 h-12 rounded-full overflow-hidden flex items-center justify-center border-2 border-[#D4AF37]/50 shadow-[0_0_20px_rgba(212,175,55,0.15)] flex-shrink-0">
-              <Image src="/falguni-logo.png" alt="Falguni" width={48} height={48} className="object-cover w-full h-full scale-[1.15]" />
-            </div>
-            <div className="flex flex-col leading-none">
-              <span className="font-serif text-[#D4AF37] text-xl font-bold tracking-wide">Falguni</span>
-              <span className="text-white/60 text-[10px] font-bold tracking-[0.2em] uppercase mt-1">Gruh Udhyog</span>
-            </div>
-          </div>
-        </div>
-      )}
+        )}
     </>
   );
 }
