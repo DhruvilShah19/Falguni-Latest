@@ -226,19 +226,7 @@ export default function Header() {
       {/* ── Full Screen Mobile Menu ── */}
       {menuOpen && (
         <div className="md:hidden fixed inset-0 top-14 md:top-20 z-40 bg-[#1a100e] flex flex-col animate-fade-in overflow-hidden">
-          
-          {/* Small Faded Background Logo at Bottom Left */}
-          <div className="absolute bottom-6 left-4 z-0 pointer-events-none opacity-[0.15] grayscale flex items-center gap-3 mix-blend-screen">
-            <div className="w-16 h-16 rounded-full overflow-hidden flex items-center justify-center border border-white/20">
-              <Image src="/falguni-logo.png" alt="Watermark" width={64} height={64} className="object-cover w-full h-full scale-[1.15]" />
-            </div>
-            <div className="flex flex-col leading-none">
-              <span className="font-serif text-white/90 text-xl font-bold tracking-wide">Falguni</span>
-              <span className="text-white/60 text-[9px] font-bold tracking-[0.2em] uppercase mt-1">Gruh Udhyog</span>
-            </div>
-          </div>
-
-          <div className="flex-1 px-6 py-8 flex flex-col gap-2 overflow-y-auto relative z-10 pb-24">
+          <div className="flex-1 px-6 py-8 flex flex-col gap-2 overflow-y-auto relative z-10 pb-8">
               <Link href="/" className="py-4 border-b border-white/5 text-base font-serif tracking-wide text-white/80 hover:text-[#D4AF37] transition-all flex items-center justify-between group">
                 <div className="flex items-center gap-4">
                   <Home size={20} className="text-white/20 group-hover:text-[#D4AF37] transition-colors" />
@@ -300,18 +288,29 @@ export default function Header() {
                 <ChevronDown size={16} className="-rotate-90 opacity-0 group-hover:opacity-100 transition-all text-[#D4AF37]" />
               </Link>
 
-            </div>
+              <div className="mt-6 mb-4">
+                {!firebaseUser ? (
+                  <Link href="/login" className="block text-center py-4 rounded-xl text-base font-bold btn-gold shadow-[0_0_20px_rgba(212,175,55,0.15)]">
+                    Sign In
+                  </Link>
+                ) : (
+                  <button onClick={handleSignOut} className="w-full py-4 rounded-xl text-base font-bold text-red-400 hover:bg-red-500/10 transition-all text-center border border-red-500/20">
+                    Sign Out
+                  </button>
+                )}
+              </div>
 
-            <div className="relative z-10 bg-gradient-to-t from-[#1a100e] via-[#1a100e]/90 to-transparent pt-10 pb-8 px-6">
-              {!firebaseUser ? (
-                <Link href="/login" className="block text-center py-4 rounded-xl text-base font-bold btn-gold shadow-[0_0_20px_rgba(212,175,55,0.15)]">
-                  Sign In
-                </Link>
-              ) : (
-                <button onClick={handleSignOut} className="w-full py-4 rounded-xl text-base font-bold text-red-400 hover:bg-red-500/10 transition-all text-center border border-red-500/20">
-                  Sign Out
-                </button>
-              )}
+              {/* Small Faded Background Logo at Bottom Left */}
+              <div className="mt-8 mb-2 flex items-center gap-3 opacity-50 grayscale mix-blend-screen pointer-events-none">
+                <div className="w-14 h-14 rounded-full overflow-hidden flex items-center justify-center border border-white/20">
+                  <Image src="/falguni-logo.png" alt="Watermark" width={56} height={56} className="object-cover w-full h-full scale-[1.15]" />
+                </div>
+                <div className="flex flex-col leading-none">
+                  <span className="font-serif text-white/90 text-xl font-bold tracking-wide">Falguni</span>
+                  <span className="text-white/60 text-[9px] font-bold tracking-[0.2em] uppercase mt-1">Gruh Udhyog</span>
+                </div>
+              </div>
+
             </div>
           </div>
         )}
