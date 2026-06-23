@@ -164,10 +164,10 @@ export default function AddAddressPage() {
 
   return (
     <PageShell>
-      <div className="relative overflow-hidden" style={{ height: 'calc(100vh - 72px)', background: '#2B1B17' }}>
+      <div className="relative overflow-hidden flex flex-col md:block" style={{ height: 'calc(100vh - 72px)', background: '#2B1B17' }}>
 
-        {/* ── Full-bleed 3D Map ── */}
-        <div className="absolute inset-0 z-0">
+        {/* ── 3D Map ── */}
+        <div className="relative md:absolute inset-0 z-0 h-[45vh] md:h-auto w-full flex-shrink-0">
           <GoogleMap
             mapContainerStyle={{ width: '100%', height: '100%' }}
             center={DEFAULT_CENTER}
@@ -294,9 +294,9 @@ export default function AddAddressPage() {
           />
         </div>
 
-        {/* ── Floating left panel ── */}
-        <div className="absolute top-0 bottom-0 left-0 z-20 w-[92vw] max-w-[400px] flex flex-col pointer-events-none">
-          <div className="m-4 md:m-5 flex-1 flex flex-col rounded-3xl overflow-hidden pointer-events-auto"
+        {/* ── Left panel ── */}
+        <div className="relative md:absolute md:top-0 md:bottom-0 md:left-0 z-20 w-full md:w-[400px] flex flex-col flex-1 pointer-events-none">
+          <div className="flex-1 md:m-5 flex flex-col rounded-t-3xl md:rounded-3xl overflow-hidden pointer-events-auto -mt-5 md:mt-0"
             style={{
               /* Warm #5C4033 surface — matches home/product card surfaces */
               background: 'rgba(58,36,26,0.96)',
