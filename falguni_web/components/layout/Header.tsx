@@ -301,13 +301,9 @@ export default function Header() {
               </div>
 
               {/* Small Faded Background Logo at Bottom Left */}
-              <div className="mt-8 mb-2 flex items-center gap-3 opacity-50 grayscale mix-blend-screen pointer-events-none">
+              <div className="mt-8 mb-2 flex items-center opacity-50 grayscale mix-blend-screen pointer-events-none">
                 <div className="w-14 h-14 rounded-full overflow-hidden flex items-center justify-center border border-white/20">
                   <Image src="/falguni-logo.png" alt="Watermark" width={56} height={56} className="object-cover w-full h-full scale-[1.15]" />
-                </div>
-                <div className="flex flex-col leading-none">
-                  <span className="font-serif text-white/90 text-xl font-bold tracking-wide">Falguni</span>
-                  <span className="text-white/60 text-[9px] font-bold tracking-[0.2em] uppercase mt-1">Gruh Udhyog</span>
                 </div>
               </div>
 
