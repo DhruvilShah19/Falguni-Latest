@@ -2,7 +2,7 @@
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
 import { useState, useEffect } from 'react';
-import { Search, ShoppingCart, User, Menu, X, Heart, Package, LogOut, ChevronDown, MapPin } from 'lucide-react';
+import { Search, ShoppingCart, User, Menu, X, Heart, Package, LogOut, ChevronDown, MapPin, Home, LayoutGrid, ShoppingBag } from 'lucide-react';
 import { useCartStore } from '@/store/cartStore';
 import { useAuthStore } from '@/store/authStore';
 import { signOut } from 'firebase/auth';
@@ -43,10 +43,10 @@ export default function Header() {
   };
 
   const navLinks = [
-    { href: '/',            label: 'Home' },
-    { href: '/categories',  label: 'Categories' },
-    { href: '/products',    label: 'Products' },
-    ...(firebaseUser ? [{ href: '/orders', label: 'Orders' }] : []),
+    { href: '/',            label: 'Home',       icon: Home },
+    { href: '/categories',  label: 'Categories', icon: LayoutGrid },
+    { href: '/products',    label: 'Products',   icon: ShoppingBag },
+    ...(firebaseUser ? [{ href: '/orders', label: 'Orders', icon: Package }] : []),
   ];
 
   return (
@@ -228,10 +228,13 @@ export default function Header() {
         <div className="md:hidden fixed inset-0 top-14 md:top-20 z-40 bg-[#1a100e] flex flex-col animate-fade-in overflow-hidden">
           <div className="flex-1 px-6 py-8 flex flex-col gap-2 overflow-y-auto pb-24">
             <div className="flex flex-col mb-4">
-              {navLinks.map(({ href, label }) => (
+              {navLinks.map(({ href, label, icon: Icon }) => (
                 <Link key={href} href={href}
-                  className="py-4 border-b border-white/5 text-lg font-serif tracking-wide text-white/80 hover:text-[#D4AF37] transition-all flex items-center justify-between group">
-                  {label}
+                  className="py-3 border-b border-white/5 text-base font-serif tracking-wide text-white/70 hover:text-[#D4AF37] transition-all flex items-center justify-between group">
+                  <div className="flex items-center gap-4">
+                    <Icon size={20} className="text-[#D4AF37]" />
+                    {label}
+                  </div>
                   <ChevronDown size={16} className="-rotate-90 opacity-0 group-hover:opacity-100 transition-all text-[#D4AF37]" />
                 </Link>
               ))}
