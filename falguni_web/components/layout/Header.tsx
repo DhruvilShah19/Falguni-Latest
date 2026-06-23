@@ -227,19 +227,46 @@ export default function Header() {
       {menuOpen && (
         <div className="md:hidden fixed inset-0 top-14 md:top-20 z-40 bg-[#1a100e] flex flex-col animate-fade-in overflow-hidden">
           <div className="flex-1 px-6 py-8 flex flex-col gap-2 overflow-y-auto pb-24">
-            {navLinks.map(({ href, label }) => (
-              <Link key={href} href={href}
-                className="py-4 border-b border-white/5 text-lg font-serif tracking-wide text-white/80 hover:text-[#D4AF37] transition-all flex items-center justify-between group">
-                {label}
-                <ChevronDown size={16} className="-rotate-90 opacity-0 group-hover:opacity-100 transition-all text-[#D4AF37]" />
+            <div className="flex flex-col mb-4">
+              {navLinks.map(({ href, label }) => (
+                <Link key={href} href={href}
+                  className="py-4 border-b border-white/5 text-lg font-serif tracking-wide text-white/80 hover:text-[#D4AF37] transition-all flex items-center justify-between group">
+                  {label}
+                  <ChevronDown size={16} className="-rotate-90 opacity-0 group-hover:opacity-100 transition-all text-[#D4AF37]" />
+                </Link>
+              ))}
+            </div>
+
+            <div className="flex flex-col mb-4 border-b border-white/10 pb-4">
+              <Link href="/search" className="py-3 text-base font-serif tracking-wide text-white/70 hover:text-[#D4AF37] transition-all flex items-center gap-4">
+                <Search size={20} className="text-[#D4AF37]" /> Search
               </Link>
-            ))}
+              <Link href="/cart" className="py-3 text-base font-serif tracking-wide text-white/70 hover:text-[#D4AF37] transition-all flex items-center gap-4">
+                <ShoppingCart size={20} className="text-[#D4AF37]" /> Cart 
+                {cartCount > 0 && <span className="bg-[#D4AF37] text-[#1a100e] text-xs font-bold px-2 py-0.5 rounded-full ml-auto">{cartCount}</span>}
+              </Link>
+              <Link href="/favorites" className="py-3 text-base font-serif tracking-wide text-white/70 hover:text-[#D4AF37] transition-all flex items-center gap-4">
+                <Heart size={20} className="text-[#D4AF37]" /> Favourites
+              </Link>
+              
+              {firebaseUser && (
+                <>
+                  <Link href="/profile" className="py-3 text-base font-serif tracking-wide text-white/70 hover:text-[#D4AF37] transition-all flex items-center gap-4">
+                    <User size={20} className="text-[#D4AF37]" /> My Profile
+                  </Link>
+                  <Link href="/orders" className="py-3 text-base font-serif tracking-wide text-white/70 hover:text-[#D4AF37] transition-all flex items-center gap-4">
+                    <Package size={20} className="text-[#D4AF37]" /> My Orders
+                  </Link>
+                </>
+              )}
+            </div>
+
             {!firebaseUser ? (
-              <Link href="/login" className="mt-8 text-center py-4 rounded-xl text-base font-bold btn-gold mx-2 shadow-[0_0_20px_rgba(212,175,55,0.15)]">
+              <Link href="/login" className="mt-2 text-center py-4 rounded-xl text-base font-bold btn-gold mx-2 shadow-[0_0_20px_rgba(212,175,55,0.15)]">
                 Sign In
               </Link>
             ) : (
-              <button onClick={handleSignOut} className="mt-8 py-4 px-4 rounded-xl text-base font-bold text-red-400 hover:bg-red-500/10 transition-all text-center mx-2 border border-red-500/20">
+              <button onClick={handleSignOut} className="mt-2 py-4 px-4 rounded-xl text-base font-bold text-red-400 hover:bg-red-500/10 transition-all text-center mx-2 border border-red-500/20">
                 Sign Out
               </button>
             )}
