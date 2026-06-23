@@ -227,9 +227,15 @@ export default function Header() {
       {menuOpen && (
         <div className="md:hidden fixed inset-0 top-14 md:top-20 z-40 bg-[#1a100e] flex flex-col animate-fade-in overflow-hidden">
           
-          {/* Giant Watermark Background Icon */}
-          <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-[0.03]">
-            <Image src="/falguni-logo.png" alt="Watermark" width={400} height={400} className="w-[120vw] h-[120vw] object-cover grayscale rounded-full mix-blend-screen blur-[2px]" />
+          {/* Small Faded Background Logo at Bottom Left */}
+          <div className="absolute bottom-6 left-4 z-0 pointer-events-none opacity-[0.15] grayscale flex items-center gap-3 mix-blend-screen">
+            <div className="w-16 h-16 rounded-full overflow-hidden flex items-center justify-center border border-white/20">
+              <Image src="/falguni-logo.png" alt="Watermark" width={64} height={64} className="object-cover w-full h-full scale-[1.15]" />
+            </div>
+            <div className="flex flex-col leading-none">
+              <span className="font-serif text-white/90 text-xl font-bold tracking-wide">Falguni</span>
+              <span className="text-white/60 text-[9px] font-bold tracking-[0.2em] uppercase mt-1">Gruh Udhyog</span>
+            </div>
           </div>
 
           <div className="flex-1 px-6 py-8 flex flex-col gap-2 overflow-y-auto relative z-10 pb-24">
