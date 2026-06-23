@@ -11,7 +11,8 @@ export async function GET(request: Request) {
 
   const clientId = process.env.CASHFREE_CLIENT_ID;
   const clientSecret = process.env.CASHFREE_CLIENT_SECRET;
-  const baseUrl = process.env.CASHFREE_API_URL;
+  const rawBaseUrl = process.env.CASHFREE_API_URL || '';
+  const baseUrl = rawBaseUrl.replace(/\/orders\/?$/, '') || 'https://api.cashfree.com/pg';
 
   if (!clientId || !clientSecret || !baseUrl) {
     return NextResponse.json({ error: 'Server missing Cashfree credentials' }, { status: 500 });
