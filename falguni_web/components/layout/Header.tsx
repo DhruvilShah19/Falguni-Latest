@@ -225,72 +225,33 @@ export default function Header() {
 
       {/* ── Full Screen Mobile Menu ── */}
       {menuOpen && (
-        <div className="md:hidden fixed inset-0 top-14 md:top-20 z-40 bg-[#1a100e] flex flex-col animate-fade-in overflow-hidden">
+        <div className="md:hidden fixed inset-0 top-14 md:top-20 z-40 bg-[#2B1B17] flex flex-col animate-fade-in overflow-hidden">
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(212,175,55,0.05),transparent_80%)] pointer-events-none" />
+
           <div className="flex-1 px-6 py-8 flex flex-col gap-2 overflow-y-auto relative z-10 pb-8">
-              <Link href="/" className="py-4 border-b border-white/5 text-base font-serif tracking-wide text-white/80 hover:text-[#D4AF37] transition-all flex items-center justify-between group">
-                <div className="flex items-center gap-4">
-                  <Home size={20} className="text-white/20 group-hover:text-[#D4AF37] transition-colors" />
-                  Home
-                </div>
-                <ChevronDown size={16} className="-rotate-90 opacity-0 group-hover:opacity-100 transition-all text-[#D4AF37]" />
+              <Link href="/categories" className="py-4 border-b border-[#D4AF37]/10 text-base font-serif tracking-wide text-white hover:text-[#D4AF37] transition-all flex items-center justify-between group">
+                <span>Categories</span>
+                <LayoutGrid size={20} className="text-[#D4AF37]/40 group-hover:text-[#D4AF37] transition-colors" />
               </Link>
-              <Link href="/search" className="py-4 border-b border-white/5 text-base font-serif tracking-wide text-white/80 hover:text-[#D4AF37] transition-all flex items-center justify-between group">
-                <div className="flex items-center gap-4">
-                  <Search size={20} className="text-white/20 group-hover:text-[#D4AF37] transition-colors" />
-                  Search
-                </div>
-                <ChevronDown size={16} className="-rotate-90 opacity-0 group-hover:opacity-100 transition-all text-[#D4AF37]" />
-              </Link>
-              <Link href="/categories" className="py-4 border-b border-white/5 text-base font-serif tracking-wide text-white/80 hover:text-[#D4AF37] transition-all flex items-center justify-between group">
-                <div className="flex items-center gap-4">
-                  <LayoutGrid size={20} className="text-white/20 group-hover:text-[#D4AF37] transition-colors" />
-                  Categories
-                </div>
-                <ChevronDown size={16} className="-rotate-90 opacity-0 group-hover:opacity-100 transition-all text-[#D4AF37]" />
-              </Link>
-              <Link href="/products" className="py-4 border-b border-white/5 text-base font-serif tracking-wide text-white/80 hover:text-[#D4AF37] transition-all flex items-center justify-between group">
-                <div className="flex items-center gap-4">
-                  <ShoppingBag size={20} className="text-white/20 group-hover:text-[#D4AF37] transition-colors" />
-                  Products
-                </div>
-                <ChevronDown size={16} className="-rotate-90 opacity-0 group-hover:opacity-100 transition-all text-[#D4AF37]" />
+              <Link href="/products" className="py-4 border-b border-[#D4AF37]/10 text-base font-serif tracking-wide text-white hover:text-[#D4AF37] transition-all flex items-center justify-between group">
+                <span>Products</span>
+                <ShoppingBag size={20} className="text-[#D4AF37]/40 group-hover:text-[#D4AF37] transition-colors" />
               </Link>
 
               <div className="my-2" />
 
-              <Link href="/cart" className="py-4 border-b border-white/5 text-base font-serif tracking-wide text-white/80 hover:text-[#D4AF37] transition-all flex items-center justify-between group">
-                <div className="flex items-center gap-4">
-                  <ShoppingCart size={20} className="text-white/20 group-hover:text-[#D4AF37] transition-colors" />
-                  Cart
-                  {cartCount > 0 && <span className="bg-[#D4AF37] text-[#1a100e] text-xs font-bold px-2 py-0.5 rounded-full ml-1">{cartCount}</span>}
-                </div>
-                <ChevronDown size={16} className="-rotate-90 opacity-0 group-hover:opacity-100 transition-all text-[#D4AF37]" />
+              <Link href="/orders" className="py-4 border-b border-[#D4AF37]/10 text-base font-serif tracking-wide text-white hover:text-[#D4AF37] transition-all flex items-center justify-between group">
+                <span>My Orders</span>
+                <Package size={20} className="text-[#D4AF37]/40 group-hover:text-[#D4AF37] transition-colors" />
               </Link>
-              <Link href="/favorites" className="py-4 border-b border-white/5 text-base font-serif tracking-wide text-white/80 hover:text-[#D4AF37] transition-all flex items-center justify-between group">
-                <div className="flex items-center gap-4">
-                  <Heart size={20} className="text-white/20 group-hover:text-[#D4AF37] transition-colors" />
-                  Favourites
-                </div>
-                <ChevronDown size={16} className="-rotate-90 opacity-0 group-hover:opacity-100 transition-all text-[#D4AF37]" />
-              </Link>
-              <Link href="/orders" className="py-4 border-b border-white/5 text-base font-serif tracking-wide text-white/80 hover:text-[#D4AF37] transition-all flex items-center justify-between group">
-                <div className="flex items-center gap-4">
-                  <Package size={20} className="text-white/20 group-hover:text-[#D4AF37] transition-colors" />
-                  My Orders
-                </div>
-                <ChevronDown size={16} className="-rotate-90 opacity-0 group-hover:opacity-100 transition-all text-[#D4AF37]" />
-              </Link>
-              <Link href="/profile" className="py-4 border-b border-white/5 text-base font-serif tracking-wide text-white/80 hover:text-[#D4AF37] transition-all flex items-center justify-between group">
-                <div className="flex items-center gap-4">
-                  <User size={20} className="text-white/20 group-hover:text-[#D4AF37] transition-colors" />
-                  My Profile
-                </div>
-                <ChevronDown size={16} className="-rotate-90 opacity-0 group-hover:opacity-100 transition-all text-[#D4AF37]" />
+              <Link href="/profile" className="py-4 border-b border-[#D4AF37]/10 text-base font-serif tracking-wide text-white hover:text-[#D4AF37] transition-all flex items-center justify-between group">
+                <span>My Profile</span>
+                <User size={20} className="text-[#D4AF37]/40 group-hover:text-[#D4AF37] transition-colors" />
               </Link>
 
               <div className="mt-6 mb-4">
                 {!firebaseUser ? (
-                  <Link href="/login" className="block text-center py-4 rounded-xl text-base font-bold btn-gold shadow-[0_0_20px_rgba(212,175,55,0.15)]">
+                  <Link href="/login" className="block text-center py-4 rounded-xl text-base font-bold bg-[#D4AF37] text-[#1A110D] shadow-[0_0_20px_rgba(212,175,55,0.2)] hover:bg-white transition-all">
                     Sign In
                   </Link>
                 ) : (
@@ -300,10 +261,10 @@ export default function Header() {
                 )}
               </div>
 
-              {/* Small Faded Background Logo at Bottom Left */}
-              <div className="mt-8 mb-2 flex items-center opacity-60 mix-blend-screen pointer-events-none">
-                <div className="w-10 h-10 rounded-full overflow-hidden flex items-center justify-center border border-white/20">
-                  <Image src="/falguni-logo.png" alt="Watermark" width={40} height={40} className="object-cover w-full h-full scale-[1.15]" />
+              {/* Falguni Logo / Icon at the bottom */}
+              <div className="mt-auto pt-12 pb-4 flex items-center justify-start opacity-80 pointer-events-none">
+                <div className="w-12 h-12 rounded-full overflow-hidden flex items-center justify-center border border-[#D4AF37]/20 shadow-[0_0_15px_rgba(212,175,55,0.1)] bg-[#1A110D]">
+                  <Image src="/falguni-logo.png" alt="Falguni Watermark" width={48} height={48} className="object-cover w-full h-full scale-[1.15]" />
                 </div>
               </div>
 

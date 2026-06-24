@@ -9,21 +9,28 @@ import PageShell from '@/components/layout/PageShell';
 export default function ContactPage() {
   return (
     <PageShell>
-      <div className="min-h-screen bg-[#1A110D] flex flex-col pb-[140px] relative overflow-hidden">
-        
-        {/* Ambient Background Glow (Minimal) */}
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-[1000px] h-[500px] bg-[radial-gradient(ellipse_at_top,rgba(212,175,55,0.08),transparent_70%)] pointer-events-none" />
+      <div className="min-h-screen bg-[#2B1B17] flex flex-col pb-20 relative overflow-hidden">
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(212,175,55,0.05),transparent_80%)] pointer-events-none" />
 
-        {/* ── Ultra Premium Hero ── */}
-        <div className="relative w-full pt-32 pb-16 px-6 z-10 flex flex-col items-center">
-           <span className="text-[#D4AF37] font-bold tracking-[0.4em] uppercase text-[10px] sm:text-xs mb-4 sm:mb-6 flex items-center justify-center gap-4 sm:gap-6 w-full max-w-sm">
-             <span className="flex-1 h-[1px] bg-gradient-to-r from-transparent to-[#D4AF37]/80" />
-             GET IN TOUCH
-             <span className="flex-1 h-[1px] bg-gradient-to-l from-transparent to-[#D4AF37]/80" />
-           </span>
-           <h1 className="font-serif text-4xl sm:text-6xl md:text-7xl lg:text-8xl text-white tracking-tight text-center leading-tight drop-shadow-[0_0_20px_rgba(212,175,55,0.1)] italic">
-             Contact Us
-           </h1>
+        {/* ── Premium Header Banner ── */}
+        <div className="relative w-full overflow-hidden bg-[#2B1B17] border-b border-[#D4AF37]/10 pt-28 pb-12 md:pt-36 md:pb-20 flex flex-col items-center justify-center mb-6 md:mb-12">
+           <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(212,175,55,0.15),transparent_70%)] pointer-events-none" />
+
+           <div className="relative z-10 text-center px-4 w-full mt-4 md:mt-0">
+             <div className="animate-fade-up text-[9px] md:text-xs tracking-[0.25em] md:tracking-[0.3em] font-bold text-[#D4AF37] mb-3 md:mb-4 flex items-center justify-center gap-2 md:gap-3">
+               <span className="w-6 md:w-8 h-px bg-[#D4AF37]/50" />
+               GET IN TOUCH
+               <span className="w-6 md:w-8 h-px bg-[#D4AF37]/50" />
+             </div>
+             
+             <h1 className="animate-fade-up font-serif text-2xl md:text-5xl lg:text-6xl text-white drop-shadow-[0_0_15px_rgba(212,175,55,0.2)] mb-2 md:mb-4" style={{ animationDelay: '100ms' }}>
+               Contact Us
+             </h1>
+             
+             <p className="animate-fade-up text-[var(--color-fg-muted)] max-w-lg mx-auto text-[11px] md:text-base leading-relaxed px-2" style={{ animationDelay: '200ms' }}>
+               Reach out for orders, queries, or just to say hello.
+             </p>
+           </div>
         </div>
 
         <div className="max-w-7xl mx-auto w-full px-4 sm:px-6 md:px-8 relative z-10 flex flex-col gap-12 sm:gap-16">

@@ -8,6 +8,8 @@ import { addToCart, updateCartItem } from '@/lib/firestore';
 import { useCartStore } from '@/store/cartStore';
 import type { ProductsModel, RatingModel } from '@/types';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
+import ShareButton from '@/components/ui/ShareButton';
+import BackButton from '@/components/ui/BackButton';
 import PageShell from '@/components/layout/PageShell';
 import { ChevronLeft, Star, ShoppingCart, Heart, Share2, Minus, Plus, ChevronRight, ShieldCheck, Truck, Sparkles, Leaf } from 'lucide-react';
 import { useAuthStore } from '@/store/authStore';
@@ -392,16 +394,11 @@ export default function ProductDetailPage() {
           </div>
         )}
 
-        {/* ── Top Controls: Back, Breadcrumbs, Actions (Desktop Only) ── */}
-        <div className="hidden md:flex absolute top-8 left-8 right-8 z-40 items-center justify-between pointer-events-none">
-          <button onClick={() => router.back()} className="pointer-events-auto flex items-center gap-2 text-white hover:text-[#D4AF37] transition-colors group">
-            <div className="w-10 h-10 rounded-full flex items-center justify-center bg-black/30 backdrop-blur-md shadow-lg group-hover:bg-black/50">
-              <ChevronLeft size={20} strokeWidth={2.5} className="md:w-5 md:h-5 pr-0.5" />
-            </div>
-            <span className="font-bold tracking-widest uppercase text-[10px] hidden sm:block mt-0.5">Back</span>
-          </button>
+        {/* Floating Top Nav for Product Image */}
+        <div className="absolute top-4 md:top-8 left-4 md:left-8 right-4 md:right-8 flex items-center justify-between z-50 pointer-events-none">
+          <BackButton />
 
-          <div className="pointer-events-auto flex items-center gap-2 text-[10px] font-bold tracking-[0.2em] uppercase text-white/50 bg-[#2B1B17]/50 px-5 py-2.5 rounded-full border border-white/5 backdrop-blur-md shadow-lg">
+          <div className="hidden lg:flex pointer-events-auto items-center gap-2 text-[10px] font-bold tracking-[0.2em] uppercase text-white/50 bg-[#2B1B17]/50 px-5 py-2.5 rounded-full border border-white/5 backdrop-blur-md shadow-lg">
             <Link href="/" className="hover:text-white transition-colors">Home</Link>
             <ChevronRight size={12} className="text-white/20" />
             <Link href="/categories" className="hover:text-white transition-colors">Categories</Link>
@@ -421,7 +418,7 @@ export default function ProductDetailPage() {
           </div>
         </div>
 
-        <div className="relative z-10 max-w-7xl mx-auto px-4 md:px-5 lg:px-8 pt-4 md:pt-12 lg:pt-16">
+        <div className="relative z-10 max-w-7xl mx-auto px-4 md:px-5 lg:px-8 pt-1 md:pt-12 lg:pt-16">
 
           {/* Main Product Layout */}
           <div className="flex flex-col lg:flex-row gap-6 md:gap-10 lg:gap-16">
@@ -429,19 +426,10 @@ export default function ProductDetailPage() {
             {/* ── Left: Image Gallery ── */}
             <div className="w-full lg:w-1/2 flex-shrink-0 animate-fade-up flex flex-col">
               
-              {/* Mobile Breadcrumb Path (Premium look, tight spacing above image) */}
-              <div className="flex lg:hidden items-center gap-1.5 text-[9px] font-bold tracking-[0.2em] uppercase text-white/60 bg-white/5 px-3 py-1.5 rounded-lg border border-white/10 w-max mb-3 backdrop-blur-sm shadow-sm overflow-x-auto whitespace-nowrap scrollbar-hide max-w-full">
-                <Link href="/" className="hover:text-[#D4AF37] transition-colors shrink-0">Home</Link>
-                <ChevronRight size={10} className="text-white/20 shrink-0" />
-                <Link href="/categories" className="hover:text-[#D4AF37] transition-colors shrink-0">Categories</Link>
-                <ChevronRight size={10} className="text-white/20 shrink-0" />
-                <Link href={`/categories/${product.category}`} className="text-[#D4AF37] hover:text-white transition-colors truncate max-w-[150px] shrink-0">{product.category}</Link>
-              </div>
-
               {/* Massive Main Image Frame */}
-              <div className="relative aspect-square md:aspect-[4/3] md:rounded-[2rem] overflow-hidden bg-[#2B1B17] border-b md:border border-white/10 shadow-2xl mb-3 md:mb-4 group flex items-center justify-center -mx-4 md:mx-0 w-[calc(100%+2rem)] md:w-full">
+              <div className="relative aspect-[5/4] md:aspect-[4/3] md:rounded-[2rem] overflow-hidden bg-[#2B1B17] border-b md:border border-white/10 shadow-2xl mb-3 md:mb-4 group flex items-center justify-center -mx-4 md:mx-0 w-[calc(100%+2rem)] md:w-full">
                 {/* Subtle Inner Glow */}
-                <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(212,175,55,0.1),transparent_70%)] pointer-events-none" />
+                <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(212,175,55,0.1),transparent_70%)] pointer-events-none z-10" />
                 
                 {images[currentImage] ? (
                   <Image
@@ -449,7 +437,7 @@ export default function ProductDetailPage() {
                     alt={product.name}
                     fill
                     sizes="(max-width:1024px) 100vw, 50vw"
-                    className="object-contain p-8 md:p-12 drop-shadow-2xl group-hover:scale-105 transition-transform duration-700 ease-out"
+                    className="object-cover object-center group-hover:scale-105 transition-transform duration-700 ease-out z-0"
                     priority
                   />
                 ) : (
@@ -485,6 +473,15 @@ export default function ProductDetailPage() {
             {/* ── Right: Product Info ── */}
             <div className="w-full lg:w-1/2 flex flex-col pt-0 md:pt-2 lg:pt-6 animate-fade-up" style={{ animationDelay: '100ms' }}>
               
+              {/* Mobile Breadcrumb Path */}
+              <div className="flex lg:hidden items-center gap-1.5 text-[9px] font-bold tracking-[0.2em] uppercase text-white/60 bg-white/5 px-3 py-1.5 rounded-lg border border-white/10 w-max mb-4 backdrop-blur-sm shadow-sm overflow-x-auto whitespace-nowrap scrollbar-hide max-w-full">
+                <Link href="/" className="hover:text-[#D4AF37] transition-colors shrink-0">Home</Link>
+                <ChevronRight size={10} className="text-white/20 shrink-0" />
+                <Link href="/categories" className="hover:text-[#D4AF37] transition-colors shrink-0">Categories</Link>
+                <ChevronRight size={10} className="text-white/20 shrink-0" />
+                <Link href={`/categories/${product.category}`} className="text-[#D4AF37] hover:text-white transition-colors truncate max-w-[150px] shrink-0">{product.category}</Link>
+              </div>
+
               {/* Category Tags */}
               <div className="flex flex-wrap gap-2 mb-2 md:mb-4">
                 {Array.from(new Set([product.category, product.subCategory, product.subSubCategory].filter(Boolean)))
@@ -605,7 +602,7 @@ export default function ProductDetailPage() {
       </div>
 
       {/* Quantity & CTA Row (Sticky on Mobile, explicitly outside transformed containers) */}
-      <div className="md:hidden fixed bottom-[59px] inset-x-0 z-[40] p-3 pt-3 pb-4 bg-[#1a100e]/95 backdrop-blur-xl border-t border-b border-white/10 flex flex-row items-center gap-3 shadow-[0_-10px_40px_rgba(0,0,0,0.5)]">
+      <div className="md:hidden fixed bottom-0 inset-x-0 z-[40] p-4 pt-3 pb-6 bg-[#1A110D] border-t border-[#D4AF37]/20 flex flex-row items-center gap-3 shadow-[0_-10px_30px_rgba(0,0,0,0.8)]">
         {ctaContent}
       </div>
     </PageShell>

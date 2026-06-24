@@ -1,6 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import BackButton from '@/components/ui/BackButton';
 import { sendPasswordResetEmail } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import { Mail, ChevronLeft } from 'lucide-react';
@@ -34,15 +35,10 @@ export default function ForgotPasswordPage() {
       className="min-h-dvh w-full flex items-center justify-center px-6"
       style={{ background: `linear-gradient(180deg, ${kBgTop} 0%, ${kBgMid} 50%, ${kBgTop} 100%)` }}
     >
+      <div className="absolute top-6 left-4 md:left-6 z-10">
+        <BackButton />
+      </div>
       <div className="w-full max-w-sm">
-
-        {/* Back */}
-        <button
-          onClick={() => router.back()}
-          className="flex items-center justify-center w-9 h-9 rounded-full mb-8 hover:opacity-70 transition text-[var(--color-fg)]"
-        >
-          <ChevronLeft size={22} />
-        </button>
 
         {sent ? (
           /* ── Success state ── */
@@ -88,8 +84,8 @@ export default function ForgotPasswordPage() {
                   onChange={e => setEmail(e.target.value)}
                   placeholder="Email"
                   required
-                  className="w-full h-[54px] pl-12 pr-4 rounded-xl text-[var(--color-fg)] text-sm outline-none transition-all"
-                  style={{ background: 'var(--color-surface)', border: '1px solid var(--color-border)' }}
+                  className="w-full h-[54px] pl-12 pr-4 rounded-xl text-[var(--color-fg)] text-sm outline-none transition-all placeholder:text-white/30"
+                  style={{ background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.12)' }}
                   onFocus={e => { e.currentTarget.style.borderColor = kGold; }}
                   onBlur={e  => { e.currentTarget.style.borderColor = 'var(--color-border)'; }}
                 />

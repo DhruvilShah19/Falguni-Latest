@@ -21,7 +21,7 @@ export default function CategoriesPage() {
   return (
     <PageShell>
       {/* Premium Header Banner */}
-      <div className="relative w-full overflow-hidden bg-[#2B1B17] border-b border-[#D4AF37]/10 py-8 md:py-20 flex flex-col items-center justify-center mb-6 md:mb-12">
+      <div className="relative w-full overflow-hidden bg-[#2B1B17] border-b border-[#D4AF37]/10 pt-28 pb-12 md:pt-36 md:pb-20 flex flex-col items-center justify-center mb-6 md:mb-12">
          
          {/* Ambient Glows */}
          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(212,175,55,0.15),transparent_70%)] pointer-events-none" />

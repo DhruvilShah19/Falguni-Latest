@@ -71,50 +71,30 @@ export default function DeliveryAddressesPage() {
 
   return (
     <PageShell>
-      <div className="min-h-screen" style={{ background: '#2B1B17' }}>
+      <div className="min-h-screen bg-[#2B1B17] flex flex-col pb-20 relative overflow-hidden">
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(212,175,55,0.05),transparent_80%)] pointer-events-none" />
 
-        {/* ── Hero Banner — category-page style ── */}
-        <div className="relative w-full overflow-hidden" style={{ borderBottom: '1px solid rgba(212,175,55,0.1)' }}>
-          {/* Radial glow */}
-          <div className="absolute inset-0 pointer-events-none"
-            style={{ background: 'radial-gradient(ellipse 70% 60% at 50% 0%, rgba(212,175,55,0.14) 0%, transparent 100%)' }}
-          />
+        {/* ── Premium Header Banner ── */}
+        <div className="relative w-full overflow-hidden bg-[#2B1B17] border-b border-[#D4AF37]/10 pt-28 pb-12 md:pt-36 md:pb-20 flex flex-col items-center justify-center mb-6 md:mb-12">
+           <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(212,175,55,0.15),transparent_70%)] pointer-events-none" />
 
-          {/* Back button */}
-          <div className="absolute top-6 left-5 md:top-8 md:left-8 z-20">
-            <Link href="/profile"
-              className="flex items-center gap-2 transition-all group"
-              style={{ color: 'rgba(212,175,55,0.75)' }}
-              onMouseEnter={e => (e.currentTarget as HTMLAnchorElement).style.color = '#D4AF37'}
-              onMouseLeave={e => (e.currentTarget as HTMLAnchorElement).style.color = 'rgba(212,175,55,0.75)'}
-            >
-              <div className="w-8 h-8 rounded-full flex items-center justify-center transition-all"
-                style={{ border: '1px solid rgba(212,175,55,0.3)', background: '#2B1B17' }}
-                onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.borderColor = '#D4AF37'; (e.currentTarget as HTMLDivElement).style.background = 'rgba(212,175,55,0.08)'; }}
-                onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.borderColor = 'rgba(212,175,55,0.3)'; (e.currentTarget as HTMLDivElement).style.background = '#2B1B17'; }}
-              >
-                <ChevronLeft size={16} />
-              </div>
-              <span className="text-[11px] font-bold tracking-wider uppercase hidden sm:block">Profile</span>
-            </Link>
-          </div>
 
-          <div className="relative z-10 text-center px-4 py-14 md:py-20">
-            {/* Eyebrow */}
-            <span className="text-[#D4AF37] font-bold tracking-[0.5em] uppercase text-xs mb-6 flex items-center justify-center gap-6">
-              <span className="w-16 h-[1px] bg-gradient-to-r from-transparent to-[#D4AF37]" />
-              YOUR ADDRESSES
-              <span className="w-16 h-[1px] bg-gradient-to-l from-transparent to-[#D4AF37]" />
-            </span>
-            <h1 className="font-serif text-5xl md:text-7xl lg:text-8xl text-white mb-6 tracking-tight" 
-              style={{ fontStyle: 'italic', textShadow: '0 0 30px rgba(212,175,55,0.15)' }}
-            >
-              Delivery Locations
-            </h1>
-            <p className="max-w-sm mx-auto text-sm leading-relaxed" style={{ color: '#9A8878' }}>
-              Manage your saved delivery addresses for fast checkout.
-            </p>
-          </div>
+
+           <div className="relative z-10 text-center px-4 w-full">
+             <div className="animate-fade-up text-[9px] md:text-xs tracking-[0.25em] md:tracking-[0.3em] font-bold text-[#D4AF37] mb-3 md:mb-4 flex items-center justify-center gap-2 md:gap-3">
+               <span className="w-6 md:w-8 h-px bg-[#D4AF37]/50" />
+               YOUR ADDRESSES
+               <span className="w-6 md:w-8 h-px bg-[#D4AF37]/50" />
+             </div>
+             
+             <h1 className="animate-fade-up font-serif text-2xl md:text-5xl lg:text-6xl text-white drop-shadow-[0_0_15px_rgba(212,175,55,0.2)] mb-2 md:mb-4" style={{ animationDelay: '100ms' }}>
+               Delivery Locations
+             </h1>
+             
+             <p className="animate-fade-up text-[var(--color-fg-muted)] max-w-lg mx-auto text-[11px] md:text-base leading-relaxed px-2" style={{ animationDelay: '200ms' }}>
+               Manage your delivery destinations for seamless acquisitions.
+             </p>
+           </div>
         </div>
 
         {/* ── Content ── */}

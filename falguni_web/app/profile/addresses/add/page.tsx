@@ -7,7 +7,8 @@ import { db } from '@/lib/firebase';
 import { useAuthStore } from '@/store/authStore';
 import PageShell from '@/components/layout/PageShell';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
-import { ArrowLeft, MapPin, Check, LocateFixed, Search, Home, Navigation, AlertCircle, Plus, Minus, Compass } from 'lucide-react';
+import { Compass, Crosshair, Navigation, Search, Check, Save, ArrowLeft, Building2, MapPin, Map as MapIcon, Type, Phone, Home, Plus, Minus, LocateFixed, AlertCircle } from 'lucide-react';
+import BackButton from '@/components/ui/BackButton';
 import Link from 'next/link';
 import { useJsApiLoader, GoogleMap } from '@react-google-maps/api';
 import usePlacesAutocomplete, { getGeocode, getLatLng } from 'use-places-autocomplete';
@@ -101,7 +102,9 @@ export default function AddAddressPage() {
       const { lat, lng } = await getLatLng(results[0]);
       setAddress(suggestion.description);
       if (mapRef.current) { mapRef.current.panTo({ lat, lng }); mapRef.current.setZoom(18); }
-    } catch (e) { console.error(e); }
+    } catch (e) {
+      // Ignore geocode errors silently instead of breaking UI
+    }
   };
 
   const handleIdle = useCallback(() => {
@@ -117,12 +120,20 @@ export default function AddAddressPage() {
 
   const handleLocateMe = () => {
     if (navigator.geolocation && mapRef.current) {
-      navigator.geolocation.getCurrentPosition(pos => {
-        const loc = { lat: pos.coords.latitude, lng: pos.coords.longitude };
-        mapRef.current!.panTo(loc);
-        mapRef.current!.setZoom(18);
-        mapRef.current!.setTilt(45);
-      });
+      navigator.geolocation.getCurrentPosition(
+        pos => {
+          const loc = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+          mapRef.current!.panTo(loc);
+          mapRef.current!.setZoom(18);
+          mapRef.current!.setTilt(45);
+        },
+        err => {
+          // Geolocation error
+          alert('Unable to retrieve your location. Please check browser permissions.');
+        }
+      );
+    } else {
+      alert('Geolocation is not supported by your browser.');
     }
   };
 
@@ -146,7 +157,6 @@ export default function AddAddressPage() {
       });
       router.push('/profile/addresses');
     } catch (err: any) {
-      console.error(err);
       setError('Failed to save address. Please try again.');
       setIsSubmitting(false);
     }
@@ -164,325 +174,204 @@ export default function AddAddressPage() {
 
   return (
     <PageShell>
-      <div className="relative overflow-hidden flex flex-col md:block" style={{ height: 'calc(100vh - 72px)', background: '#2B1B17' }}>
-
-        {/* ── 3D Map ── */}
-        <div className="relative md:absolute inset-0 z-0 h-[45vh] md:h-auto w-full flex-shrink-0">
-          <GoogleMap
-            mapContainerStyle={{ width: '100%', height: '100%' }}
-            center={DEFAULT_CENTER}
-            zoom={17}
-            options={{
-              disableDefaultUI: true,
-              zoomControl: false,
-              scrollwheel: true,
-              gestureHandling: 'greedy',
-              tilt: 45,
-              heading: 0,
-              mapTypeId: 'roadmap',
-              isFractionalZoomEnabled: true,
-              styles: goldenMapStyle,
-            }}
-            onLoad={map => {
-              mapRef.current = map;
-              map.setTilt(45);
-            }}
-            onIdle={handleIdle}
-          />
-
-          {/* ── Centre pin — gold diamond ── */}
-          <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
-            <div className="flex flex-col items-center" style={{ marginTop: '-40px' }}>
-              {/* Diamond-head pin */}
-              <div className="flex items-center justify-center"
-                style={{
-                  width: 50, height: 50,
-                  borderRadius: '50% 50% 50% 0',
-                  transform: 'rotate(-45deg)',
-                  background: 'linear-gradient(135deg, #E8C84A 0%, #D4AF37 60%, #A88520 100%)',
-                  boxShadow: '0 6px 24px rgba(212,175,55,0.6), 0 2px 6px rgba(0,0,0,0.4)',
-                  border: '2.5px solid rgba(255,255,255,0.92)',
-                }}
-              >
-                <MapPin size={20} style={{ transform: 'rotate(45deg)', color: '#2B1B17', fill: '#2B1B17' }} />
-              </div>
-              {/* Oval shadow */}
-              <div style={{ width: 16, height: 5, borderRadius: '50%', marginTop: 4, background: 'rgba(0,0,0,0.2)', filter: 'blur(3px)' }} />
-              {/* Pulse ring */}
-              <div className="absolute rounded-full animate-ping"
-                style={{ width: 18, height: 18, top: 46, background: 'rgba(212,175,55,0.28)' }} />
-            </div>
-          </div>
-
-          {/* ── Right-side controls ── */}
-          <div className="absolute right-5 bottom-10 z-20 flex flex-col items-center gap-3">
-
-            {/* + / − zoom card */}
-            <div className="flex flex-col overflow-hidden"
-              style={{
-                borderRadius: 14,
-                border: '1px solid rgba(255,255,255,0.15)',
-                background: 'rgba(36,20,10,0.88)',
-                backdropFilter: 'blur(16px)',
-                boxShadow: '0 8px 28px rgba(0,0,0,0.45)',
-              }}
-            >
-              <button type="button" onClick={handleZoomIn}
-                className="flex items-center justify-center transition-all"
-                style={{ width: 44, height: 44, color: '#F0EDE8' }}
-                onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(212,175,55,0.18)'; (e.currentTarget as HTMLButtonElement).style.color = '#D4AF37'; }}
-                onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = 'transparent'; (e.currentTarget as HTMLButtonElement).style.color = '#F0EDE8'; }}
-              >
-                <Plus size={17} strokeWidth={2} />
-              </button>
-              <div style={{ height: 1, background: 'rgba(255,255,255,0.08)' }} />
-              <button type="button" onClick={handleZoomOut}
-                className="flex items-center justify-center transition-all"
-                style={{ width: 44, height: 44, color: '#F0EDE8' }}
-                onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(212,175,55,0.18)'; (e.currentTarget as HTMLButtonElement).style.color = '#D4AF37'; }}
-                onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = 'transparent'; (e.currentTarget as HTMLButtonElement).style.color = '#F0EDE8'; }}
-              >
-                <Minus size={17} strokeWidth={2} />
-              </button>
-            </div>
-
-            {/* Compass — reset 3D north */}
-            <button type="button" onClick={handleResetTilt} title="Reset 3D view"
-              className="flex items-center justify-center transition-all"
-              style={{
-                width: 44, height: 44, borderRadius: 12,
-                border: '1px solid rgba(255,255,255,0.12)',
-                background: 'rgba(36,20,10,0.88)',
-                backdropFilter: 'blur(12px)',
-                boxShadow: '0 4px 14px rgba(0,0,0,0.35)',
-                color: 'rgba(212,175,55,0.65)',
-              }}
-              onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(212,175,55,0.4)'; (e.currentTarget as HTMLButtonElement).style.color = '#D4AF37'; }}
-              onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(255,255,255,0.12)'; (e.currentTarget as HTMLButtonElement).style.color = 'rgba(212,175,55,0.65)'; }}
-            >
-              <Compass size={17} strokeWidth={1.5} />
-            </button>
-
-            {/* Locate me */}
-            <button type="button" onClick={handleLocateMe} title="Go to my location"
-              className="flex items-center justify-center transition-all"
-              style={{
-                width: 44, height: 44, borderRadius: 12,
-                background: 'linear-gradient(135deg, #D4AF37 0%, #F0CF6B 50%, #B8952A 100%)',
-                boxShadow: '0 6px 20px rgba(212,175,55,0.42)',
-                color: '#2B1B17',
-              }}
-              onMouseEnter={e => (e.currentTarget as HTMLButtonElement).style.boxShadow = '0 8px 28px rgba(212,175,55,0.58)'}
-              onMouseLeave={e => (e.currentTarget as HTMLButtonElement).style.boxShadow = '0 6px 20px rgba(212,175,55,0.42)'}
-            >
-              <LocateFixed size={17} strokeWidth={2} />
-            </button>
-          </div>
-
-          {/* 3D hint badge */}
-          <div className="absolute bottom-10 left-1/2 -translate-x-1/2 z-10 pointer-events-none"
-            style={{ padding: '4px 12px', borderRadius: 20, background: 'rgba(36,20,10,0.72)', backdropFilter: 'blur(8px)', border: '1px solid rgba(212,175,55,0.18)' }}
+      <div className="min-h-screen bg-[#2B1B17] flex flex-col pb-20 relative overflow-hidden">
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(212,175,55,0.05),transparent_80%)] pointer-events-none" />
+        
+        {/* ── Header ── */}
+        <div className="px-5 pt-28 md:pt-36 pb-6 relative z-10 max-w-4xl mx-auto w-full">
+          <Link href="/profile/addresses"
+            className="inline-flex items-center gap-2 mb-6 group transition-colors"
+            style={{ color: 'rgba(212,175,55,0.7)' }}
+            onMouseEnter={e => (e.currentTarget as HTMLAnchorElement).style.color = '#D4AF37'}
+            onMouseLeave={e => (e.currentTarget as HTMLAnchorElement).style.color = 'rgba(212,175,55,0.7)'}
           >
-            <p className="text-[9px] font-bold tracking-[0.35em] uppercase whitespace-nowrap" style={{ color: 'rgba(212,175,55,0.65)' }}>
-              3D · Scroll to zoom · Drag to explore
-            </p>
-          </div>
+            <ArrowLeft size={15} />
+            <span className="text-[10px] font-bold tracking-[0.3em] uppercase">Back</span>
+          </Link>
 
-          {/* Panel-edge vignette */}
-          <div className="absolute inset-0 pointer-events-none"
-            style={{ background: 'linear-gradient(to right, rgba(36,20,10,0.9) 0%, rgba(36,20,10,0.3) 36%, transparent 52%)' }}
-          />
+          <h1 className="font-serif text-3xl leading-tight mb-1 text-white">Add Address</h1>
+          <p className="text-sm" style={{ color: '#9A8878' }}>Search or drag the map to pin your location</p>
         </div>
 
-        {/* ── Left panel ── */}
-        <div className="relative md:absolute md:top-0 md:bottom-0 md:left-0 z-20 w-full md:w-[400px] flex flex-col flex-1 pointer-events-none">
-          <div className="flex-1 md:m-5 flex flex-col rounded-t-3xl md:rounded-3xl overflow-hidden pointer-events-auto -mt-5 md:mt-0"
-            style={{
-              /* Warm #5C4033 surface — matches home/product card surfaces */
-              background: 'rgba(58,36,26,0.96)',
-              backdropFilter: 'blur(20px)',
-              border: '1px solid rgba(255,255,255,0.1)',
-              boxShadow: '0 24px 64px rgba(0,0,0,0.5)',
-            }}
-          >
+        <div className="px-5 flex flex-col gap-6 relative z-10 max-w-4xl mx-auto w-full">
 
-            {/* ── Header ── */}
-            <div className="flex-shrink-0 px-5 pt-5 pb-4"
-              style={{ borderBottom: '1px solid rgba(255,255,255,0.07)' }}
+          {/* Error */}
+          {error && (
+            <div className="flex items-start gap-3 px-4 py-3 rounded-xl"
+              style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.25)' }}
             >
-              {/* Back */}
-              <Link href="/profile/addresses"
-                className="inline-flex items-center gap-2 mb-5 group transition-colors"
-                style={{ color: 'rgba(212,175,55,0.7)' }}
-                onMouseEnter={e => (e.currentTarget as HTMLAnchorElement).style.color = '#D4AF37'}
-                onMouseLeave={e => (e.currentTarget as HTMLAnchorElement).style.color = 'rgba(212,175,55,0.7)'}
-              >
-                <ArrowLeft size={15} />
-                <span className="text-[10px] font-bold tracking-[0.3em] uppercase">Back</span>
-              </Link>
+              <AlertCircle size={14} className="text-red-400 flex-shrink-0 mt-0.5" />
+              <p className="text-sm text-red-400 leading-snug">{error}</p>
+            </div>
+          )}
 
-              <h1 className="font-serif text-white text-2xl leading-tight mb-0.5">Add New Address</h1>
-              <p className="text-xs" style={{ color: '#9A8878' }}>Search or drag the map to pin your location</p>
+          {/* ── Search ── */}
+          <div className="relative z-50">
+            <div className="relative">
+              <input
+                value={value}
+                onChange={e => setValue(e.target.value)}
+                disabled={!ready}
+                placeholder="Search area, street or landmark…"
+                className="w-full text-sm text-white outline-none transition-all placeholder:text-white/30 shadow-lg"
+                style={{
+                  background: 'rgba(255,255,255,0.07)',
+                  border: '1px solid rgba(212,175,55,0.3)',
+                  borderRadius: 16,
+                  padding: '14px 14px 14px 42px',
+                }}
+                onFocus={e => (e.target as HTMLInputElement).style.borderColor = 'rgba(212,175,55,0.7)'}
+                onBlur={e => (e.target as HTMLInputElement).style.borderColor = 'rgba(212,175,55,0.3)'}
+              />
+              <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none text-[#D4AF37]" />
             </div>
 
-            {/* ── Scrollable content ── */}
-            <div className="flex-1 overflow-y-auto px-5 py-4 flex flex-col gap-4"
-              style={{ scrollbarWidth: 'none' }}
-            >
-
-              {/* Error */}
-              {error && (
-                <div className="flex items-start gap-3 px-4 py-3 rounded-xl"
-                  style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.25)' }}
-                >
-                  <AlertCircle size={14} className="text-red-400 flex-shrink-0 mt-0.5" />
-                  <p className="text-sm text-red-400 leading-snug">{error}</p>
-                </div>
-              )}
-
-              {/* Search */}
-              <div className="relative">
-                <p className="text-xs text-white/40 mb-1.5">Search location</p>
-                <div className="relative">
-                  <input
-                    value={value}
-                    onChange={e => setValue(e.target.value)}
-                    disabled={!ready}
-                    placeholder="Area, street or landmark…"
-                    className="w-full text-sm text-white outline-none transition-all placeholder:text-white/20"
-                    style={{
-                      background: '#2B1B17',
-                      border: '1px solid rgba(212,175,55,0.2)',
-                      borderRadius: 14,
-                      padding: '12px 14px 12px 38px',
-                    }}
-                    onFocus={e => (e.target as HTMLInputElement).style.borderColor = 'rgba(212,175,55,0.55)'}
-                    onBlur={e => (e.target as HTMLInputElement).style.borderColor = 'rgba(212,175,55,0.2)'}
-                  />
-                  <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none text-white/25" />
-                </div>
-
-                {status === 'OK' && (
-                  <ul className="absolute top-full left-0 right-0 mt-1.5 overflow-hidden rounded-2xl z-50"
-                    style={{
-                      background: 'rgba(50,30,18,0.98)',
-                      border: '1px solid rgba(255,255,255,0.08)',
-                      boxShadow: '0 16px 40px rgba(0,0,0,0.5)',
-                      maxHeight: 220,
-                      overflowY: 'auto',
-                    }}
+            {status === 'OK' && (
+              <ul className="absolute top-full left-0 right-0 mt-2 overflow-hidden rounded-2xl"
+                style={{
+                  background: 'rgba(50,30,18,0.98)',
+                  border: '1px solid rgba(255,255,255,0.08)',
+                  boxShadow: '0 16px 40px rgba(0,0,0,0.5)',
+                  maxHeight: 220,
+                  overflowY: 'auto',
+                }}
+              >
+                {data.map(suggestion => (
+                  <li key={suggestion.place_id} onClick={() => handleSelect(suggestion)}
+                    className="flex items-start gap-3 cursor-pointer transition-all px-4 py-3.5"
+                    style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}
+                    onMouseEnter={e => (e.currentTarget as HTMLLIElement).style.background = 'rgba(212,175,55,0.07)'}
+                    onMouseLeave={e => (e.currentTarget as HTMLLIElement).style.background = 'transparent'}
                   >
-                    {data.map(suggestion => (
-                      <li key={suggestion.place_id} onClick={() => handleSelect(suggestion)}
-                        className="flex items-start gap-3 cursor-pointer transition-all px-4 py-3"
-                        style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}
-                        onMouseEnter={e => (e.currentTarget as HTMLLIElement).style.background = 'rgba(212,175,55,0.07)'}
-                        onMouseLeave={e => (e.currentTarget as HTMLLIElement).style.background = 'transparent'}
-                      >
-                        <MapPin size={13} className="flex-shrink-0 mt-0.5" style={{ color: 'rgba(212,175,55,0.5)' }} />
-                        <span className="text-sm leading-snug" style={{ color: '#F0EDE8' }}>
-                          {suggestion.description}
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </div>
-
-              {/* ── Pinned Address — large, unmissable ── */}
-              <div className="rounded-2xl overflow-hidden"
-                style={{
-                  border: address ? '1.5px solid rgba(212,175,55,0.4)' : '1px solid rgba(255,255,255,0.08)',
-                  background: address ? 'rgba(212,175,55,0.06)' : 'rgba(43,27,23,0.5)',
-                  transition: 'all 0.3s',
-                }}
-              >
-                {/* Label row */}
-                <div className="flex items-center justify-between px-4 py-2.5"
-                  style={{ borderBottom: address ? '1px solid rgba(212,175,55,0.15)' : '1px solid rgba(255,255,255,0.06)' }}
-                >
-                  <div className="flex items-center gap-2">
-                    <div className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0"
-                      style={{ background: address ? '#D4AF37' : 'rgba(255,255,255,0.08)' }}
-                    >
-                      <MapPin size={11} style={{ color: address ? '#2B1B17' : '#9A8878', fill: address ? '#2B1B17' : 'none' }} />
-                    </div>
-                    <span className="text-[10px] font-bold tracking-[0.25em] uppercase"
-                      style={{ color: address ? '#D4AF37' : '#9A8878' }}
-                    >
-                      {address ? 'Delivery Location' : 'No location pinned yet'}
+                    <MapPin size={14} className="flex-shrink-0 mt-0.5" style={{ color: 'rgba(212,175,55,0.5)' }} />
+                    <span className="text-sm leading-snug" style={{ color: '#F0EDE8' }}>
+                      {suggestion.description}
                     </span>
-                  </div>
-                  {isLoadingAddress && (
-                    <div className="w-3.5 h-3.5 rounded-full border-[1.5px] animate-spin flex-shrink-0"
-                      style={{ borderColor: 'rgba(212,175,55,0.25)', borderTopColor: '#D4AF37' }}
-                    />
-                  )}
-                </div>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
 
-                {/* Address text — the main hero of this section */}
-                <div className="px-4 py-4">
-                  {address ? (
-                    <p className="text-[15px] font-medium leading-relaxed" style={{ color: '#F0EDE8' }}>
-                      {address}
-                    </p>
-                  ) : (
-                    <p className="text-sm italic leading-relaxed" style={{ color: 'rgba(154,136,120,0.5)' }}>
-                      Move the map pin or use search above — your address will appear here automatically.
-                    </p>
-                  )}
+          {/* ── Embedded Map ── */}
+          <div className="relative w-full h-[350px] rounded-3xl overflow-hidden shadow-[0_12px_40px_rgba(0,0,0,0.4)] border border-white/10 z-0 bg-[#2B1B17]">
+            <GoogleMap
+              mapContainerStyle={{ width: '100%', height: '100%' }}
+              center={DEFAULT_CENTER}
+              zoom={17}
+              options={{
+                disableDefaultUI: true,
+                zoomControl: false,
+                scrollwheel: true,
+                gestureHandling: 'greedy',
+                tilt: 45,
+                heading: 0,
+                mapTypeId: 'roadmap',
+                isFractionalZoomEnabled: true,
+                styles: goldenMapStyle,
+              }}
+              onLoad={map => {
+                mapRef.current = map;
+                map.setTilt(45);
+              }}
+              onIdle={handleIdle}
+            />
+
+            {/* Centre pin */}
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
+              <div className="flex flex-col items-center" style={{ marginTop: '-40px' }}>
+                <div className="flex items-center justify-center"
+                  style={{
+                    width: 44, height: 44,
+                    borderRadius: '50% 50% 50% 0',
+                    transform: 'rotate(-45deg)',
+                    background: 'linear-gradient(135deg, #E8C84A 0%, #D4AF37 60%, #A88520 100%)',
+                    boxShadow: '0 6px 24px rgba(212,175,55,0.6), 0 2px 6px rgba(0,0,0,0.4)',
+                    border: '2px solid rgba(255,255,255,0.9)',
+                  }}
+                >
+                  <MapPin size={18} style={{ transform: 'rotate(45deg)', color: '#2B1B17', fill: '#2B1B17' }} />
                 </div>
+                <div style={{ width: 14, height: 4, borderRadius: '50%', marginTop: 4, background: 'rgba(0,0,0,0.2)', filter: 'blur(2px)' }} />
               </div>
-
-              {/* Form fields */}
-              <form id="address-form" onSubmit={handleSubmit} className="flex flex-col gap-3.5">
-                <FormField
-                  label="House / Flat No."
-                  value={houseNumber}
-                  onChange={setHouseNumber}
-                  placeholder="e.g. Apt 4B, House 23"
-                  required
-                />
-                <FormField
-                  label="Zip Code / Landmark"
-                  value={closestBusStop}
-                  onChange={setClosestBusStop}
-                  placeholder="e.g. 380015 or Near Bus Stand"
-                  required
-                />
-              </form>
-
             </div>
 
-            {/* ── Save button ── */}
-            <div className="flex-shrink-0 px-5 py-4"
-              style={{ borderTop: '1px solid rgba(255,255,255,0.07)' }}
-            >
-              <button
-                form="address-form"
-                type="submit"
-                disabled={isSubmitting || !address}
-                className="w-full flex items-center justify-center gap-2.5 rounded-2xl font-bold tracking-[0.2em] uppercase text-sm transition-all disabled:opacity-40"
-                style={{
-                  padding: '14px 0',
-                  background: 'linear-gradient(135deg, #D4AF37 0%, #F0CF6B 50%, #B8952A 100%)',
-                  color: '#2B1B17',
-                  boxShadow: (!isSubmitting && address) ? '0 6px 24px rgba(212,175,55,0.3)' : 'none',
-                }}
-                onMouseEnter={e => { if (!isSubmitting && address) (e.currentTarget as HTMLButtonElement).style.boxShadow = '0 10px 32px rgba(212,175,55,0.45)'; }}
-                onMouseLeave={e => (e.currentTarget as HTMLButtonElement).style.boxShadow = (!isSubmitting && address) ? '0 6px 24px rgba(212,175,55,0.3)' : 'none'}
+            {/* Map Controls */}
+            <div className="absolute right-3 bottom-4 z-20 flex flex-col items-center gap-2 pointer-events-auto">
+              {/* Zoom */}
+              <div className="flex flex-col overflow-hidden rounded-xl bg-black/60 backdrop-blur-md border border-white/10">
+                <button type="button" onClick={handleZoomIn} className="w-10 h-10 flex items-center justify-center text-white/80 active:bg-white/10"><Plus size={16} /></button>
+                <div className="h-[1px] bg-white/10" />
+                <button type="button" onClick={handleZoomOut} className="w-10 h-10 flex items-center justify-center text-white/80 active:bg-white/10"><Minus size={16} /></button>
+              </div>
+              {/* Compass */}
+              <button type="button" onClick={handleResetTilt} className="w-10 h-10 flex items-center justify-center rounded-xl bg-black/60 backdrop-blur-md border border-white/10 text-white/80 active:bg-white/10">
+                <Compass size={16} />
+              </button>
+              {/* Locate Me */}
+              <button type="button" onClick={handleLocateMe} className="w-10 h-10 flex items-center justify-center rounded-xl text-black shadow-lg"
+                style={{ background: 'linear-gradient(135deg, #D4AF37 0%, #F0CF6B 50%, #B8952A 100%)' }}
               >
-                {isSubmitting ? (
-                  <div className="w-4 h-4 rounded-full border-2 animate-spin" style={{ borderColor: 'rgba(43,27,23,0.25)', borderTopColor: '#2B1B17' }} />
-                ) : (
-                  <><Check size={15} strokeWidth={2.5} /> Save Address</>
-                )}
+                <LocateFixed size={16} />
               </button>
             </div>
-
+            
+            {/* 3D hint badge */}
+            <div className="absolute bottom-4 left-3 z-10 pointer-events-none rounded-full bg-black/50 backdrop-blur-md border border-white/10 px-3 py-1.5">
+              <p className="text-[9px] font-bold tracking-widest uppercase text-[#D4AF37]">3D map</p>
+            </div>
           </div>
-        </div>
 
+          {/* ── Pinned Address Display ── */}
+          <div className="rounded-2xl overflow-hidden p-4"
+            style={{
+              border: address ? '1px solid rgba(212,175,55,0.4)' : '1px solid rgba(255,255,255,0.1)',
+              background: address ? 'rgba(212,175,55,0.08)' : 'rgba(255,255,255,0.03)',
+            }}
+          >
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2">
+                <MapPin size={14} style={{ color: address ? '#D4AF37' : '#9A8878' }} />
+                <span className="text-[10px] font-bold tracking-[0.2em] uppercase" style={{ color: address ? '#D4AF37' : '#9A8878' }}>
+                  {address ? 'Delivery Location' : 'No location pinned'}
+                </span>
+              </div>
+              {isLoadingAddress && <div className="w-3.5 h-3.5 rounded-full border-2 animate-spin border-[#D4AF37]/30 border-t-[#D4AF37]" />}
+            </div>
+            {address ? (
+              <p className="text-[15px] font-medium leading-relaxed text-[#F0EDE8]">{address}</p>
+            ) : (
+              <p className="text-sm italic text-[#9A8878]">Move the map pin to select your delivery address.</p>
+            )}
+          </div>
+
+          {/* ── Form Fields ── */}
+          <form id="address-form" onSubmit={handleSubmit} className="flex flex-col gap-4">
+            <FormField label="House / Flat No." value={houseNumber} onChange={setHouseNumber} placeholder="e.g. Apt 4B, House 23" required />
+            <FormField label="Zip Code / Landmark" value={closestBusStop} onChange={setClosestBusStop} placeholder="e.g. Near Bus Stand" required />
+          </form>
+
+          {/* ── Save Button ── */}
+          <button
+            form="address-form"
+            type="submit"
+            disabled={isSubmitting || !address}
+            className="w-full flex items-center justify-center gap-2.5 rounded-2xl font-bold tracking-[0.2em] uppercase text-sm transition-all disabled:opacity-40 mt-4"
+            style={{
+              padding: '16px 0',
+              background: 'linear-gradient(135deg, #D4AF37 0%, #F0CF6B 50%, #B8952A 100%)',
+              color: '#2B1B17',
+              boxShadow: (!isSubmitting && address) ? '0 8px 24px rgba(212,175,55,0.35)' : 'none',
+            }}
+          >
+            {isSubmitting ? (
+              <div className="w-5 h-5 rounded-full border-2 animate-spin border-black/20 border-t-black" />
+            ) : (
+              <><Check size={16} strokeWidth={2.5} /> Save Address</>
+            )}
+          </button>
+
+        </div>
       </div>
     </PageShell>
   );
@@ -507,9 +396,9 @@ function FormField({ label, value, onChange, placeholder, required }: {
         value={value}
         onChange={e => onChange(e.target.value)}
         placeholder={placeholder}
-        className="w-full text-sm text-white outline-none transition-all placeholder:text-white/20"
+        className="w-full text-sm text-white outline-none transition-all placeholder:text-white/30"
         style={{
-          background: '#2B1B17',
+          background: 'rgba(255,255,255,0.07)',
           border: '1px solid rgba(212,175,55,0.2)',
           borderRadius: 14,
           padding: '12px 14px',

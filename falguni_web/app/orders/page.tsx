@@ -152,25 +152,25 @@ export default function OrdersPage() {
 
   return (
     <PageShell>
-      <div className="flex flex-col min-h-screen bg-[#2B1B17]">
-        {/* ── Ultra Premium Editorial Hero ── */}
-        <div className="relative w-full min-h-[50vh] flex flex-col items-center justify-center pt-32 pb-16 px-4 border-b border-[#D4AF37]/10">
-           <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(212,175,55,0.05),transparent_60%)] pointer-events-none" />
-           
+      <div className="min-h-screen bg-[#2B1B17] flex flex-col pb-20 relative overflow-hidden">
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(212,175,55,0.05),transparent_80%)] pointer-events-none" />
+        
+        {/* ── Premium Header Banner ── */}
+        <div className="relative w-full overflow-hidden bg-[#2B1B17] border-b border-[#D4AF37]/10 pt-28 pb-12 md:pt-36 md:pb-20 flex flex-col items-center justify-center mb-6 md:mb-12">
+           <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(212,175,55,0.15),transparent_70%)] pointer-events-none" />
 
-
-           <div className="relative z-10 text-center flex flex-col items-center max-w-4xl mx-auto animate-fade-up">
-             <span className="text-[#D4AF37] font-bold tracking-[0.5em] uppercase text-xs mb-8 flex items-center justify-center gap-6">
-               <span className="w-16 h-[1px] bg-gradient-to-r from-transparent to-[#D4AF37]" />
+           <div className="relative z-10 text-center px-4 w-full">
+             <div className="animate-fade-up text-[9px] md:text-xs tracking-[0.25em] md:tracking-[0.3em] font-bold text-[#D4AF37] mb-3 md:mb-4 flex items-center justify-center gap-2 md:gap-3">
+               <span className="w-6 md:w-8 h-px bg-[#D4AF37]/50" />
                YOUR ACQUISITIONS
-               <span className="w-16 h-[1px] bg-gradient-to-l from-transparent to-[#D4AF37]" />
-             </span>
+               <span className="w-6 md:w-8 h-px bg-[#D4AF37]/50" />
+             </div>
              
-             <h1 className="font-serif text-5xl md:text-7xl lg:text-8xl text-white mb-8 tracking-tight" style={{ fontStyle: 'italic' }}>
+             <h1 className="animate-fade-up font-serif text-2xl md:text-5xl lg:text-6xl text-white drop-shadow-[0_0_15px_rgba(212,175,55,0.2)] mb-2 md:mb-4" style={{ animationDelay: '100ms' }}>
                The Archives
              </h1>
              
-             <p className="text-white/40 max-w-xl text-sm md:text-base leading-[2] font-light tracking-wide">
+             <p className="animate-fade-up text-[var(--color-fg-muted)] max-w-lg mx-auto text-[11px] md:text-base leading-relaxed px-2" style={{ animationDelay: '200ms' }}>
                Review your past acquisitions and digital receipts.
              </p>
            </div>

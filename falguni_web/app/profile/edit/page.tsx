@@ -176,7 +176,7 @@ export default function EditProfilePage() {
                     value={fullname}
                     onChange={(e) => setFullname(e.target.value)}
                     placeholder="Enter your full name"
-                    className="w-full bg-white/[0.03] border border-white/10 rounded-2xl px-5 py-4 text-white focus:outline-none focus:border-[#D4AF37]/50 focus:bg-white/[0.05] transition-all text-sm font-light"
+                    className="w-full bg-white/[0.07] border border-white/15 rounded-2xl px-5 py-4 text-white focus:outline-none focus:border-[#D4AF37]/50 focus:bg-white/[0.1] transition-all text-sm font-light placeholder:text-white/30"
                   />
                 </div>
 
@@ -189,7 +189,7 @@ export default function EditProfilePage() {
                     type="email"
                     readOnly
                     value={email}
-                    className="w-full bg-white/[0.01] border border-white/5 rounded-2xl px-5 py-4 text-white/50 cursor-not-allowed transition-all text-sm font-light"
+                    className="w-full bg-white/[0.04] border border-white/10 rounded-2xl px-5 py-4 text-white/50 cursor-not-allowed transition-all text-sm font-light"
                   />
                 </div>
 
@@ -207,7 +207,7 @@ export default function EditProfilePage() {
                       onChange={(e) => setPhone(e.target.value)}
                       placeholder="XXXXX XXXXX"
                       maxLength={10}
-                      className="w-full bg-white/[0.03] border border-white/10 rounded-2xl pl-14 pr-5 py-4 text-white focus:outline-none focus:border-[#D4AF37]/50 focus:bg-white/[0.05] transition-all text-sm font-light"
+                      className="w-full bg-white/[0.07] border border-white/15 rounded-2xl pl-14 pr-5 py-4 text-white focus:outline-none focus:border-[#D4AF37]/50 focus:bg-white/[0.1] transition-all text-sm font-light placeholder:text-white/30"
                     />
                   </div>
                 </div>

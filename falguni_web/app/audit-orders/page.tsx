@@ -7,6 +7,7 @@ import { useAuthStore } from '@/store/authStore';
 import PageShell from '@/components/layout/PageShell';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import { ArrowLeft, ShieldAlert, FileText, ArrowRightCircle, CheckCircle2, AlertTriangle, Search, Loader2 } from 'lucide-react';
+import BackButton from '@/components/ui/BackButton';
 import Link from 'next/link';
 
 interface TransactionItem {
@@ -288,37 +289,33 @@ export default function AuditOrdersPage() {
 
   return (
     <PageShell>
-      <div className="min-h-screen bg-[#2B1B17] relative pb-32">
-        {/* ── Ultra Premium Editorial Hero ── */}
-        <div className="relative w-full min-h-[40vh] flex flex-col items-center justify-center pt-32 pb-0 px-4 mb-8 z-10">
-           <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(212,175,55,0.05),transparent_60%)] pointer-events-none" />
+      <div className="min-h-screen bg-[#2B1B17] flex flex-col pb-20 relative overflow-hidden">
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(212,175,55,0.05),transparent_80%)] pointer-events-none" />
 
-           <div className="relative z-10 text-center flex flex-col items-center max-w-4xl mx-auto animate-fade-up w-full border-b border-[#D4AF37]/10 pb-12">
-             {/* Back Button */}
-             <div className="absolute top-0 left-0 -mt-16 md:-mt-20">
-               <Link 
-                 href="/profile" 
-                 className="inline-flex items-center gap-2 text-white/50 hover:text-[#D4AF37] transition-colors text-xs font-bold uppercase tracking-widest"
-               >
-                 <ArrowLeft size={16} /> Back to Profile
-               </Link>
-             </div>
+        {/* ── Premium Header Banner ── */}
+        <div className="relative w-full overflow-hidden bg-[#2B1B17] border-b border-[#D4AF37]/10 pt-28 pb-12 md:pt-36 md:pb-20 flex flex-col items-center justify-center mb-6 md:mb-12">
+           <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(212,175,55,0.15),transparent_70%)] pointer-events-none" />
 
-             <span className="text-[#D4AF37] font-bold tracking-[0.5em] uppercase text-xs mb-6 flex items-center justify-center gap-6">
-               <span className="w-16 h-[1px] bg-gradient-to-r from-transparent to-[#D4AF37]" />
+           {/* Back Button */}
+           <div className="absolute top-28 md:top-36 left-4 md:left-8 z-50">
+             <BackButton href="/profile" label="Back" />
+           </div>
+
+           <div className="relative z-10 text-center px-4 w-full mt-4 md:mt-0">
+             <div className="animate-fade-up text-[9px] md:text-xs tracking-[0.25em] md:tracking-[0.3em] font-bold text-[#D4AF37] mb-3 md:mb-4 flex items-center justify-center gap-2 md:gap-3">
+               <span className="w-6 md:w-8 h-px bg-[#D4AF37]/50" />
                SECURE LEDGER
-               <span className="w-16 h-[1px] bg-gradient-to-l from-transparent to-[#D4AF37]" />
-             </span>
+               <span className="w-6 md:w-8 h-px bg-[#D4AF37]/50" />
+             </div>
              
-             <h1 className="font-serif text-5xl md:text-7xl lg:text-8xl text-white tracking-tight" style={{ fontStyle: 'italic', textShadow: '0 0 30px rgba(212,175,55,0.15)' }}>
+             <h1 className="animate-fade-up font-serif text-2xl md:text-5xl lg:text-6xl text-white drop-shadow-[0_0_15px_rgba(212,175,55,0.2)] mb-2 md:mb-4" style={{ animationDelay: '100ms' }}>
                Transaction Data
              </h1>
              
-             <p className="mt-8 text-white/50 font-light max-w-md mx-auto text-sm tracking-wide">
+             <p className="animate-fade-up text-[var(--color-fg-muted)] max-w-lg mx-auto text-[11px] md:text-base leading-relaxed px-2" style={{ animationDelay: '200ms' }}>
                Review your complete digital transaction history and verify your Cashfree payments securely.
              </p>
            </div>
-
            {/* Tab Navigation */}
            <div className="relative z-10 flex gap-4 mt-8 pb-4">
              <button
@@ -467,7 +464,7 @@ export default function AuditOrdersPage() {
                       placeholder="Enter Cashfree Order ID..."
                       value={lookupOrderId}
                       onChange={(e) => setLookupOrderId(e.target.value)}
-                      className="w-full bg-white/[0.03] border border-[#D4AF37]/30 focus:border-[#D4AF37] rounded-xl py-4 pl-12 pr-4 text-white outline-none transition-colors placeholder:text-white/30"
+                      className="w-full bg-white/[0.07] border border-[#D4AF37]/30 focus:border-[#D4AF37] rounded-xl py-4 pl-12 pr-4 text-white outline-none transition-colors placeholder:text-white/30"
                     />
                   </div>
                   <button 

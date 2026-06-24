@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import { Mail, Lock, Eye, EyeOff, Apple } from 'lucide-react';
+import BackButton from '@/components/ui/BackButton';
 
 const kGold = 'var(--color-gold)';
 const kBgTop = 'var(--color-bg)';
@@ -44,6 +45,9 @@ export default function LoginPage() {
       className="min-h-dvh w-full flex items-center justify-center px-6 py-10"
       style={{ background: `linear-gradient(180deg, ${kBgTop} 0%, ${kBgMid} 50%, ${kBgTop} 100%)` }}
     >
+      <div className="absolute top-6 left-4 md:left-6 z-10">
+        <BackButton />
+      </div>
       <div className="w-full max-w-sm">
 
         {/* Heading */}
@@ -184,10 +188,10 @@ function AppField({
         onChange={e => onChange(e.target.value)}
         placeholder={placeholder}
         required
-        className="w-full h-[54px] pl-12 pr-12 rounded-xl text-[var(--color-fg)] text-sm outline-none transition-all"
+        className="w-full h-[54px] pl-12 pr-12 rounded-xl text-[var(--color-fg)] text-sm outline-none transition-all placeholder:text-white/30"
         style={{
-          background: 'var(--color-surface)',
-          border: '1px solid var(--color-border)',
+          background: 'rgba(255,255,255,0.07)',
+          border: '1px solid rgba(255,255,255,0.12)',
           color: 'var(--color-fg)',
         }}
         onFocus={e => { e.currentTarget.style.borderColor = 'var(--color-gold)'; }}

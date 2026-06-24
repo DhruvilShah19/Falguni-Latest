@@ -6,6 +6,7 @@ import { createUserWithEmailAndPassword, updateProfile, GoogleAuthProvider, sign
 import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { auth, db } from '@/lib/firebase';
 import { User, Mail, Lock, Eye, EyeOff, Phone, ChevronLeft, Check, X } from 'lucide-react';
+import BackButton from '@/components/ui/BackButton';
 
 const kGold   = 'var(--color-gold)';
 const kBgTop  = 'var(--color-bg)';
@@ -80,13 +81,9 @@ export default function SignupPage() {
       <div className="w-full max-w-sm">
 
         {/* Back button */}
-        <button
-          onClick={() => router.back()}
-          className="flex items-center justify-center w-9 h-9 rounded-full mb-6 transition hover:opacity-70"
-          style={{ color: 'white' }}
-        >
-          <ChevronLeft size={22} />
-        </button>
+        <div className="absolute top-6 left-4 md:left-6 z-10">
+          <BackButton />
+        </div>
 
         {/* Heading */}
         <h1 className="text-3xl font-bold text-[var(--color-fg)] mb-2">Create Account</h1>
@@ -123,19 +120,19 @@ export default function SignupPage() {
               onChange={e => setCountry(e.target.value)}
               className="h-[54px] px-3 rounded-xl text-[var(--color-fg)] text-sm outline-none appearance-none cursor-pointer transition-all flex-shrink-0"
               style={{
-                background: 'var(--color-surface)',
-                border: '1px solid var(--color-border)',
+                background: 'rgba(255,255,255,0.07)',
+                border: '1px solid rgba(255,255,255,0.12)',
                 color: 'var(--color-fg)',
                 minWidth: 80,
               }}
               onFocus={e  => { e.currentTarget.style.borderColor = kGold; }}
-              onBlur={e   => { e.currentTarget.style.borderColor = 'var(--color-border)'; }}
+              onBlur={e   => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.12)'; }}
             >
-              <option value="+91"  style={{ background: 'var(--color-surface)' }}>+91 🇮🇳</option>
-              <option value="+1"   style={{ background: 'var(--color-surface)' }}>+1 🇺🇸</option>
-              <option value="+44"  style={{ background: 'var(--color-surface)' }}>+44 🇬🇧</option>
-              <option value="+61"  style={{ background: 'var(--color-surface)' }}>+61 🇦🇺</option>
-              <option value="+971" style={{ background: 'var(--color-surface)' }}>+971 🇦🇪</option>
+              <option value="+91"  style={{ background: '#2B1B17' }}>+91 🇮🇳</option>
+              <option value="+1"   style={{ background: '#2B1B17' }}>+1 🇺🇸</option>
+              <option value="+44"  style={{ background: '#2B1B17' }}>+44 🇬🇧</option>
+              <option value="+61"  style={{ background: '#2B1B17' }}>+61 🇦🇺</option>
+              <option value="+971" style={{ background: '#2B1B17' }}>+971 🇦🇪</option>
             </select>
 
             {/* Phone number */}
@@ -229,8 +226,8 @@ function AppField({ type, placeholder, value, onChange, icon, suffix }: {
       <input
         type={type} value={value} placeholder={placeholder}
         onChange={e => onChange(e.target.value)}
-        className="w-full h-[54px] pl-12 pr-12 rounded-xl text-[var(--color-fg)] text-sm outline-none transition-all"
-        style={{ background: 'var(--color-surface)', border: '1px solid var(--color-border)', color: 'var(--color-fg)' }}
+        className="w-full h-[54px] pl-12 pr-12 rounded-xl text-[var(--color-fg)] text-sm outline-none transition-all placeholder:text-white/30"
+        style={{ background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.12)', color: 'var(--color-fg)' }}
         onFocus={e => { e.currentTarget.style.borderColor = 'var(--color-gold)'; }}
         onBlur={e  => { e.currentTarget.style.borderColor = 'var(--color-border)'; }}
       />

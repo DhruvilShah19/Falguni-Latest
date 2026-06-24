@@ -40,7 +40,7 @@ body { background: var(--color-bg); color: var(--color-fg); font-family: var(--f
 ::-webkit-scrollbar-thumb { background: var(--color-gold); border-radius: 99px; opacity: 0.5; }
 
 /* ── Placeholder ── */
-input::placeholder, textarea::placeholder { color: rgba(0,0,0,0.35); }
+input::placeholder, textarea::placeholder { color: rgba(255,255,255,0.3); }
 
 /* ════════════════════════════════
    UTILITIES

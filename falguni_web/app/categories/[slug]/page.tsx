@@ -6,6 +6,7 @@ import type { ProductsModel } from '@/types';
 import ProductCard from '@/components/ui/ProductCard';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import PageShell from '@/components/layout/PageShell';
+import BackButton from '@/components/ui/BackButton';
 import { ChevronLeft, SlidersHorizontal, ChevronRight } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -80,12 +81,7 @@ export default function CategoryProductsPage() {
          
          {/* Top Controls: Back & Breadcrumbs */}
          <div className="absolute top-4 left-4 right-4 md:top-8 md:left-8 md:right-8 z-20 flex items-center justify-between">
-           <button onClick={() => router.back()} className="flex items-center gap-2 text-[#D4AF37] hover:text-white transition-colors group">
-             <div className="w-6 h-6 md:w-8 md:h-8 rounded-full border border-[#D4AF37]/40 flex items-center justify-center group-hover:border-[#D4AF37] group-hover:bg-[#D4AF37]/20 transition-all bg-[#2B1B17]/50 backdrop-blur-md">
-               <ChevronLeft size={14} className="md:w-4 md:h-4" />
-             </div>
-             <span className="font-bold tracking-widest uppercase text-[10px] hidden sm:block mt-0.5">Back</span>
-           </button>
+           <BackButton />
 
            <div className="hidden md:flex items-center gap-2 text-[10px] font-bold tracking-[0.2em] uppercase text-white/50 bg-black/20 px-4 py-2 rounded-full backdrop-blur-md border border-white/5">
               <Link href="/" className="hover:text-white transition-colors">Home</Link>

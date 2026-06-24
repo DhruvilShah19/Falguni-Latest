@@ -1,8 +1,6 @@
 'use client';
 import { useEffect, useState } from 'react';
-import Image from 'next/image';
-import Link from 'next/link';
-import ProductCard from '@/components/ui/ProductCard';
+import BoutiqueItem from '@/components/ui/BoutiqueItem';
 import SectionHeader from '@/components/ui/SectionHeader';
 import { getProducts } from '@/lib/firestore';
 import type { ProductsModel } from '@/types';
@@ -13,7 +11,7 @@ interface Props {
   subtitle?: string;
   viewAllHref?: string;
   limitCount?: number;
-  products?: ProductsModel[]; // optional: pass pre-fetched
+  products?: ProductsModel[];
   sliceStart?: number;
   sliceEnd?: number;
 }
@@ -22,7 +20,7 @@ export default function ProductsGrid({
   title = 'Curated For You',
   subtitle = 'Handpicked',
   viewAllHref = '/products',
-  limitCount = 20, // We will still fetch up to this, but only slice the top 5 for the bento grid
+  limitCount = 20,
   products: propProducts,
   sliceStart = 0,
   sliceEnd = 12,
@@ -48,7 +46,6 @@ export default function ProductsGrid({
         viewAllHref={viewAllHref}
       />
 
-      {/* Clean, Minimalist Horizontal Slider */}
       <div className="relative w-full">
          <div className="hidden md:block absolute left-0 top-0 bottom-0 w-12 bg-gradient-to-r from-[var(--color-bg)] to-transparent z-10 pointer-events-none" />
          <div className="hidden md:block absolute right-0 top-0 bottom-0 w-12 bg-gradient-to-l from-[var(--color-bg)] to-transparent z-10 pointer-events-none" />
@@ -58,12 +55,10 @@ export default function ProductsGrid({
              {displayProducts.map((p, idx) => (
                <div 
                   key={p.uid} 
-                  className="snap-start shrink-0 w-[140px] md:w-[200px] h-full transition-transform duration-500 hover:scale-[1.02]"
-                  style={{ 
-                    animation: `fadeUp 0.5s ease-out ${idx * 50}ms both`
-                  }}
+                  className="snap-start shrink-0 w-[160px] md:w-[220px]"
+                  style={{ animation: `fadeUp 0.5s ease-out ${idx * 50}ms both` }}
                >
-                  <ProductCard product={p} variant="default" />
+                  <BoutiqueItem product={p} />
                </div>
              ))}
            </div>
