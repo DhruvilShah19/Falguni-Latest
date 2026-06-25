@@ -68,95 +68,70 @@ class CheckoutStep1Delivery extends StatelessWidget {
                 padding: const EdgeInsets.all(14),
                 child: Column(
                   children: [
-                    // --- TEMPORARILY DISABLED DELIVERY OPTION ---
+                    // Delivery Option
                     Material(
                       color: Colors.transparent,
                       child: InkWell(
-                        onTap: () {
-                          // Show user the explanation for the temporary disable
-                          showDialog(
-                            context: context,
-                            builder: (context) => AlertDialog(
-                              backgroundColor: kBgTop,
-                              shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(14),
-                                  side: BorderSide(
-                                      color: kGold.withOpacity(0.3))),
-                              title: const Text("Delivery Service Update",
-                                  style: TextStyle(
-                                      color: kGold,
-                                      fontWeight: FontWeight.bold)),
-                              content: const Text(
-                                  "Sorry, Porter is currently not working and we are working on this.\n\nPlease add your desired location and contact info to falgunigruhudhyog@gmail.com and we will help you with delivery.",
-                                  style: TextStyle(color: Colors.white70)),
-                              actions: [
-                                TextButton(
-                                  onPressed: () => Navigator.pop(context),
-                                  child: const Text("OK",
-                                      style: TextStyle(
-                                          color: kGold,
-                                          fontWeight: FontWeight.bold)),
-                                )
-                              ],
-                            ),
-                          );
-                        },
+                        onTap: onDeliveryChanged == null
+                            ? null
+                            : () => onDeliveryChanged(!deliveryBool),
                         borderRadius: BorderRadius.circular(12),
-                        child: Opacity(
-                          opacity: 0.5, // Visual cue that it is disabled
-                          child: Container(
-                            decoration: BoxDecoration(
-                              color: Colors.transparent,
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(
-                                color: Colors.white.withOpacity(0.1),
-                                width: 1.5,
-                              ),
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: deliveryBool
+                                ? Colors.white.withOpacity(0.1)
+                                : Colors.transparent,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: deliveryBool
+                                  ? kGold
+                                  : Colors.white.withOpacity(0.1),
+                              width: 1.5,
                             ),
-                            padding: const EdgeInsets.all(12),
-                            child: Row(
-                              children: [
-                                Container(
-                                  width: 24,
-                                  height: 24,
-                                  decoration: BoxDecoration(
-                                    shape: BoxShape.circle,
-                                    border: Border.all(
-                                      color: Colors.white24,
-                                      width: 2,
-                                    ),
+                          ),
+                          padding: const EdgeInsets.all(12),
+                          child: Row(
+                            children: [
+                              Container(
+                                width: 24,
+                                height: 24,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  border: Border.all(
+                                    color: deliveryBool ? kGold : Colors.white54,
+                                    width: 2,
                                   ),
-                                  child: null, // Radio circle remains empty
                                 ),
-                                const SizedBox(width: 12),
-                                const Expanded(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        '🚚 Delivery (Unavailable)',
-                                        style: TextStyle(
-                                          color: Colors.white,
-                                          fontSize: 14,
-                                          fontWeight: FontWeight.w600,
-                                        ),
-                                      ),
-                                      Padding(
-                                        padding: EdgeInsets.only(top: 4),
-                                        child: Text(
-                                          "Tap for more info regarding delivery",
-                                          style: TextStyle(
-                                            fontSize: 11,
-                                            color: Colors.white54,
+                                child: deliveryBool
+                                    ? Padding(
+                                        padding: const EdgeInsets.all(4.0),
+                                        child: Container(
+                                          decoration: const BoxDecoration(
+                                            shape: BoxShape.circle,
+                                            color: kGold,
                                           ),
                                         ),
+                                      )
+                                    : null,
+                              ),
+                              const SizedBox(width: 12),
+                              const Expanded(
+                                child: Column(
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      '🚚 Delivery',
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w600,
                                       ),
-                                    ],
-                                  ),
+                                    ),
+                                  ],
                                 ),
-                              ],
-                            ),
+                              ),
+                            ],
                           ),
                         ),
                       ),

@@ -1,7 +1,6 @@
 // ignore_for_file: avoid_print, use_build_context_synchronously, deprecated_member_use, prefer_const_constructors
 
 import 'dart:async';
-import 'dart:convert';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:falguni_app/Widgets/product_return_detail.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -14,7 +13,6 @@ import 'package:geocode/geocode.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:easy_localization/easy_localization.dart';
-import 'package:http/http.dart' as http;
 import 'package:url_launcher/url_launcher.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
@@ -77,18 +75,9 @@ class _OrdersPreviewState extends State<OrdersPreview> {
   String userProfilePic = '';
   num? tip;
 
-  String? porterMaindOrderID = '';
 
   num marketLat = 0;
   num marketLong = 0;
-  String? ridersName = '';
-  String ridersPhone = '';
-  String status = '';
-  String vehicleNumber = '';
-  String vehicleType = '';
-  String ridersPhone2 = '';
-  num amount = 0;
-  dynamic partnerInfo;
 
   double deliveryAddressLat = 0;
   double deliveryAddressLong = 0;
@@ -361,54 +350,8 @@ class _OrdersPreviewState extends State<OrdersPreview> {
         deliveryAddress = value['deliveryAddress'];
         deliveryBoyID = value['deliveryBoyID'];
         confirmationStatus = value['confirmationStatus'];
-        porterMaindOrderID = value['porterMaindOrderID'];
       });
-      trackPorterOrderByID(value['porterMaindOrderID']);
     });
-  }
-
-  trackPorterOrderByID(String porterMaindOrderID) async {
-    try {
-      var url = Uri.parse(
-          'https://render-packages.onrender.com/track-order/$porterMaindOrderID');
-
-      var response = await http.get(
-        url,
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Api-Key': '4330e319-edc7-4110-880f-b2747bf666db',
-          'Accept': 'application/json',
-          "Access-Control-Allow-Origin": "*",
-          "Access-Control-Allow-Methods": "GET,POST,PUT,OPTIONS",
-        },
-      );
-      setState(() {
-        ridersName =
-            jsonDecode(response.body.toString())["partner_info"]['name'];
-        ridersPhone = jsonDecode(response.body.toString())["partner_info"]
-            ['mobile']['mobile_number'];
-        ridersPhone2 = jsonDecode(response.body.toString())["partner_info"]
-            ["partner_secondary_mobile"]['mobile_number'];
-        vehicleNumber = jsonDecode(response.body.toString())["partner_info"]
-            ["vehicle_number"];
-        vehicleType = jsonDecode(response.body.toString())["partner_info"]
-            ['vehicle_type'];
-        status = jsonDecode(response.body.toString())["status"];
-        amount = jsonDecode(response.body.toString())["fare_details"]
-            ["estimated_fare_details"]['minor_amount'];
-      });
-      print('Response status: ${response.statusCode}');
-      print('Response body: ${response.body}');
-      print('Rider name is ${jsonDecode(response.body.toString())['status']}');
-    } catch (e) {
-      return Fluttertoast.showToast(
-        msg:
-            'Order Sent to Porter with Order ID : ${jsonDecode(e.toString())["message"]}',
-        toastLength: Toast.LENGTH_LONG,
-        timeInSecForIosWeb: 4,
-        fontSize: 14.0,
-      );
-    }
   }
 
   getRiderDetails(String deliveryBoyID) {
@@ -489,14 +432,6 @@ class _OrdersPreviewState extends State<OrdersPreview> {
         .doc(deliveryBoyID)
         .collection('Notifications')
         .add(historyModel.toMap());
-  }
-
-  Future<void> _callRider(String phoneNumber) async {
-    final Uri launchUri = Uri(
-      scheme: 'tel',
-      path: phoneNumber,
-    );
-    await launchUrl(launchUri);
   }
 
   confirmFunc(bool status) async {
@@ -1046,9 +981,7 @@ class _OrdersPreviewState extends State<OrdersPreview> {
                 const Gap(16),
                 _buildTrackingCard(),
                 const Gap(16),
-                if (ridersName != null && ridersName!.isNotEmpty)
-                  _buildRiderCard(),
-                if (ridersName != null && ridersName!.isNotEmpty) const Gap(16),
+
                 _buildPaymentCard(),
                 const Gap(16),
                 _buildDeliveryCard(),
@@ -1410,68 +1343,7 @@ class _OrdersPreviewState extends State<OrdersPreview> {
     );
   }
 
-  Widget _buildRiderCard() {
-    return Container(
-      padding: const EdgeInsets.fromLTRB(16, 14, 16, 10),
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.06),
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: kGold.withOpacity(0.35), width: 1),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(Icons.delivery_dining_rounded, color: kGold, size: 20),
-              const SizedBox(width: 8),
-              Text(
-                "Rider's Detail".tr(),
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w600,
-                  fontSize: 15,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 10),
-          _buildInfoRow(Icons.person, "Rider's name".tr(), ridersName ?? ''),
-          const SizedBox(height: 6),
-          _buildInfoRow(
-              Icons.delivery_dining, "Rider's Vehicle Type".tr(), vehicleType),
-          const SizedBox(height: 6),
-          _buildInfoRow(
-              Icons.numbers, "Rider's Vehicle Number".tr(), vehicleNumber),
-          const SizedBox(height: 6),
-          Row(
-            children: [
-              Expanded(
-                child: _buildInfoRow(
-                  Icons.phone,
-                  "Rider's phone".tr(),
-                  '+9$ridersPhone',
-                  trailing: TextButton.icon(
-                    onPressed: () => _callRider('+9$ridersPhone'),
-                    style: TextButton.styleFrom(
-                      foregroundColor: kGold,
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 10, vertical: 4),
-                    ),
-                    icon: const Icon(Icons.call, size: 16),
-                    label: Text(
-                      'Call Rider'.tr(),
-                      style: const TextStyle(fontSize: 12.5),
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
+
 
   Widget _buildInfoRow(IconData icon, String label, String value,
       {Widget? trailing}) {

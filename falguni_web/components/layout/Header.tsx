@@ -72,18 +72,20 @@ export default function Header() {
             : 'bg-[#2B1B17]/80 backdrop-blur-lg border-white/5'
         }`}
       >
-        <div className="max-w-[1400px] mx-auto px-4 md:px-5 lg:px-8 h-14 md:h-20 flex items-center justify-between gap-3 md:gap-8">
+        <div className="max-w-[1400px] mx-auto px-4 md:px-5 lg:px-8 h-[72px] md:h-[100px] flex items-center justify-between gap-3 md:gap-8">
 
           {/* ── Left Section: Logo & Global Address ── */}
           <div className="flex items-center gap-4 md:gap-6 lg:gap-8 flex-shrink-0">
             {/* Logo */}
-            <Link href="/" className="flex-shrink-0 flex items-center gap-2 md:gap-3 group">
-              <div className="w-8 h-8 md:w-12 md:h-12 rounded-full overflow-hidden flex-shrink-0 border-2 border-[#D4AF37]/50 group-hover:border-[#D4AF37] transition-colors shadow-[0_0_15px_rgba(212,175,55,0.2)]">
-                <Image src="/falguni-logo.png" alt="Falguni" width={48} height={48} className="object-cover w-full h-full scale-[1.15]" />
-              </div>
-              <div className="hidden sm:flex flex-col leading-none">
-                <span className="font-serif text-[#D4AF37] text-lg md:text-xl font-bold tracking-wide">Falguni</span>
-                <span className="text-white/60 text-[10px] md:text-xs font-bold tracking-[0.2em] uppercase mt-0.5">Gruh Udhyog</span>
+            {/* Logo */}
+            <Link href="/" className="flex-shrink-0 flex items-center group transition-transform hover:scale-105">
+              <div className="relative h-14 w-[92px] md:h-[80px] md:w-[130px] drop-shadow-[0_0_12px_rgba(212,175,55,0.5)]">
+                <Image 
+                  src="/falguni-logo-transparent.png" 
+                  alt="Falguni Gruh Udhyog" 
+                  fill 
+                  className="object-contain object-left filter brightness-125 contrast-110" 
+                />
               </div>
             </Link>
 
@@ -165,14 +167,6 @@ export default function Header() {
               )}
             </Link>
 
-            {/* Wishlist */}
-            <Link
-              href="/favorites"
-              className="p-1.5 md:p-3 rounded-xl md:rounded-2xl text-white/70 hover:text-[#D4AF37] hover:bg-white/5 transition-all"
-            >
-              <Heart size={22} className="w-[18px] h-[18px] md:w-[22px] md:h-[22px]" />
-            </Link>
-
             {/* User (desktop) */}
             {firebaseUser ? (
               <div className="hidden md:block relative">
@@ -225,7 +219,7 @@ export default function Header() {
 
       {/* ── Full Screen Mobile Menu ── */}
       {menuOpen && (
-        <div className="md:hidden fixed inset-0 top-14 md:top-20 z-40 bg-[#2B1B17] flex flex-col animate-fade-in overflow-hidden">
+        <div className="md:hidden fixed inset-0 top-[72px] z-40 bg-[#2B1B17] flex flex-col animate-fade-in overflow-hidden">
           <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(212,175,55,0.05),transparent_80%)] pointer-events-none" />
 
           <div className="flex-1 px-6 py-8 flex flex-col gap-2 overflow-y-auto relative z-10 pb-8">
@@ -240,6 +234,10 @@ export default function Header() {
 
               <div className="my-2" />
 
+              <Link href="/favorites" className="py-4 border-b border-[#D4AF37]/10 text-base font-serif tracking-wide text-white hover:text-[#D4AF37] transition-all flex items-center justify-between group">
+                <span>Favorites</span>
+                <Heart size={20} className="text-[#D4AF37]/40 group-hover:text-[#D4AF37] transition-colors" />
+              </Link>
               <Link href="/orders" className="py-4 border-b border-[#D4AF37]/10 text-base font-serif tracking-wide text-white hover:text-[#D4AF37] transition-all flex items-center justify-between group">
                 <span>My Orders</span>
                 <Package size={20} className="text-[#D4AF37]/40 group-hover:text-[#D4AF37] transition-colors" />

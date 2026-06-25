@@ -10,22 +10,48 @@ import { removeFromCart, updateCartItem, validateCoupon, getDeliveryFee, getCoup
 import type { CouponModel } from '@/types';
 import PageShell from '@/components/layout/PageShell';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
+import { MapPin, Truck } from 'lucide-react';
+import DeliveryAddressInput, { DeliveryDetails } from '@/components/ui/DeliveryAddressInput';
+import CartAddons from '@/components/cart/CartAddons';
+import { getUserDoc } from '@/lib/firestore';
+
 
 export default function CartPage() {
   const router = useRouter();
   const { firebaseUser, loading: authLoading } = useAuthStore();
-  const { items, subTotal, discountedTotal, couponCode, couponDiscount, setCoupon, clearCoupon } = useCartStore();
-  const [deliveryFee, setDeliveryFee] = useState(0);
+    const { items, subTotal, discountedTotal, couponCode, couponDiscount, setCoupon, clearCoupon, isPickup, deliveryDetails, setFulfillment } = useCartStore();
   const [couponInput, setCouponInput] = useState('');
   const [couponError, setCouponError] = useState('');
   const [couponLoading, setCouponLoading] = useState(false);
   const [removingId, setRemovingId] = useState<string | null>(null);
   const [popularCoupons, setPopularCoupons] = useState<CouponModel[]>([]);
+  const [address, setAddress] = useState('');
+  const [localPickup, setLocalPickup] = useState(isPickup);
+  const [localDelivery, setLocalDelivery] = useState<DeliveryDetails | null>(deliveryDetails);
 
   useEffect(() => {
-    getDeliveryFee().then(setDeliveryFee);
     getCoupons(3).then(setPopularCoupons);
   }, []);
+
+  useEffect(() => {
+    if (!authLoading && firebaseUser) {
+      getUserDoc(firebaseUser.uid).then((doc: any) => {
+        let fullAddress = (doc?.DeliveryAddress || doc?.deliveryAddress || '') as string;
+        if (fullAddress && doc?.HouseNumber) {
+          fullAddress = `${doc.HouseNumber}, ${fullAddress}`;
+        }
+        if (fullAddress && !address) {
+          setAddress(fullAddress);
+        }
+      });
+    }
+  }, [firebaseUser, authLoading]);
+
+  // Sync to global store
+  useEffect(() => {
+    setFulfillment(localPickup, localDelivery);
+  }, [localPickup, localDelivery, setFulfillment]);
+
 
   // Redirect to login if not authenticated
   useEffect(() => {
@@ -66,13 +92,14 @@ export default function CartPage() {
 
   const sub = subTotal();
   const discounted = discountedTotal();
+  const deliveryFee = useCartStore(s => s.deliveryFee());
   const total = discounted + deliveryFee;
 
   if (authLoading || !firebaseUser) return <PageShell><div className="min-h-screen bg-[#2B1B17] flex items-center justify-center"><LoadingSpinner /></div></PageShell>;
 
   return (
     <PageShell>
-      <div className="min-h-screen bg-[#2B1B17] flex flex-col pb-[140px] relative overflow-hidden">
+      <div className="min-h-screen bg-[#2B1B17] flex flex-col pb-[140px] relative overflow-clip">
         
         {/* ── Premium Header Banner ── */}
         <div className="relative w-full overflow-hidden bg-[#2B1B17] border-b border-[#D4AF37]/10 pt-28 pb-12 md:pt-36 md:pb-20 flex flex-col items-center justify-center mb-6 md:mb-12">
@@ -112,7 +139,7 @@ export default function CartPage() {
               </Link>
             </div>
           ) : (
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 pb-12 animate-fade-up">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 pb-12">
               
               {/* ── LEFT COLUMN: ITEMS ── */}
               <div className="lg:col-span-7 xl:col-span-8">
@@ -146,15 +173,15 @@ export default function CartPage() {
                         <div className="flex-1 flex flex-col justify-between">
                           <div className="flex justify-between items-start gap-2 sm:gap-4">
                             <div>
-                              <h3 className="text-white font-bold text-sm sm:text-lg leading-tight mb-1 sm:mb-2 group-hover:text-[#D4AF37] transition-colors line-clamp-2">{item.name}</h3>
+                              <h3 className="text-white font-bold text-base sm:text-xl leading-tight mb-1 group-hover:text-[#D4AF37] transition-colors line-clamp-2">{item.name}</h3>
                               {item.selected && (
-                                <span className="inline-block bg-white/5 border border-white/10 text-white/60 text-[9px] sm:text-[10px] font-black uppercase tracking-widest px-2 py-1 rounded-md mb-1 sm:mb-2">
+                                <span className="inline-block bg-[#D4AF37]/10 border border-[#D4AF37]/20 text-[#D4AF37] text-[9px] sm:text-[10px] font-black uppercase tracking-widest px-2 py-1 rounded-md mb-2">
                                   {item[`unitname${item.selected.replace('unit', '')}` as keyof typeof item] as string}
                                 </span>
                               )}
-                              <p className="text-white/40 text-[10px] sm:text-xs font-medium">₹{pricePerUnit} each</p>
+                              <p className="text-white/50 text-[10px] sm:text-xs font-medium tracking-wide">₹{pricePerUnit} / unit</p>
                             </div>
-                            <span className="text-white font-bold text-base sm:text-xl tracking-tight bg-white/5 px-2 py-1 sm:px-3 sm:py-1.5 rounded-xl border border-white/5 shrink-0">
+                            <span className="text-white font-black text-lg sm:text-2xl tracking-tighter shrink-0">
                               ₹{item.price ?? 0}
                             </span>
                           </div>
@@ -191,10 +218,69 @@ export default function CartPage() {
                     );
                   })}
                 </div>
+
+                                {/* ── FULFILLMENT (Tabs) ── */}
+                <div className="mt-8 md:mt-12 mb-8 animate-fade-up">
+                  <div className="flex items-center gap-4 mb-6">
+                    <h2 className="text-white text-xl md:text-2xl font-serif italic tracking-wide">Fulfillment</h2>
+                    <span className="flex-1 h-[1px] bg-white/10" />
+                  </div>
+
+                  <div className="bg-black/20 p-1 rounded-2xl border border-white/5 flex gap-1 mb-6 w-full max-w-sm">
+                    <button 
+                      onClick={() => setLocalPickup(false)}
+                      className={`flex-1 py-3 px-4 rounded-xl text-xs md:text-sm font-bold uppercase tracking-widest transition-all duration-300 flex items-center justify-center gap-2 ${!localPickup ? 'bg-[#D4AF37] text-[#1A110D] shadow-[0_0_15px_rgba(212,175,55,0.3)]' : 'text-white/50 hover:text-white'}`}
+                    >
+                      <Truck size={16} /> Delivery
+                    </button>
+                    <button 
+                      onClick={() => setLocalPickup(true)}
+                      className={`flex-1 py-3 px-4 rounded-xl text-xs md:text-sm font-bold uppercase tracking-widest transition-all duration-300 flex items-center justify-center gap-2 ${localPickup ? 'bg-[#D4AF37] text-[#1A110D] shadow-[0_0_15px_rgba(212,175,55,0.3)]' : 'text-white/50 hover:text-white'}`}
+                    >
+                      <MapPin size={16} /> Pick Up
+                    </button>
+                  </div>
+
+                  <div className="transition-all duration-500">
+                    {localPickup ? (
+                      <div className="bg-white/5 border border-[#D4AF37]/20 rounded-2xl p-6 md:p-8 flex items-start gap-4 shadow-inner">
+                         <div className="w-10 h-10 rounded-full bg-[#D4AF37]/10 flex items-center justify-center flex-shrink-0">
+                           <MapPin size={20} className="text-[#D4AF37]" />
+                         </div>
+                         <div>
+                           <h3 className="text-white font-bold text-base md:text-lg mb-1">Pick Up at Store</h3>
+                           <p className="text-white/50 text-sm leading-relaxed mb-4">
+                             Your order will be prepared and packed securely. You can collect it from our flagship store in Ahmedabad.
+                           </p>
+                           <div className="text-[#D4AF37] font-bold text-xs uppercase tracking-widest bg-[#D4AF37]/10 inline-block px-3 py-1.5 rounded-lg border border-[#D4AF37]/20">
+                             Free Service
+                           </div>
+                         </div>
+                      </div>
+                    ) : (
+                      <div className="bg-gradient-to-br from-white/[0.03] to-transparent border border-white/5 rounded-2xl p-1 shadow-lg">
+                        <DeliveryAddressInput 
+                          defaultAddress={address} 
+                          onDeliveryCalculated={(details) => setLocalDelivery(details)} 
+                        />
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* ── INTELLIGENT UPSELLS (Integrated) ── */}
+                <div className="mt-8 mb-6 animate-fade-up">
+                  <div className="flex items-center gap-4 mb-4">
+                    <h2 className="text-[#D4AF37] text-xs font-bold uppercase tracking-[0.2em]">Add to your order</h2>
+                    <span className="flex-1 h-[1px] bg-white/5" />
+                  </div>
+                  <CartAddons />
+                </div>
+
               </div>
 
               {/* ── RIGHT COLUMN: SUMMARY ── */}
-              <div className="lg:col-span-5 xl:col-span-4 relative">
+              <div className="lg:col-span-5 xl:col-span-4 relative h-full">
                 <div className="lg:sticky lg:top-32 flex flex-col gap-6">
                   
                   {/* Order Summary Card */}
@@ -375,6 +461,9 @@ export default function CartPage() {
             </div>
           )}
         </div>
+
+        
+        
 
         {/* Sticky Checkout Bottom Bar (Mobile Only) */}
         {items.length > 0 && (

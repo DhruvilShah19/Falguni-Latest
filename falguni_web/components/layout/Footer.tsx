@@ -7,21 +7,24 @@ const HELP   = [['FAQ','/faq'],['Contact Us','/contact'],['Track Order','/orders
 
 export default function Footer() {
   return (
-    <footer className="hidden md:block mt-auto" style={{ background: 'var(--color-bg)', borderTop: '1px solid var(--color-border)' }}>
+    <footer className="mt-auto border-t" style={{ background: 'var(--color-bg)', borderColor: 'var(--color-border)' }}>
 
       {/* ── Main footer grid ── */}
-      <div className="max-w-7xl mx-auto px-6 pt-12 pb-8 grid grid-cols-12 gap-8">
+      <div className="max-w-7xl mx-auto px-6 pt-10 md:pt-12 pb-8 grid grid-cols-2 md:grid-cols-12 gap-8 gap-y-10">
 
         {/* Brand col */}
-        <div className="col-span-4">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="w-12 h-12 rounded-full overflow-hidden flex items-center justify-center border-2 border-[#D4AF37]/50 shadow-[0_0_20px_rgba(212,175,55,0.15)] flex-shrink-0">
-              <Image src="/falguni-logo.png" alt="Falguni" width={48} height={48} className="object-cover w-full h-full scale-[1.15]" />
-            </div>
-            <div>
-              <p className="text-[var(--color-fg)] font-black text-lg leading-none">Falguni</p>
-              <p className="text-[var(--color-fg-muted)] text-[10px] tracking-widest uppercase mt-0.5">Gruh Udhyog</p>
-            </div>
+        <div className="col-span-2 md:col-span-4">
+          <div className="mb-6 drop-shadow-[0_0_15px_rgba(212,175,55,0.4)] transition-transform hover:scale-105 inline-block">
+            <Link href="/">
+              <div className="relative h-[86px] w-[140px] md:h-[116px] md:w-[190px]">
+                <Image 
+                  src="/falguni-logo-transparent.png" 
+                  alt="Falguni Gruh Udhyog" 
+                  fill 
+                  className="object-contain object-left filter brightness-125 contrast-110" 
+                />
+              </div>
+            </Link>
           </div>
           <p className="text-sm leading-relaxed max-w-xs" style={{ color: 'var(--color-fg-muted)' }}>
             Authentic homemade snacks & sweets, crafted with love and delivered fresh to your door.
@@ -40,18 +43,18 @@ export default function Footer() {
         </div>
 
         {/* Links */}
-        <div className="col-span-2">
+        <div className="col-span-1 md:col-span-2">
           <FooterCol title="Shop"    links={SHOP} />
         </div>
-        <div className="col-span-2">
+        <div className="col-span-1 md:col-span-2">
           <FooterCol title="Account" links={ACCOUNT} />
         </div>
-        <div className="col-span-2">
+        <div className="col-span-1 md:col-span-2">
           <FooterCol title="Help"    links={HELP} />
         </div>
 
         {/* Newsletter */}
-        <div className="col-span-2">
+        <div className="col-span-2 md:col-span-2 mt-2 md:mt-0">
           <h4 className="text-xs font-bold uppercase tracking-widest mb-4" style={{ color: 'var(--color-fg)' }}>
             Stay Updated
           </h4>
@@ -79,13 +82,13 @@ export default function Footer() {
 
       {/* ── Bottom bar ── */}
       <div
-        className="border-t max-w-7xl mx-auto px-6 py-4 flex items-center justify-between"
+        className="border-t max-w-7xl mx-auto px-6 py-4 flex flex-col md:flex-row items-center justify-between gap-4"
         style={{ borderColor: 'rgba(0,0,0,0.08)' }}
       >
-        <p className="text-xs" style={{ color: 'var(--color-fg-muted)' }}>
+        <p className="text-xs text-center md:text-left" style={{ color: 'var(--color-fg-muted)' }}>
           © {new Date().getFullYear()} Falguni Gruh Udhyog. All rights reserved.
         </p>
-        <div className="flex items-center gap-4">
+        <div className="flex items-center justify-center gap-4">
           {['Privacy Policy', 'Terms of Service'].map(t => (
             <Link key={t} href="#"
               className="text-xs transition hover:text-[var(--color-fg)]"

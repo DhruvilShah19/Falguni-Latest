@@ -10,8 +10,12 @@ import { db } from '@/lib/firebase';
 import { collection, addDoc, serverTimestamp, doc, updateDoc, getDocs, query, where } from 'firebase/firestore';
 import { load } from '@cashfreepayments/cashfree-js';
 import PageShell from '@/components/layout/PageShell';
+
+import { ProductsModel } from '@/types';
+import { limit } from 'firebase/firestore';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import BackButton from '@/components/ui/BackButton';
+
 
 const STEPS = [
   { id: 0, title: 'Delivery', icon: Truck },
@@ -22,16 +26,12 @@ const STEPS = [
 export default function CheckoutPage() {
   const router = useRouter();
   const { firebaseUser, loading: authLoading } = useAuthStore();
-  const { items, subTotal, discountedTotal, couponCode, couponDiscount, clearCoupon } = useCartStore();
+  const { items, subTotal, discountedTotal, couponCode, couponDiscount, clearCoupon, isPickup, deliveryDetails } = useCartStore();
 
-  const [step, setStep] = useState(0);
-  const [deliveryFee, setDeliveryFee] = useState(0);
-  const [address, setAddress] = useState('');
+  const [address, setAddress] = useState(deliveryDetails?.address || '');
   const [phone, setPhone] = useState('');
   const [fullName, setFullName] = useState('');
   const [placing, setPlacing] = useState(false);
-  const [pickupBool, setPickupBool] = useState(true);
-  const [showDeliveryModal, setShowDeliveryModal] = useState(false);
   const [cashfree, setCashfree] = useState<any>(null);
 
   // Initialize Cashfree SDK
@@ -39,23 +39,34 @@ export default function CheckoutPage() {
     load({ mode: "production" }).then((cf: any) => setCashfree(cf));
   }, []);
 
-  // Using Cashfree embedded Drop-in UI. Validation is handled via Promise.
-
   useEffect(() => {
     if (authLoading) return;
     if (!firebaseUser) { router.push('/login'); return; }
     if (items.length === 0) { router.push('/cart'); return; }
-    getDeliveryFee().then(setDeliveryFee);
-    // Pre-fill user data
+    
     getUserDoc(firebaseUser.uid).then((doc: any) => {
-      if (doc?.deliveryAddress) setAddress(doc.deliveryAddress as string);
-      if (doc?.phone) setPhone(doc.phone as string);
-      if (doc?.fullname) setFullName(doc.fullname as string);
+      if (!isPickup && !deliveryDetails?.address) {
+         // Fallback if somehow global store missed the address
+         let fullAddress = (doc?.DeliveryAddress || doc?.deliveryAddress || '') as string;
+         if (fullAddress && doc?.HouseNumber) {
+           fullAddress = `${doc.HouseNumber}, ${fullAddress}`;
+         }
+         setAddress(fullAddress);
+      }
+      
+      if (doc?.phone || doc?.Phone) setPhone((doc.phone || doc.Phone) as string);
+      if (doc?.fullname || doc?.FullName || doc?.name) setFullName((doc.fullname || doc.FullName || doc.name) as string);
     });
-  }, [firebaseUser, authLoading, items.length, router]);
+  }, [firebaseUser, authLoading, items.length, router, isPickup, deliveryDetails]);
 
+  const sub = subTotal();
   const discounted = discountedTotal();
-  const total = discounted + (pickupBool ? 0 : deliveryFee);
+  const deliveryFee = useCartStore(s => s.deliveryFee());
+  const total = discounted + deliveryFee;
+
+
+  
+  
 
   const placeOrder = async () => {
     if (!firebaseUser) return;
@@ -78,9 +89,12 @@ export default function CheckoutPage() {
             customer_phone: phone.replace(/\D/g, '').slice(-10) || '9999999999',
           },
           cart_details: {
-            isPickup: pickupBool,
+            isPickup: isPickup,
             couponCode: couponCode || '',
-            deliveryAddress: address,
+            deliveryAddress: isPickup ? '' : (deliveryDetails?.address || address || ''),
+            deliveryLat: isPickup ? null : (deliveryDetails?.lat || null),
+            deliveryLng: isPickup ? null : (deliveryDetails?.lng || null),
+            deliveryTier: pickupBool ? null : (deliveryDetails?.tier || null),
             phone: phone,
             fullName: fullName,
           },
@@ -152,296 +166,94 @@ export default function CheckoutPage() {
 
   if (authLoading || !firebaseUser || items.length === 0) return <PageShell><div className="min-h-screen bg-[#2B1B17] flex items-center justify-center"><LoadingSpinner /></div></PageShell>;
 
+  
   return (
     <PageShell>
-      <div className="min-h-screen bg-[#2B1B17] flex flex-col pb-[140px] relative overflow-hidden">
+      <div className="min-h-screen bg-[#2B1B17] flex flex-col pb-20">
         
-        {/* ── Premium Header Banner ── */}
-        <div className="relative w-full overflow-hidden bg-[#2B1B17] border-b border-[#D4AF37]/10 pt-28 pb-12 md:pt-36 md:pb-20 flex flex-col items-center justify-center mb-6 md:mb-12">
-           {/* Back to Cart Button */}
-           <div className="absolute top-28 md:top-36 left-4 md:left-8 z-50">
-             <BackButton href="/cart" label="Back to Cart" />
-           </div>
-           
-           <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(212,175,55,0.15),transparent_70%)] pointer-events-none" />
-           
-           <div className="relative z-10 text-center px-4 w-full mt-4 md:mt-0">
-              <div className="animate-fade-up text-[9px] md:text-xs tracking-[0.25em] md:tracking-[0.3em] font-bold text-[#D4AF37] mb-3 md:mb-4 flex items-center justify-center gap-2 md:gap-3">
-                 <span className="w-6 md:w-8 h-px bg-[#D4AF37]/50" />
-                 SECURE ENCRYPTED
-                 <span className="w-6 md:w-8 h-px bg-[#D4AF37]/50" />
-              </div>
-              <h1 className="animate-fade-up font-serif text-2xl md:text-5xl lg:text-6xl text-white drop-shadow-[0_0_15px_rgba(212,175,55,0.2)]" style={{ animationDelay: '100ms' }}>
-                Checkout
-              </h1>
-           </div>
+        {/* Header Banner */}
+        <div className="relative w-full overflow-hidden bg-[#2B1B17] border-b border-[#D4AF37]/10 pt-24 pb-8 md:pt-32 md:pb-12 flex flex-col items-center justify-center mb-6 md:mb-12">
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(212,175,55,0.15),transparent_70%)] pointer-events-none" />
+          <div className="relative z-10 text-center px-4 w-full">
+            <h1 className="animate-fade-up font-serif text-3xl md:text-5xl text-white drop-shadow-[0_0_15px_rgba(212,175,55,0.2)]">
+              Review & Pay
+            </h1>
+            <p className="text-white/50 text-xs md:text-sm mt-3 uppercase tracking-widest">Final Step</p>
+          </div>
         </div>
 
-        <div className="max-w-4xl mx-auto px-4 md:px-8 w-full relative z-10">
-          
-          {/* Custom Stepper */}
-          <div className="mb-10 md:mb-16 relative">
-            <div className="flex items-center justify-between relative z-10">
-              {STEPS.map((s, idx) => {
-                const isActive = step === s.id;
-                const isPast = step > s.id;
-                const Icon = s.icon;
-                return (
-                  <div key={s.id} className="flex flex-col items-center gap-2 md:gap-4 relative z-10 w-1/3">
-                    <div className={`w-12 h-12 md:w-16 md:h-16 rounded-full flex items-center justify-center border-2 transition-all duration-700 shadow-2xl ${
-                      isActive ? 'bg-[#D4AF37] border-[#D4AF37] scale-110 shadow-[0_0_30px_rgba(212,175,55,0.3)]' : 
-                      isPast ? 'bg-[#2B1B17] border-[#D4AF37] text-[#D4AF37]' : 
-                      'bg-[#2B1B17] border-white/10 text-white/20'
-                    }`}>
-                      <Icon size={18} className={`md:w-6 md:h-6 ${isActive ? 'text-[#1A110D]' : ''}`} />
+        <div className="container max-w-4xl mx-auto px-4">
+          <div className="bg-gradient-to-br from-white/[0.03] to-transparent border border-white/10 rounded-[24px] md:rounded-[32px] p-6 md:p-10 backdrop-blur-sm shadow-2xl mb-8">
+             
+             {/* Order Details Header */}
+             <div className="flex items-center gap-3 md:gap-4 mb-6 md:mb-8 border-b border-white/10 pb-4">
+               <span className="w-6 md:w-8 h-[1px] bg-[#D4AF37]" />
+               <h2 className="text-white text-xl md:text-2xl font-serif italic tracking-wide">Order Confirmation</h2>
+             </div>
+
+             {/* Items Review */}
+             <div className="max-h-[300px] overflow-y-auto pr-2 custom-scrollbar mb-8">
+                {items.map((item, idx) => (
+                  <div key={item.cartDocId} className="p-3 md:p-4 mb-3 rounded-xl md:rounded-2xl bg-black/20 border border-white/5 flex items-center gap-3 md:gap-4 group hover:bg-white/[0.03] hover:border-[#D4AF37]/20 transition-all">
+                    <div className="flex-1 min-w-0">
+                      <h4 className="text-white font-bold text-xs md:text-sm leading-tight truncate group-hover:text-[#D4AF37] transition-colors">{item.name}</h4>
+                      <p className="text-white/40 text-[9px] md:text-[10px] mt-0.5 font-medium">{item.selected || 'Standard'}</p>
                     </div>
-                    <span className={`text-[9px] md:text-xs font-black uppercase tracking-[0.15em] md:tracking-[0.2em] transition-colors duration-500 text-center ${
-                      isActive ? 'text-[#D4AF37]' : isPast ? 'text-white/80' : 'text-white/20'
-                    }`}>
-                      {s.title}
-                    </span>
+                    <div className="flex flex-col items-end">
+                       <span className="text-white font-black text-xs md:text-sm tracking-tight">₹{item.price}</span>
+                       <span className="inline-block bg-[#D4AF37]/10 text-[#D4AF37] text-[8px] md:text-[9px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded mt-1">Qty: {item.quantity}</span>
+                    </div>
                   </div>
-                );
-              })}
-            </div>
-            {/* Connecting Lines */}
-            <div className="absolute top-6 md:top-8 left-[16.6%] right-[16.6%] h-[1px] bg-white/10 z-0">
-              <div 
-                className="h-full bg-[#D4AF37] transition-all duration-1000 ease-[cubic-bezier(0.25,0.1,0.25,1)]"
-                style={{ width: `${(step / (STEPS.length - 1)) * 100}%`, boxShadow: '0 0 10px rgba(212,175,55,0.5)' }}
-              />
-            </div>
+                ))}
+             </div>
+
+             {/* Delivery Status */}
+             <div className="bg-black/20 rounded-2xl p-4 md:p-6 border border-white/5 mb-8">
+                <h3 className="text-white/70 text-xs font-bold uppercase tracking-widest mb-3">Fulfillment Method</h3>
+                {isPickup ? (
+                   <p className="text-[#D4AF37] font-bold text-sm md:text-base">Pick Up at Shop (Ahmedabad)</p>
+                ) : (
+                   <div>
+                     <p className="text-white font-bold text-sm md:text-base">Delivery</p>
+                     <p className="text-white/50 text-xs mt-1">{deliveryDetails?.address || address}</p>
+                   </div>
+                )}
+             </div>
+
+             {/* Financials */}
+             <div className="bg-gradient-to-br from-white/[0.05] to-transparent border border-[#D4AF37]/20 rounded-2xl p-5 md:p-6 mb-8">
+                <div className="flex justify-between items-center mb-3">
+                  <span className="text-white/50 text-sm font-medium">Subtotal</span>
+                  <span className="text-white font-bold">₹{subTotal().toFixed(2)}</span>
+                </div>
+                {couponDiscount > 0 && (
+                  <div className="flex justify-between items-center mb-3">
+                    <span className="text-green-400 text-xs font-black uppercase tracking-wider">Discount ({couponCode})</span>
+                    <span className="text-green-400 font-bold">-₹{(subTotal() - discounted).toFixed(2)}</span>
+                  </div>
+                )}
+                <div className="flex justify-between items-center mb-4">
+                  <span className="text-white/50 text-sm font-medium">Delivery Fee</span>
+                  <span className="text-white font-bold">{deliveryFee === 0 ? 'Free' : `₹${deliveryFee.toFixed(2)}`}</span>
+                </div>
+                <div className="w-full h-px bg-gradient-to-r from-transparent via-[#D4AF37]/30 to-transparent mb-4" />
+                <div className="flex justify-between items-end">
+                  <span className="text-white/70 font-black text-xs uppercase tracking-widest">Total to Pay</span>
+                  <span className="text-[#D4AF37] text-3xl md:text-4xl font-black tracking-tight drop-shadow-md">₹{total.toFixed(2)}</span>
+                </div>
+             </div>
+
+             <button
+               onClick={placeOrder}
+               disabled={placing}
+               className="w-full bg-[#D4AF37] hover:bg-white text-[#1A110D] py-4 md:py-5 rounded-xl md:rounded-[20px] font-black text-xs md:text-sm uppercase tracking-[0.2em] flex items-center justify-center gap-3 shadow-[0_0_30px_rgba(212,175,55,0.2)] hover:shadow-[0_0_40px_rgba(255,255,255,0.4)] transition-all duration-500 group disabled:opacity-50"
+             >
+               {placing ? <LoadingSpinner /> : 'Complete Secure Payment'}
+             </button>
           </div>
-          
-          {/* ── STEP 0: DELIVERY ── */}
-          {step === 0 && (
-            <div className="animate-fade-up">
-              {/* Delivery Types */}
-              <div className="bg-gradient-to-br from-white/[0.05] to-transparent border border-[#D4AF37]/20 rounded-[24px] md:rounded-[32px] p-5 md:p-8 shadow-2xl backdrop-blur-md mb-8 md:mb-12">
-                <h2 className="text-white text-xl md:text-2xl font-serif italic mb-4 md:mb-6">Fulfillment Method</h2>
-                
-                {/* Disabled Delivery Option */}
-                <button 
-                  onClick={() => setShowDeliveryModal(true)}
-                  className="w-full text-left bg-black/20 border-2 border-white/5 rounded-xl md:rounded-2xl p-4 md:p-5 flex items-center gap-4 md:gap-5 opacity-50 cursor-pointer hover:border-white/10 transition-all mb-3 md:mb-4 group"
-                >
-                  <div className="w-6 h-6 md:w-8 md:h-8 rounded-full border-2 border-white/20 flex-shrink-0" />
-                  <div className="flex-1">
-                    <h3 className="text-white font-bold text-sm md:text-base tracking-wide flex items-center gap-2">
-                      <Truck size={16} className="md:w-[18px] md:h-[18px]" /> Delivery (Unavailable)
-                    </h3>
-                    <p className="text-white/40 text-[10px] md:text-xs mt-1 font-medium">Tap for more info regarding delivery services</p>
-                  </div>
-                </button>
-
-                {/* Pickup Option */}
-                <button 
-                  onClick={() => setPickupBool(true)}
-                  className={`w-full text-left bg-gradient-to-r from-[#D4AF37]/10 to-transparent border-2 rounded-xl md:rounded-2xl p-4 md:p-5 flex items-center gap-4 md:gap-5 transition-all ${
-                    pickupBool ? 'border-[#D4AF37] shadow-[0_0_30px_rgba(212,175,55,0.15)]' : 'border-white/10'
-                  }`}
-                >
-                  <div className={`w-6 h-6 md:w-8 md:h-8 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-colors ${pickupBool ? 'border-[#D4AF37]' : 'border-white/50'}`}>
-                    {pickupBool && <div className="w-2.5 h-2.5 md:w-3.5 md:h-3.5 bg-[#D4AF37] rounded-full shadow-[0_0_10px_rgba(212,175,55,0.5)]" />}
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="text-white font-bold text-sm md:text-base tracking-wide flex items-center gap-2">
-                      <MapPin size={16} className={`md:w-[18px] md:h-[18px] ${pickupBool ? 'text-[#D4AF37]' : 'text-white/70'}`} /> Pick Up
-                    </h3>
-                    <p className="text-[#D4AF37] text-[10px] md:text-xs mt-1 font-bold tracking-widest uppercase">Studio Falguni, Ahmedabad</p>
-                  </div>
-                </button>
-              </div>
-
-              {/* Order Summary */}
-              <div className="flex items-center gap-3 md:gap-4 mb-4 md:mb-6 px-2">
-                <span className="w-6 md:w-8 h-[1px] bg-[#D4AF37]" />
-                <h2 className="text-white text-xl md:text-2xl font-serif italic tracking-wide">Order Details</h2>
-              </div>
-
-              <div className="bg-gradient-to-br from-white/[0.03] to-transparent border border-white/10 rounded-[24px] md:rounded-[32px] p-4 md:p-6 backdrop-blur-sm shadow-2xl mb-8 md:mb-12">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
-                  {items.map((item, idx) => (
-                    <div key={item.cartDocId} className="p-3 md:p-4 rounded-xl md:rounded-2xl bg-black/20 border border-white/5 flex items-center gap-3 md:gap-4 group hover:bg-white/[0.03] hover:border-[#D4AF37]/20 transition-all">
-                      <div className="w-14 h-14 md:w-16 md:h-16 flex-shrink-0 rounded-lg md:rounded-xl bg-black/40 border border-white/5 group-hover:border-[#D4AF37]/30 flex items-center justify-center overflow-hidden relative transition-colors">
-                         {item.image1 ? (
-                            <Image src={item.image1} alt={item.name} fill className="object-cover group-hover:scale-110 transition duration-700" />
-                         ) : (
-                            <ShoppingBag size={18} className="md:w-5 md:h-5 text-[#D4AF37]/50" />
-                         )}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <h4 className="text-white font-bold text-xs md:text-sm leading-tight truncate group-hover:text-[#D4AF37] transition-colors">{item.name}</h4>
-                        <p className="text-white/40 text-[9px] md:text-[10px] mt-0.5 font-medium">{item.selected || 'Standard'}</p>
-                        <div className="flex items-center justify-between mt-1.5 md:mt-2">
-                          <span className="inline-block bg-[#D4AF37]/10 border border-[#D4AF37]/30 rounded-md px-1.5 py-0.5 text-[#D4AF37] text-[8px] md:text-[9px] font-black uppercase tracking-wider">Qty: {item.quantity}</span>
-                          <span className="text-white font-black text-xs md:text-sm tracking-tight">₹{item.price}</span>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Price Summary with Coupon */}
-              <div className="bg-gradient-to-br from-white/[0.03] to-transparent border border-white/10 rounded-[20px] md:rounded-[24px] p-4 md:p-6 backdrop-blur-sm mb-6 md:mb-8">
-                <div className="flex justify-between items-center mb-3 md:mb-4">
-                  <span className="text-white/50 text-xs md:text-sm font-medium">Subtotal</span>
-                  <span className="text-white font-bold text-sm md:text-base">₹{subTotal().toFixed(2)}</span>
-                </div>
-                {couponDiscount > 0 && (
-                  <div className="flex justify-between items-center mb-3 md:mb-4 bg-green-500/10 border border-green-500/20 p-3 rounded-xl">
-                    <span className="text-green-400 text-[10px] md:text-xs font-black uppercase tracking-wider flex items-center gap-1.5">
-                      <Tag size={12} /> {couponCode} (-{couponDiscount}%)
-                    </span>
-                    <span className="text-green-400 font-bold text-xs md:text-sm">-₹{(subTotal() - discounted).toFixed(2)}</span>
-                  </div>
-                )}
-                <div className="w-full h-px bg-gradient-to-r from-transparent via-[#D4AF37]/30 to-transparent my-3 md:my-4" />
-                <div className="flex justify-between items-end">
-                  <span className="text-white/70 font-black text-[10px] md:text-xs uppercase tracking-widest">Estimated Total</span>
-                  <span className="text-[#D4AF37] text-2xl md:text-3xl font-black tracking-tight">₹{discounted.toFixed(2)}</span>
-                </div>
-              </div>
-
-              <button
-                onClick={() => setStep(1)}
-                className="w-full bg-[#D4AF37] hover:bg-white text-[#1A110D] py-4 md:py-6 rounded-xl md:rounded-[20px] font-black text-[10px] md:text-sm uppercase tracking-[0.2em] flex items-center justify-center gap-3 md:gap-4 shadow-[0_0_30px_rgba(212,175,55,0.2)] hover:shadow-[0_0_40px_rgba(255,255,255,0.4)] transition-all duration-500 group"
-              >
-                Proceed to Payment <ArrowRight size={16} className="md:w-5 md:h-5 group-hover:translate-x-2 transition-transform duration-500" />
-              </button>
-            </div>
-          )}
-
-          {/* ── STEP 1: PAYMENT ── */}
-          {step === 1 && (
-            <div className="animate-fade-up">
-              {/* Header */}
-              <div className="bg-gradient-to-br from-white/[0.05] to-transparent border border-[#D4AF37]/20 rounded-[24px] md:rounded-[32px] p-6 md:p-8 mb-8 md:mb-10 flex flex-col sm:flex-row items-center gap-4 md:gap-6 backdrop-blur-sm shadow-2xl relative overflow-hidden">
-                <div className="absolute right-0 top-0 opacity-5 pointer-events-none -translate-y-1/4 translate-x-1/4">
-                   <CreditCard size={150} className="text-[#D4AF37] -rotate-12" />
-                </div>
-                <div className="bg-[#D4AF37] p-3 md:p-4 rounded-xl md:rounded-2xl shadow-[0_0_20px_rgba(212,175,55,0.3)] relative z-10">
-                  <CreditCard size={24} className="md:w-7 md:h-7 text-[#1A110D]" />
-                </div>
-                <div className="text-center sm:text-left relative z-10">
-                  <h2 className="text-white font-serif italic text-2xl md:text-3xl mb-1 md:mb-2">Secure Checkout</h2>
-                  <p className="text-white/50 text-[10px] md:text-sm font-medium">Select how you want to pay for your premium order</p>
-                </div>
-              </div>
-
-              <h3 className="text-white/80 font-bold text-[10px] md:text-xs uppercase tracking-widest mb-4 md:mb-6 px-2 flex items-center gap-2 md:gap-3">
-                <span className="w-4 h-[1px] bg-[#D4AF37]" /> Available Methods
-              </h3>
-              
-              <div className="flex flex-col gap-4 md:gap-5 mb-8 md:mb-12">
-                {/* Online Payment */}
-                <div 
-                  className="w-full text-left bg-gradient-to-r from-white/[0.02] to-transparent border-2 border-[#D4AF37] bg-[#D4AF37]/[0.02] shadow-[0_0_30px_rgba(212,175,55,0.15)] rounded-[20px] md:rounded-[24px] p-4 md:p-6 flex items-center gap-4 md:gap-6"
-                >
-                  <div className="p-3 md:p-4 rounded-lg md:rounded-xl bg-[#D4AF37] shadow-[0_0_15px_rgba(212,175,55,0.4)]">
-                    <CreditCard size={20} className="md:w-6 md:h-6 text-[#1A110D]" />
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="text-white font-bold text-base md:text-lg tracking-wide mb-0.5 md:mb-1">Online Payment</h3>
-                    <p className="text-white/50 text-[10px] md:text-xs font-medium">Pay securely using Cards, UPI, or Net Banking</p>
-                  </div>
-                  <div className="w-6 h-6 md:w-8 md:h-8 rounded-full border-2 border-[#D4AF37] flex items-center justify-center">
-                    <div className="w-2.5 h-2.5 md:w-3.5 md:h-3.5 bg-[#D4AF37] rounded-full shadow-[0_0_10px_rgba(212,175,55,0.5)]" />
-                  </div>
-                </div>
-              </div>
-
-              {/* Order Summary Pricing */}
-              <div className="bg-gradient-to-br from-white/[0.03] to-transparent border border-[#D4AF37]/20 rounded-[24px] md:rounded-[32px] p-5 md:p-8 backdrop-blur-sm shadow-2xl mb-8 md:mb-12">
-                <div className="flex justify-between items-center mb-4 md:mb-6">
-                  <span className="text-white/60 text-sm md:text-base font-medium">Subtotal</span>
-                  <span className="text-white font-bold text-base md:text-lg tracking-wide">₹{subTotal().toFixed(2)}</span>
-                </div>
-                {couponDiscount > 0 && (
-                  <div className="flex justify-between items-center mb-4 md:mb-6 bg-green-500/10 border border-green-500/20 p-3 md:p-4 rounded-xl md:rounded-2xl">
-                    <span className="text-green-400 text-[10px] md:text-sm font-black uppercase tracking-wider flex items-center gap-1 md:gap-2">Discount (-{couponDiscount}%)</span>
-                    <span className="text-green-400 font-bold text-sm md:text-lg tracking-wide">-₹{(subTotal() - discounted).toFixed(2)}</span>
-                  </div>
-                )}
-                {!pickupBool && (
-                  <div className="flex justify-between items-center mb-4 md:mb-6">
-                    <span className="text-white/60 text-sm md:text-base font-medium">Delivery Fee</span>
-                    <span className="text-white font-bold text-base md:text-lg tracking-wide">₹{deliveryFee.toFixed(2)}</span>
-                  </div>
-                )}
-                <div className="w-full h-px bg-gradient-to-r from-transparent via-[#D4AF37]/30 to-transparent my-6 md:my-8" />
-                <div className="flex justify-between items-end">
-                  <span className="text-white/80 font-black text-xs md:text-sm uppercase tracking-widest">Total Amount</span>
-                  <span className="text-[#D4AF37] text-3xl md:text-5xl font-black tracking-tight drop-shadow-md">₹{total.toFixed(2)}</span>
-                </div>
-              </div>
-
-              <div className="flex flex-col sm:flex-row gap-3 md:gap-5">
-                <button
-                  onClick={() => setStep(0)}
-                  className="w-full sm:w-1/3 py-4 md:py-6 bg-transparent hover:bg-white/5 border-2 border-white/20 hover:border-white/40 text-white rounded-xl md:rounded-[20px] font-black text-[10px] md:text-sm uppercase tracking-[0.2em] transition-all duration-300"
-                >
-                  Back
-                </button>
-                <button
-                  onClick={placeOrder}
-                  disabled={placing}
-                  className="flex-1 bg-[#D4AF37] hover:bg-white text-[#1A110D] py-4 md:py-6 rounded-xl md:rounded-[20px] font-black text-[10px] md:text-sm uppercase tracking-[0.2em] flex items-center justify-center gap-3 md:gap-4 shadow-[0_0_30px_rgba(212,175,55,0.2)] hover:shadow-[0_0_50px_rgba(255,255,255,0.5)] transition-all duration-500 disabled:opacity-50 group"
-                >
-                  {placing ? 'Processing...' : 'Pay Securely'}
-                  {!placing && <ArrowRight size={16} className="md:w-5 md:h-5 group-hover:translate-x-2 transition-transform duration-500" />}
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/* ── STEP 2: COMPLETED ── */}
-          {step === 2 && (
-            <div className="animate-fade-up text-center py-8 md:py-10">
-              <div className="w-20 h-20 md:w-32 md:h-32 mx-auto rounded-full bg-green-500/10 border border-green-500/20 flex items-center justify-center mb-6 md:mb-8 relative">
-                <div className="absolute inset-0 bg-green-500/20 blur-xl rounded-full" />
-                <CheckCircle size={40} className="md:w-16 md:h-16 text-green-400 relative z-10 animate-bounce" />
-              </div>
-              <h1 className="text-3xl md:text-5xl font-serif italic text-white mb-3 md:mb-4">Order Placed Successfully!</h1>
-              <p className="text-white/50 text-xs md:text-base mb-8 md:mb-12 max-w-md mx-auto leading-relaxed px-4 md:px-0">
-                Thank you for your purchase. Your premium order is now being processed by Studio Falguni.
-              </p>
-              
-              <div className="flex flex-col sm:flex-row gap-3 md:gap-4 justify-center">
-                <button onClick={() => router.push('/profile')} className="px-6 md:px-8 py-3 md:py-4 bg-white/5 hover:bg-white/10 border border-white/10 text-white font-bold text-[10px] md:text-xs uppercase tracking-widest rounded-xl transition-colors">
-                  Track Order
-                </button>
-                <button onClick={() => router.push('/products')} className="px-6 md:px-8 py-3 md:py-4 bg-[#D4AF37] hover:bg-[#C5A028] text-[#1A110D] font-black text-[10px] md:text-xs uppercase tracking-widest rounded-xl shadow-[0_0_20px_rgba(212,175,55,0.3)] transition-all">
-                  Continue Shopping
-                </button>
-              </div>
-            </div>
-          )}
-
         </div>
-
-        {/* Delivery Unavailable Modal */}
-        {showDeliveryModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center px-4 bg-black/60 backdrop-blur-sm animate-fade-in">
-            <div className="bg-[#2B1B17] border border-[#D4AF37]/30 rounded-3xl max-w-sm w-full p-6 shadow-2xl relative">
-              <h3 className="text-[#D4AF37] text-lg font-bold mb-4">Delivery Service Update</h3>
-              <p className="text-white/70 text-sm leading-relaxed mb-6">
-                Sorry, Porter is currently not working and we are working on this.
-                <br/><br/>
-                Please add your desired location and contact info to <strong>falgunigruhudhyog@gmail.com</strong> and we will help you with delivery.
-              </p>
-              <button 
-                onClick={() => setShowDeliveryModal(false)}
-                className="w-full bg-white/10 hover:bg-white/20 text-[#D4AF37] font-bold py-3 rounded-xl transition-colors"
-              >
-                OK
-              </button>
-            </div>
-          </div>
-        )}
-
       </div>
     </PageShell>
   );
+
 }

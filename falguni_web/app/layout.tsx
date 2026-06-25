@@ -25,7 +25,7 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={chivo.className}>
-      <body className="min-h-dvh flex flex-col bg-[var(--color-bg)] text-[var(--color-fg)] overflow-x-hidden w-full">
+      <body className="min-h-dvh flex flex-col bg-[var(--color-bg)] text-[var(--color-fg)] w-full">
         <AuthProvider>
           <OnboardingGuard>{children}</OnboardingGuard>
         </AuthProvider>

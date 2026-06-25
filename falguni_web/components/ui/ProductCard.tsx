@@ -121,9 +121,9 @@ export default function ProductCard({
         <button
           onClick={handleAdd}
           disabled={adding || !firebaseUser}
-          className="hidden md:flex absolute bottom-2.5 right-2.5 z-10 items-center justify-center rounded-full
-            opacity-0 group-hover:opacity-100 scale-75 group-hover:scale-100
-            transition-all duration-300 disabled:opacity-40"
+          className={`absolute bottom-2.5 right-2.5 z-10 flex items-center justify-center rounded-full transition-all duration-300 disabled:opacity-40
+            ${variant === 'square-small' ? 'opacity-100 scale-100' : 'opacity-100 md:opacity-0 md:group-hover:opacity-100 scale-100 md:scale-75 md:group-hover:scale-100'}
+          `}
           style={{
             width: 36, height: 36,
             background: added ? '#16a34a' : 'linear-gradient(135deg,#D4AF37,#C9A227)',
@@ -147,7 +147,7 @@ export default function ProductCard({
           <div className="flex-shrink-0 mt-0.5" style={{ width: 2, height: 10, borderRadius: 99, background: '#D4AF37' }} />
           <div className="min-w-0">
             <p style={{ color: 'rgba(212,175,55,0.9)', fontSize: 7.5, fontWeight: 700, letterSpacing: '0.15em', lineHeight: 1 }}>
-              {(product.brandName || product.category).toUpperCase()}
+              {(product.brandName || product.category || 'Falguni').toUpperCase()}
             </p>
             <h3 className="line-clamp-2 leading-snug mt-0.5 capitalize"
               style={{ color: 'var(--color-fg)', fontSize: 11, fontWeight: 500, letterSpacing: '0.01em' }}>
