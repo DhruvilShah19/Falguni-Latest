@@ -13,6 +13,7 @@ import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import { MapPin, Truck } from 'lucide-react';
 import DeliveryAddressInput, { DeliveryDetails } from '@/components/ui/DeliveryAddressInput';
 import CartAddons from '@/components/cart/CartAddons';
+import StorePickupCard from '@/components/cart/StorePickupCard';
 import { getUserDoc } from '@/lib/firestore';
 
 
@@ -243,20 +244,7 @@ export default function CartPage() {
 
                   <div className="transition-all duration-500">
                     {localPickup ? (
-                      <div className="bg-white/5 border border-[#D4AF37]/20 rounded-2xl p-6 md:p-8 flex items-start gap-4 shadow-inner">
-                         <div className="w-10 h-10 rounded-full bg-[#D4AF37]/10 flex items-center justify-center flex-shrink-0">
-                           <MapPin size={20} className="text-[#D4AF37]" />
-                         </div>
-                         <div>
-                           <h3 className="text-white font-bold text-base md:text-lg mb-1">Pick Up at Store</h3>
-                           <p className="text-white/50 text-sm leading-relaxed mb-4">
-                             Your order will be prepared and packed securely. You can collect it from our flagship store in Ahmedabad.
-                           </p>
-                           <div className="text-[#D4AF37] font-bold text-xs uppercase tracking-widest bg-[#D4AF37]/10 inline-block px-3 py-1.5 rounded-lg border border-[#D4AF37]/20">
-                             Free Service
-                           </div>
-                         </div>
-                      </div>
+                      <StorePickupCard />
                     ) : (
                       <div className="bg-gradient-to-br from-white/[0.03] to-transparent border border-white/5 rounded-2xl p-1 shadow-lg">
                         <DeliveryAddressInput 
@@ -296,8 +284,8 @@ export default function CartPage() {
                       <span className="text-white font-bold tracking-wide">₹{sub.toFixed(2)}</span>
                     </div>
                     
-                    <div className="flex justify-between items-center mb-6 relative z-10">
-                      <span className="text-white/60 font-medium text-sm">Delivery Fee</span>
+                    <div className="flex justify-between items-center mb-4 relative z-10">
+                      <span className="text-white/60 font-medium text-sm">{localPickup ? 'Pickup Fee' : 'Delivery Fee'}</span>
                       <span className="text-white font-bold tracking-wide">{deliveryFee > 0 ? `₹${deliveryFee}` : 'Free'}</span>
                     </div>
 

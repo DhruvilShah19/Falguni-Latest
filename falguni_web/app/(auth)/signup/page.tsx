@@ -2,10 +2,10 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { createUserWithEmailAndPassword, updateProfile, GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
+import { createUserWithEmailAndPassword, updateProfile, GoogleAuthProvider, OAuthProvider, signInWithPopup } from 'firebase/auth';
 import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { auth, db } from '@/lib/firebase';
-import { User, Mail, Lock, Eye, EyeOff, Phone, ChevronLeft, Check, X } from 'lucide-react';
+import { User, Mail, Lock, Eye, EyeOff, Phone, ChevronLeft, Check, X, Apple } from 'lucide-react';
 import BackButton from '@/components/ui/BackButton';
 
 const kGold   = 'var(--color-gold)';
@@ -66,7 +66,32 @@ export default function SignupPage() {
     setLoading(true); setError('');
     try {
       const { user } = await signInWithPopup(auth, new GoogleAuthProvider());
-      await createUserDoc(user.uid);
+      // Create user doc if new
+      await setDoc(doc(db, 'users', user.uid), {
+        fullname: user.displayName || 'Guest User',
+        email: user.email,
+        phone: user.phoneNumber || '',
+        createdAt: serverTimestamp(),
+        loyaltyPoints: 0,
+      }, { merge: true });
+      router.push('/');
+    } catch (err: any) {
+      setError(friendlyError(err.code));
+    } finally { setLoading(false); }
+  };
+
+  const handleApple = async () => {
+    setLoading(true); setError('');
+    try {
+      const { user } = await signInWithPopup(auth, new OAuthProvider('apple.com'));
+      // Create user doc if new
+      await setDoc(doc(db, 'users', user.uid), {
+        fullname: user.displayName || 'Guest User',
+        email: user.email || '',
+        phone: user.phoneNumber || '',
+        createdAt: serverTimestamp(),
+        loyaltyPoints: 0,
+      }, { merge: true });
       router.push('/');
     } catch (err: any) {
       setError(friendlyError(err.code));
@@ -187,15 +212,26 @@ export default function SignupPage() {
           <div className="flex-1 h-px" style={{ background: 'var(--color-border)' }} />
         </div>
 
-        {/* Google */}
-        <div className="flex justify-center">
+        {/* Google & Apple */}
+        <div className="flex justify-center gap-6">
           <button
             onClick={handleGoogle}
             disabled={loading}
             className="w-14 h-14 rounded-full flex items-center justify-center border transition hover:opacity-80 disabled:opacity-40"
             style={{ background: 'var(--color-surface)', borderColor: 'var(--color-border)' }}
+            title="Sign in with Google"
           >
             <GoogleIcon />
+          </button>
+          
+          <button
+            onClick={handleApple}
+            disabled={loading}
+            className="w-14 h-14 rounded-full flex items-center justify-center border transition hover:opacity-80 disabled:opacity-40"
+            style={{ background: 'var(--color-surface)', borderColor: 'var(--color-border)' }}
+            title="Sign in with Apple"
+          >
+            <Apple size={26} color="var(--color-fg)" />
           </button>
         </div>
 

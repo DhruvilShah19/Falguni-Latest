@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
+import { signInWithEmailAndPassword, GoogleAuthProvider, OAuthProvider, signInWithPopup } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import { Mail, Lock, Eye, EyeOff, Apple } from 'lucide-react';
 import BackButton from '@/components/ui/BackButton';
@@ -34,6 +34,16 @@ export default function LoginPage() {
     setLoading(true); setError('');
     try {
       await signInWithPopup(auth, new GoogleAuthProvider());
+      router.push('/');
+    } catch (err: any) {
+      setError(friendlyError(err.code));
+    } finally { setLoading(false); }
+  };
+
+  const handleApple = async () => {
+    setLoading(true); setError('');
+    try {
+      await signInWithPopup(auth, new OAuthProvider('apple.com'));
       router.push('/');
     } catch (err: any) {
       setError(friendlyError(err.code));
@@ -133,10 +143,11 @@ export default function LoginPage() {
 
           {/* Apple */}
           <button
-            disabled
-            className="w-14 h-14 rounded-full flex items-center justify-center border opacity-40 cursor-not-allowed"
+            onClick={handleApple}
+            disabled={loading}
+            className="w-14 h-14 rounded-full flex items-center justify-center border transition hover:opacity-80 disabled:opacity-40"
             style={{ background: 'var(--color-surface)', borderColor: 'var(--color-border)' }}
-            title="Apple Sign In not available on web"
+            title="Sign in with Apple"
           >
             <Apple size={26} color="var(--color-fg)" />
           </button>

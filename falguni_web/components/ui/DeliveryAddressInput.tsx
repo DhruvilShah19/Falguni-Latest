@@ -24,7 +24,7 @@ const goldenMapStyle = [
 ];
 
 // Studio Falguni Location
-const STUDIO_FALGUNI_LATLNG = { lat: 23.0385315, lng: 72.5270146 }; // Falguni Gruh Udhyog (Vastrapur)
+const STUDIO_FALGUNI_LATLNG = { lat: 23.0360, lng: 72.5294 }; // Falguni Gruh Udhyog (Vastrapur)
 
 export type DeliveryTier = 'Hyperlocal' | 'Intercity' | 'Interstate' | 'PAN India';
 
@@ -324,9 +324,9 @@ export default function DeliveryAddressInput({ onDeliveryCalculated, defaultAddr
                 <span className="inline-block w-max text-[#D4AF37] font-black text-[10px] uppercase tracking-widest bg-[#D4AF37]/10 border border-[#D4AF37]/20 px-2.5 py-1 rounded-md mb-2 shadow-sm">
                   {activeDetails.tier} Delivery
                 </span>
-                <div className="text-white/90 text-sm md:text-base font-medium leading-relaxed line-clamp-2 pr-4">
+                <p className="text-white/50 text-xs md:text-sm font-medium leading-relaxed pr-4 mt-2">
                   {activeDetails.address}
-                </div>
+                </p>
               </div>
 
               {/* Minimal metrics row */}
@@ -377,15 +377,18 @@ export default function DeliveryAddressInput({ onDeliveryCalculated, defaultAddr
                     <div className="flex items-center justify-between text-xs sm:text-sm font-medium mb-2">
                       <span className="text-white/90 flex items-center gap-2">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-[#D4AF37]"><rect x="1" y="3" width="15" height="13"></rect><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon><circle cx="5.5" cy="18.5" r="2.5"></circle><circle cx="18.5" cy="18.5" r="2.5"></circle></svg>
-                        Add <span className="text-[#F2D06B] font-black tracking-wide drop-shadow-sm">₹{(activeDetails.tier === 'Hyperlocal' ? 100 : activeDetails.tier === 'Intercity' ? 500 : activeDetails.tier === 'Interstate' ? 2000 : 5000) - cartSubTotal}</span> more for Free Delivery
+                        <div className="flex-1">
+                          Add <span className="text-[#F2D06B] font-black tracking-wide drop-shadow-sm">₹{Math.max(0, (activeDetails.tier === 'Hyperlocal' ? 100 : activeDetails.tier === 'Intercity' ? 500 : activeDetails.tier === 'Interstate' ? 2000 : 5000) - cartSubTotal).toFixed(2)}</span> more for Free Delivery
+                        </div>
                       </span>
                     </div>
-                    <div className="w-full h-2 bg-black/60 rounded-full overflow-hidden border border-[#D4AF37]/10">
+                    {/* Progress Bar */}
+                    <div className="w-full bg-[#1A110D] h-2.5 rounded-full overflow-hidden mt-2 border border-white/5 shadow-inner">
                       <div 
-                        className="h-full bg-gradient-to-r from-[#A88520] via-[#D4AF37] to-[#F2D06B] rounded-full shadow-[0_0_12px_rgba(212,175,55,0.8)] transition-all duration-1000 ease-out"
+                        className="bg-gradient-to-r from-[#D4AF37] to-[#F2D06B] h-full rounded-full shadow-[0_0_10px_rgba(212,175,55,0.6)] transition-all duration-1000 ease-out" 
                         style={{ 
                           width: `${Math.min(100, (cartSubTotal / (activeDetails.tier === 'Hyperlocal' ? 100 : activeDetails.tier === 'Intercity' ? 500 : activeDetails.tier === 'Interstate' ? 2000 : 5000)) * 100)}%` 
-                        }}
+                        }} 
                       />
                     </div>
                   </div>

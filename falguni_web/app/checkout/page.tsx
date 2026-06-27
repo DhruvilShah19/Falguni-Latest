@@ -6,6 +6,8 @@ import { Truck, CreditCard, CheckCircle, Info, MapPin, Map, ShoppingBag, ArrowRi
 import { useCartStore } from '@/store/cartStore';
 import { useAuthStore } from '@/store/authStore';
 import { getDeliveryFee, clearCart, getUserDoc } from '@/lib/firestore';
+import DeliveryAddressInput from '@/components/ui/DeliveryAddressInput';
+import StorePickupCard from '@/components/cart/StorePickupCard';
 import { db } from '@/lib/firebase';
 import { collection, addDoc, serverTimestamp, doc, updateDoc, getDocs, query, where } from 'firebase/firestore';
 import { load } from '@cashfreepayments/cashfree-js';
@@ -94,7 +96,7 @@ export default function CheckoutPage() {
             deliveryAddress: isPickup ? '' : (deliveryDetails?.address || address || ''),
             deliveryLat: isPickup ? null : (deliveryDetails?.lat || null),
             deliveryLng: isPickup ? null : (deliveryDetails?.lng || null),
-            deliveryTier: pickupBool ? null : (deliveryDetails?.tier || null),
+            deliveryTier: isPickup ? null : (deliveryDetails?.tier || null),
             phone: phone,
             fullName: fullName,
           },
@@ -208,17 +210,19 @@ export default function CheckoutPage() {
              </div>
 
              {/* Delivery Status */}
-             <div className="bg-black/20 rounded-2xl p-4 md:p-6 border border-white/5 mb-8">
-                <h3 className="text-white/70 text-xs font-bold uppercase tracking-widest mb-3">Fulfillment Method</h3>
-                {isPickup ? (
-                   <p className="text-[#D4AF37] font-bold text-sm md:text-base">Pick Up at Shop (Ahmedabad)</p>
-                ) : (
-                   <div>
-                     <p className="text-white font-bold text-sm md:text-base">Delivery</p>
-                     <p className="text-white/50 text-xs mt-1">{deliveryDetails?.address || address}</p>
-                   </div>
-                )}
-             </div>
+             {isPickup ? (
+               <div className="mb-8">
+                 <StorePickupCard />
+               </div>
+             ) : (
+               <div className="bg-black/20 rounded-2xl p-4 md:p-6 border border-white/5 mb-8">
+                  <h3 className="text-white/70 text-xs font-bold uppercase tracking-widest mb-3">Fulfillment Method</h3>
+                  <div>
+                    <p className="text-white font-bold text-sm md:text-base">Delivery</p>
+                    <p className="text-white/50 text-xs mt-1">{deliveryDetails?.address || address}</p>
+                  </div>
+               </div>
+             )}
 
              {/* Financials */}
              <div className="bg-gradient-to-br from-white/[0.05] to-transparent border border-[#D4AF37]/20 rounded-2xl p-5 md:p-6 mb-8">
@@ -233,7 +237,7 @@ export default function CheckoutPage() {
                   </div>
                 )}
                 <div className="flex justify-between items-center mb-4">
-                  <span className="text-white/50 text-sm font-medium">Delivery Fee</span>
+                  <span className="text-white/50 text-sm font-medium">{isPickup ? 'Pickup Fee' : 'Delivery Fee'}</span>
                   <span className="text-white font-bold">{deliveryFee === 0 ? 'Free' : `₹${deliveryFee.toFixed(2)}`}</span>
                 </div>
                 <div className="w-full h-px bg-gradient-to-r from-transparent via-[#D4AF37]/30 to-transparent mb-4" />

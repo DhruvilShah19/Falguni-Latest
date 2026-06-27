@@ -52,7 +52,7 @@ export const useCartStore = create<CartState>((set, get) => ({
     if (!details) return 0;
     
     const d = details.distanceKm;
-    const cartSubTotal = get().subTotal();
+    const cartSubTotal = get().subTotal(); // Use Subtotal before discounts!
     
     if (d <= 15) return cartSubTotal >= 100 ? 0 : 10;
     if (d <= 50) return cartSubTotal >= 500 ? 0 : 25;
