@@ -64,28 +64,28 @@ class _AllOrdersState extends State<AllOrders> {
               setState(() {
                 orders.add(OrderModel2(
                   orders: [
-                    ...(doc.data()['orders']).map((items) {
+                    ...((doc.data()['orders'] ?? []) as List).map((items) {
                       return OrdersList.fromMap(items);
                     })
                   ],
-                  pickupAddress: doc.data()['pickupAddress'],
+                  pickupAddress: doc.data()['pickupAddress'] ?? '',
                   confirmationStatus: doc.data()['confirmationStatus'],
-                  uid: doc.data()['uid'],
-                  marketID: doc.data()['marketID'],
-                  vendorID: doc.data()['vendorID'],
-                  userID: doc.data()['userID'],
-                  deliveryAddress: doc.data()['deliveryAddress'],
-                  houseNumber: doc.data()['houseNumber'],
-                  closesBusStop: doc.data()['closesBusStop'],
-                  deliveryBoyID: doc.data()['deliveryBoyID'],
-                  status: doc.data()['status'],
-                  accept: doc.data()['accept'],
-                  orderID: doc.data()['orderID'],
+                  uid: doc.data()['uid'] ?? '',
+                  marketID: doc.data()['marketID'] ?? '',
+                  vendorID: doc.data()['vendorID'] ?? '',
+                  userID: doc.data()['userID'] ?? '',
+                  deliveryAddress: doc.data()['deliveryAddress'] ?? '',
+                  houseNumber: doc.data()['houseNumber'] ?? '',
+                  closesBusStop: doc.data()['closesBusStop'] ?? '',
+                  deliveryBoyID: doc.data()['deliveryBoyID'] ?? '',
+                  status: doc.data()['status'] ?? '',
+                  accept: doc.data()['accept'] ?? false,
+                  orderID: doc.data()['orderID'] ?? 0,
                   timeCreated: doc.data()['timeCreated'],
-                  total: doc.data()['total'],
-                  deliveryFee: doc.data()['deliveryFee'],
-                  acceptDelivery: doc.data()['acceptDelivery'],
-                  paymentType: doc.data()['paymentType'],
+                  total: doc.data()['total'] ?? 0,
+                  deliveryFee: doc.data()['deliveryFee'] ?? 0,
+                  acceptDelivery: doc.data()['acceptDelivery'] ?? false,
+                  paymentType: doc.data()['paymentType'] ?? 'Online',
                   cashFreeDetails: doc.data()["cashFreeDetails"],
                 ));
               });
