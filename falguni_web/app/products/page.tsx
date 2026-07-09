@@ -90,8 +90,8 @@ async function ProductsContent({ searchParams }: { searchParams: { [key: string]
           <>
             {/* Standard Grid instead of Asymmetrical to fit more items clearly */}
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-4 md:gap-x-8 gap-y-8 md:gap-y-12">
-              {paginatedProducts.map((p) => (
-                <BoutiqueItem key={p.uid} product={p} />
+              {paginatedProducts.map((p, idx) => (
+                <BoutiqueItem key={p.uid} product={p} priority={idx < 4} />
               ))}
             </div>
 

@@ -7,7 +7,7 @@ import type { ProductsModel } from '@/types';
  * BoutiqueItem – shared editorial product card used across Search, Home, and PLP pages.
  * Tall 3:4 image, centered text, brand label, serif title, "View Details" pill.
  */
-export default function BoutiqueItem({ product }: { product: ProductsModel }) {
+export default function BoutiqueItem({ product, priority = false }: { product: ProductsModel, priority?: boolean }) {
   const price = product.unitPrice1 ?? 0;
 
   return (
@@ -21,6 +21,8 @@ export default function BoutiqueItem({ product }: { product: ProductsModel }) {
             alt={product.name} 
             fill 
             sizes="(max-width: 768px) 50vw, 25vw"
+            quality={50}
+            priority={priority}
             className="object-cover scale-100 group-hover:scale-105 transition-transform duration-[1.5s] ease-out saturate-110" 
           />
         ) : (

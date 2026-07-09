@@ -24,6 +24,7 @@ class OrderModel {
   final String month;
   final String year;
   final dynamic cashFreeDetails;
+  final dynamic createdAt;
 
   OrderModel(
       {required this.marketID,
@@ -33,6 +34,7 @@ class OrderModel {
       required this.year,
       required this.day,
       this.cashFreeDetails,
+      this.createdAt,
       required this.pickupAddress,
       required this.orderID,
       required this.orders,
@@ -78,7 +80,8 @@ class OrderModel {
       'confirmationStatus': confirmationStatus,
       'accept': accept,
       'uid': uid,
-      'cashFreeDetails': cashFreeDetails
+      'cashFreeDetails': cashFreeDetails,
+      'createdAt': createdAt
     };
   }
 }

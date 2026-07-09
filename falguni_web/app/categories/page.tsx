@@ -64,6 +64,8 @@ export default function CategoriesPage() {
                       alt={cat.category}
                       fill
                       sizes="(max-width: 768px) 33vw, 16vw"
+                      quality={50}
+                      priority={idx < 6}
                       className="object-cover scale-100 group-hover:scale-110 transition-transform duration-700 ease-out"
                     />
                   ) : (

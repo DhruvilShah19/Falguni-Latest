@@ -100,6 +100,36 @@ export async function GET(request: Request) {
             }
           });
           
+          // Append to User History
+          try {
+            const userID = draftData?.userID;
+            if (userID) {
+              await adminDb.collection('users').doc(userID).collection('History').add({
+                timeCreated: new Date(),
+                message: 'Placed an order',
+                amount: `-₹${draftData?.total || amount}`,
+                paymentSystem: 'Online'
+              });
+            }
+          } catch (histErr) {
+            console.error('[Admin] Error writing user history:', histErr);
+          }
+
+          // Append to Vendor Notifications
+          try {
+            const vendorID = draftData?.vendorID;
+            if (vendorID) {
+              await adminDb.collection('vendors').doc(vendorID).collection('Notifications').add({
+                timeCreated: new Date(),
+                message: `New order alert Order ID #${draftData?.orderID || 'Unknown'}`,
+                amount: `₹${draftData?.total || amount}`,
+                paymentSystem: 'Online'
+              });
+            }
+          } catch (notifErr) {
+            console.error('[Admin] Error writing vendor notification:', notifErr);
+          }
+          
           // Increment vendor orderID (same as Flutter's updateVendorOrderID)
           try {
             const vendorID = draftData?.vendorID;

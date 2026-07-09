@@ -13,7 +13,7 @@ import 'package:logger/logger.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:animated_check/animated_check.dart';
 import 'package:falguni_app/Pages/pickup_addresses.dart';
-import 'package:falguni_app/Widgets/get_delviery_fee.dart';
+
 import 'package:flutter_cashfree_pg_sdk/api/cferrorresponse/cferrorresponse.dart';
 import 'package:flutter_cashfree_pg_sdk/api/cfpayment/cfdropcheckoutpayment.dart';
 import 'package:flutter_cashfree_pg_sdk/api/cfsession/cfsession.dart';
@@ -82,7 +82,7 @@ class _CheckoutPageState extends State<CheckoutPage>
   List<Map<String, dynamic>> orders = [];
   AnimationController? _animationController;
   Animation<double>? _animation;
-  String uid = DateTime.now().toString();
+  String uid = DateTime.now().toIso8601String();
   String getOnesignalKey = '';
   String playerId = '';
   Timer? oneSignalTimer;
@@ -135,13 +135,22 @@ class _CheckoutPageState extends State<CheckoutPage>
   }
 
   getDeliveryFee() {
+    FirebaseFirestore.instance.collection('Delivery Fee').doc('Delivery Fee').get().then((doc) {
+      if (doc.exists && mounted) {
+        setState(() {
+          deliveryFee = doc['Delivery Fee'] ?? 0;
+          debugPrint('flat delivery fee is $deliveryFee');
+        });
+      }
+    });
+
     if (userRef != null) {
       userRef!.snapshots().listen((val) {
-        setState(() {
-          //  deliveryFee = val['deliveryFee'];
-          couponReward = val['Coupon Reward'];
-          debugPrint('delivery fee is $deliveryFee');
-        });
+        if (mounted) {
+          setState(() {
+            couponReward = val['Coupon Reward'] ?? 0;
+          });
+        }
       });
     }
   }
@@ -425,6 +434,7 @@ class _CheckoutPageState extends State<CheckoutPage>
         paymentType: 'Online',
         userID: id,
         timeCreated: DateFormat.yMMMMEEEEd().format(DateTime.now()).toString(),
+        createdAt: FieldValue.serverTimestamp(),
         deliveryAddress: pickupBool == true ? '' : deliveryAddress,
         houseNumber: pickupBool == true ? '' : houseNumber,
         closesBusStop: pickupBool == true ? '' : closestBustStop,
@@ -718,29 +728,10 @@ class _CheckoutPageState extends State<CheckoutPage>
   }
 
   getDeliveryFeeQuote() async {
-    var result = await Navigator.push(
-      context,
-      MaterialPageRoute(
-          builder: (context) => GetDeliveryFeeWidget(
-                customerLat: deliveryAddressLat,
-                customerLong: deliveryAddressLong,
-                customerName: fullname,
-                phone: phone,
-              )),
-    );
     setState(() {
-      deliveryFee = result['deliveryFee'];
-      pickupAddress = result['pickupAddress'];
       _index = 1;
       selectedStepper2 = true;
     });
-
-    Fluttertoast.showToast(
-        msg: "Select pickup address".tr(),
-        toastLength: Toast.LENGTH_SHORT,
-        gravity: ToastGravity.TOP,
-        timeInSecForIosWeb: 1,
-        fontSize: 14.0);
   }
 
   addToRecentlyPurchased() {

@@ -340,7 +340,7 @@ export default function ProductDetailPage() {
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 md:w-12 md:h-12 rounded-full overflow-hidden bg-black/40 border border-white/10 flex-shrink-0">
                     {rev.profilePicture ? (
-                      <Image src={rev.profilePicture} alt={rev.fullname} width={48} height={48} className="object-cover w-full h-full" />
+                      <Image src={rev.profilePicture} alt={rev.fullname} width={48} height={48} quality={30} className="object-cover w-full h-full" />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center text-white/40 text-sm md:text-base font-bold">
                         {rev.fullname?.[0]?.toUpperCase() || 'U'}
@@ -389,7 +389,7 @@ export default function ProductDetailPage() {
         {/* Ambient Background Glow from Product Image */}
         {images[currentImage] && (
           <div className="absolute top-0 left-0 w-full h-[600px] z-0 overflow-hidden pointer-events-none">
-            <Image src={images[currentImage]} alt="ambient" fill className="object-cover blur-[120px] opacity-[0.15] scale-150 saturate-150" />
+            <Image src={images[currentImage]} alt="ambient" fill quality={10} className="object-cover blur-[120px] opacity-[0.15] scale-150 saturate-150" />
             <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#2B1B17]/80 to-[#2B1B17]" />
           </div>
         )}
@@ -436,6 +436,8 @@ export default function ProductDetailPage() {
                     src={images[currentImage]}
                     alt={product.name}
                     fill
+                    priority={true}
+                    quality={75}
                     sizes="(max-width:1024px) 100vw, 50vw"
                     className="object-cover object-center group-hover:scale-105 transition-transform duration-700 ease-out z-0"
                     priority
@@ -458,7 +460,7 @@ export default function ProductDetailPage() {
                           : 'border-white/10 hover:border-white/30 hover:bg-white/5 opacity-60 hover:opacity-100'
                       }`}
                     >
-                      <Image src={img} alt="thumbnail" fill className="object-cover" />
+                      <Image src={img} alt="thumbnail" fill quality={50} className="object-cover" />
                     </button>
                   ))}
                 </div>

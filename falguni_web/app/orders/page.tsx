@@ -39,7 +39,7 @@ const STATUS: Record<string, { dot: string; text: string; bg: string; border: st
 };
 const Sx = (s: string) => STATUS[s] ?? { dot: 'bg-white/20', text: 'text-white/50', bg: 'bg-white/5', border: 'border-white/15' };
 
-const STATUS_OPTIONS = ['All', 'Pending Payment', 'Received', 'Processing', 'Completed', 'Cancelled'];
+const STATUS_OPTIONS = ['All', 'Pending Payment', 'Received', 'Processing', 'Completed', 'Cancelled', 'Missing Data'];
 const DATE_OPTIONS   = ['Last 30 days', 'Last 3 months', 'Last 6 months', '2024', '2023', 'All time'];
 const SORT_OPTIONS   = ['Newest to Oldest', 'Oldest to Newest'];
 
@@ -112,7 +112,9 @@ export default function OrdersPage() {
   const filteredOrders = useMemo(() => {
     let result = [...orders];
 
-    if (statusFilter !== 'All') {
+    if (statusFilter === 'Missing Data') {
+      result = result.filter(o => getMs(o) === 0);
+    } else if (statusFilter !== 'All') {
       result = result.filter(o => o.status === statusFilter);
     }
 
