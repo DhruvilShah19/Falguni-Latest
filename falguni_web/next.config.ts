@@ -15,7 +15,8 @@ const nextConfig: NextConfig = {
         hostname: 'lh3.googleusercontent.com',
       },
     ],
-    minimumCacheTTL: 31536000,
+    loader: 'custom',
+    loaderFile: './lib/imageLoader.ts',
   },
   typescript: {
     // !! WARN !!
