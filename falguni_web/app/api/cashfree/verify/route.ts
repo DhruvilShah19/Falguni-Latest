@@ -91,7 +91,7 @@ export async function GET(request: Request) {
             ...draftData,
             status: 'Received',
             paymentStatus: 'Success',
-            cashfreeDetails: {
+            cashFreeDetails: {
               cf_order_id: orderId,
               order_status: 'PAID',
               order_amount: amount,
@@ -100,6 +100,21 @@ export async function GET(request: Request) {
             }
           });
           
+          // Increment vendor orderID (same as Flutter's updateVendorOrderID)
+          try {
+            const vendorID = draftData?.vendorID;
+            if (vendorID) {
+              const vendorRef = adminDb.collection('vendors').doc(vendorID);
+              const vendorSnap = await vendorRef.get();
+              if (vendorSnap.exists) {
+                const currentOrderID = Number(vendorSnap.data()?.['orderID'] || 0);
+                await vendorRef.update({ orderID: currentOrderID + 1 });
+              }
+            }
+          } catch (vendorErr) {
+            console.error('[Admin] Error incrementing vendor orderID:', vendorErr);
+          }
+          
           // Delete the Draft
           await draftDoc.ref.delete();
           console.log(`[Admin] Successfully moved draft ${orderId} to real Order ${newOrderRef.id}.`);
@@ -107,14 +122,18 @@ export async function GET(request: Request) {
         } else {
           // Fallback just in case webhook already moved it or old flow
           const ordersRef = adminDb.collection('Orders');
-          const querySnapshot = await ordersRef.where('cashfreeDetails.cf_order_id', '==', orderId).limit(1).get();
+          // Try both field name conventions
+          let querySnapshot = await ordersRef.where('cashFreeDetails.cf_order_id', '==', orderId).limit(1).get();
+          if (querySnapshot.empty) {
+            querySnapshot = await ordersRef.where('cashfreeOrderId', '==', orderId).limit(1).get();
+          }
           
           if (!querySnapshot.empty) {
             const docRef = querySnapshot.docs[0].ref;
             await docRef.update({
               status: 'Received',
               paymentStatus: 'Success',
-              cashfreeDetails: {
+              cashFreeDetails: {
                 cf_order_id: orderId,
                 order_status: 'PAID',
                 order_amount: amount,

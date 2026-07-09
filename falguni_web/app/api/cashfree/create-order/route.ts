@@ -64,9 +64,14 @@ export async function POST(req: Request) {
     const items: any[] = [];
     cartSnapshot.forEach((doc) => items.push(doc.data()));
 
-    const generatedOrderId = Math.floor(Math.random() * 900000) + 100000;
     const now = new Date();
     const dateStr = now.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+    const dayName = now.toLocaleDateString('en-US', { weekday: 'long' });
+
+    // Calculate week number (same as Flutter's Week.current().weekNumber)
+    const startOfYear = new Date(now.getFullYear(), 0, 1);
+    const daysSinceStart = Math.floor((now.getTime() - startOfYear.getTime()) / (24 * 60 * 60 * 1000));
+    const weekNumber = Math.ceil((daysSinceStart + startOfYear.getDay() + 1) / 7);
 
     let discountPercentage = 0;
     if (cart_details?.couponCode) {
@@ -89,13 +94,48 @@ export async function POST(req: Request) {
       }
     }
 
+    // Fetch vendorID and orderID from Firestore (same as Flutter app)
+    let vendorID = '';
+    let nextOrderID = 100000;
+    try {
+      const vendorIdSnap = await adminDb.collection('Vendor ID').doc('Vendor ID').get();
+      if (vendorIdSnap.exists) {
+        vendorID = vendorIdSnap.data()?.['Vendor ID'] || '';
+      }
+      if (vendorID) {
+        const vendorSnap = await adminDb.collection('vendors').doc(vendorID).get();
+        if (vendorSnap.exists) {
+          nextOrderID = (Number(vendorSnap.data()?.['orderID']) || 0) + 1;
+        }
+      }
+    } catch (e) {
+      console.error('Error fetching vendor details:', e);
+    }
+
+    // Fetch user's CurrentMarketID from their user doc
+    let currentMarketID = '';
+    try {
+      const userDocSnap = await adminDb.collection('users').doc(customerId).get();
+      if (userDocSnap.exists) {
+        currentMarketID = userDocSnap.data()?.['CurrentMarketID'] || '';
+      }
+    } catch (e) {
+      console.error('Error fetching user market ID:', e);
+    }
+
+    // Use DateTime.now().toString() format as uid (matches Flutter's checkout)
+    const uid = now.toISOString();
+
     await adminDb.collection('DraftOrders').doc(order_id).set({
-      uid: customerId,
+      uid: uid,
       userID: customerId,
       userId: customerId,
       userEmail: customer_details.customer_email || '',
       userName: cart_details?.fullName || customer_details.customer_name || '',
-      orderID: generatedOrderId,
+      orderID: nextOrderID,
+      marketID: currentMarketID,
+      vendorID: vendorID,
+      deliveryBoyID: '',
       orders: items.map(i => ({
         name: i.name || '',
         productName: i.name || '',
@@ -104,8 +144,12 @@ export async function POST(req: Request) {
         price: i.price || 0,
         selectedPrice: i.selectedPrice || 0,
         selected: i.selected || '',
-        vendorId: i.vendorId || '',
+        vendorId: i.vendorId || vendorID || '',
         productID: i.productID || '',
+        category: i.category || '',
+        totalRating: i.totalRating || 0,
+        totalNumberOfUserRating: i.totalNumberOfUserRating || 0,
+        id: i.productID || '',
       })),
       items: items.map(i => ({
         name: i.name || '',
@@ -113,7 +157,7 @@ export async function POST(req: Request) {
         quantity: i.quantity || 1,
         price: i.price || 0,
         selected: i.selected || '',
-        vendorId: i.vendorId || '',
+        vendorId: i.vendorId || vendorID || '',
         productID: i.productID || '',
       })),
       subTotal: subTotal,
@@ -134,6 +178,9 @@ export async function POST(req: Request) {
       confirmationStatus: false,
       acceptDelivery: false,
       accept: false,
+      weekNumber: weekNumber,
+      date: `${dayName}, ${now.toLocaleDateString('en-US', { month: 'long' })} ${now.getDate()}`,
+      day: dayName,
       month: (now.getMonth() + 1).toString(),
       year: now.getFullYear().toString(),
       timeCreated: dateStr,

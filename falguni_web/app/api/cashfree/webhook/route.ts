@@ -51,7 +51,7 @@ export async function POST(req: Request) {
             ...draftData,
             status: 'Received',
             paymentStatus: 'Success',
-            cashfreeDetails: {
+            cashFreeDetails: {
               cf_order_id: orderId,
               order_status: 'PAID',
               order_amount: payload.data.order.order_amount,
@@ -60,6 +60,21 @@ export async function POST(req: Request) {
               cf_payment_id: payload.data.payment.cf_payment_id,
             }
           });
+          
+          // Increment vendor orderID (same as Flutter's updateVendorOrderID)
+          try {
+            const vendorID = draftData?.vendorID;
+            if (vendorID) {
+              const vendorRef = adminDb.collection('vendors').doc(vendorID);
+              const vendorSnap = await vendorRef.get();
+              if (vendorSnap.exists) {
+                const currentOrderID = Number(vendorSnap.data()?.['orderID'] || 0);
+                await vendorRef.update({ orderID: currentOrderID + 1 });
+              }
+            }
+          } catch (vendorErr) {
+            console.error('[Webhook] Error incrementing vendor orderID:', vendorErr);
+          }
           
           // Delete Draft
           await draftDoc.ref.delete();
