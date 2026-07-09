@@ -315,7 +315,16 @@ class _AllOrdersState extends State<AllOrders> {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          'Cash Free'.tr(),
+                          orders.sort((a, b) {
+                            DateTime? dateA = DateTime.tryParse(a.uid);
+                            DateTime? dateB = DateTime.tryParse(b.uid);
+                            if (dateA != null && dateB != null) {
+                              return dateB.compareTo(dateA);
+                            }
+                            if (dateA != null && dateB == null) return -1;
+                            if (dateA == null && dateB != null) return 1;
+                            return b.orderID.compareTo(a.orderID);
+                          }),
                           style: const TextStyle(
                             color: Colors.white,
                             fontSize: 16,

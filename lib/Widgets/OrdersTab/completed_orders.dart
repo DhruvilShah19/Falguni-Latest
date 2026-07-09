@@ -95,13 +95,14 @@ class _CompletedOrdersState extends State<CompletedOrders> {
             }
           }
 
-          // Sort latest → oldest
           orders.sort((a, b) {
             DateTime? dateA = DateTime.tryParse(a.uid);
             DateTime? dateB = DateTime.tryParse(b.uid);
             if (dateA != null && dateB != null) {
               return dateB.compareTo(dateA);
             }
+            if (dateA != null && dateB == null) return -1;
+            if (dateA == null && dateB != null) return 1;
             return b.orderID.compareTo(a.orderID);
           });
         });

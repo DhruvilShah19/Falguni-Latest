@@ -95,13 +95,14 @@ class _ProcessingOrdersState extends State<ProcessingOrders> {
             }
           }
 
-          // Sort by uid timestamp (string → date)
           orders.sort((a, b) {
-            DateTime? da = DateTime.tryParse(a.uid);
-            DateTime? db = DateTime.tryParse(b.uid);
-            if (da != null && db != null) {
-              return db.compareTo(da); // newest first
+            DateTime? dateA = DateTime.tryParse(a.uid);
+            DateTime? dateB = DateTime.tryParse(b.uid);
+            if (dateA != null && dateB != null) {
+              return dateB.compareTo(dateA);
             }
+            if (dateA != null && dateB == null) return -1;
+            if (dateA == null && dateB != null) return 1;
             return b.orderID.compareTo(a.orderID);
           });
         });
