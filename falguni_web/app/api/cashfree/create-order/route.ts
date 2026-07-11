@@ -1,6 +1,31 @@
 import { NextResponse } from 'next/server';
 import { adminDb } from '@/lib/firebase-admin';
 
+function getDistanceFromLatLonInKm(lat1: number, lon1: number, lat2: number, lon2: number) {
+  const R = 6371; // Radius of the earth in km
+  const dLat = (lat2 - lat1) * (Math.PI/180);
+  const dLon = (lon2 - lon1) * (Math.PI/180); 
+  const a = 
+    Math.sin(dLat/2) * Math.sin(dLat/2) +
+    Math.cos(lat1 * (Math.PI/180)) * Math.cos(lat2 * (Math.PI/180)) * 
+    Math.sin(dLon/2) * Math.sin(dLon/2); 
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); 
+  return R * c; // Distance in km
+}
+
+function parseWeightToKg(unitString: string): number {
+  if (!unitString) return 1.0;
+  const str = unitString.toLowerCase();
+  const match = str.match(/([0-9.]+)\s*(kg|gm|g|ltr|ml)/);
+  if (match) {
+    const value = parseFloat(match[1]);
+    const unit = match[2];
+    if (unit === 'kg' || unit === 'ltr') return value;
+    if (unit === 'gm' || unit === 'g' || unit === 'ml') return value / 1000;
+  }
+  return 1.0;
+}
+
 export async function POST(req: Request) {
   try {
     const body = await req.json();
@@ -18,9 +43,13 @@ export async function POST(req: Request) {
     }
 
     let subTotal = 0;
+    let totalWeightKg = 0;
     cartSnapshot.forEach((doc) => {
       const item = doc.data();
       subTotal += Number(item.price || 0); // "price" field is the item's total cost in Cart
+      const qty = item.quantity || 1;
+      const w = parseWeightToKg(item.selected || item.unitname1 || '');
+      totalWeightKg += (w * qty);
     });
 
     // 2. Validate and Apply Server-Side Coupon
@@ -44,14 +73,31 @@ export async function POST(req: Request) {
       }
     }
 
-    // 3. Apply Delivery Fee securely if not pickup
     let finalTotal = discountedTotal;
+    let fee = 0;
     if (cart_details && !cart_details.isPickup) {
-      const deliverySnap = await adminDb.collection('Delivery Fee').doc('Delivery Fee').get();
-      if (deliverySnap.exists) {
-        const fee = Number(deliverySnap.data()?.['Delivery Fee'] || 0);
-        finalTotal += fee;
+      if (cart_details.deliveryLat && cart_details.deliveryLng) {
+        const d = getDistanceFromLatLonInKm(23.0360, 72.5294, Number(cart_details.deliveryLat), Number(cart_details.deliveryLng));
+        if (d <= 5) fee = subTotal >= 400 ? 0 : 50;
+        else if (d <= 10) fee = subTotal >= 1200 ? 0 : 100;
+        else if (d <= 15) fee = subTotal >= 1800 ? 0 : 150;
+        else {
+          const isGujarat = (cart_details.deliveryAddress || '').toLowerCase().includes('gujarat');
+          if (isGujarat) {
+            fee = subTotal >= 2000 ? 0 : Math.ceil(totalWeightKg) * 40;
+          } else {
+            fee = subTotal >= 3500 ? 0 : Math.ceil(totalWeightKg) * 100;
+          }
+        }
+      } else {
+        const isGujarat = (cart_details.deliveryAddress || '').toLowerCase().includes('gujarat');
+        if (isGujarat) {
+          fee = subTotal >= 2000 ? 0 : Math.ceil(totalWeightKg) * 40;
+        } else {
+          fee = subTotal >= 3500 ? 0 : Math.ceil(totalWeightKg) * 100;
+        }
       }
+      finalTotal += fee;
     }
 
     // 4. Final strict validation of calculated amount
@@ -83,14 +129,6 @@ export async function POST(req: Request) {
       const userSnap = await adminDb.collection('users').doc(customerId).get();
       if (userSnap.exists) {
         discountPercentage = Number(userSnap.data()?.['Coupon Reward'] || 0);
-      }
-    }
-
-    let fee = 0;
-    if (cart_details && !cart_details.isPickup) {
-      const deliverySnap = await adminDb.collection('Delivery Fee').doc('Delivery Fee').get();
-      if (deliverySnap.exists) {
-        fee = Number(deliverySnap.data()?.['Delivery Fee'] || 0);
       }
     }
 

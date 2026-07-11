@@ -47,8 +47,9 @@ interface DeliveryAddressInputProps {
 
 export default function DeliveryAddressInput({ onDeliveryCalculated, defaultAddress }: DeliveryAddressInputProps) {
   const { isLoaded } = useJsApiLoader({ googleMapsApiKey: GOOGLE_API_KEY, libraries });
-  const { subTotal, items } = useCartStore(); // select items to force re-render when cart changes
+  const { subTotal, items, totalWeightKg } = useCartStore(); // select items to force re-render when cart changes
   const cartSubTotal = subTotal();
+  const weight = totalWeightKg();
   
   const { ready, value, suggestions: { status, data }, setValue, clearSuggestions, init } =
     usePlacesAutocomplete({ requestOptions: { componentRestrictions: { country: 'in' } }, debounce: 300, initOnMount: false });
@@ -118,18 +119,24 @@ export default function DeliveryAddressInput({ onDeliveryCalculated, defaultAddr
           let fee = 0;
           let tier: DeliveryTier = 'Hyperlocal';
 
-          if (distanceKm <= 15) {
+          if (distanceKm <= 5) {
             tier = 'Hyperlocal';
-            fee = (cartSubTotal >= 100) ? 0 : 10;
-          } else if (distanceKm <= 50) {
+            fee = (cartSubTotal >= 400) ? 0 : 50;
+          } else if (distanceKm <= 10) {
             tier = 'Intercity';
-            fee = (cartSubTotal >= 500) ? 0 : 25;
-          } else if (distanceKm <= 500) {
+            fee = (cartSubTotal >= 1200) ? 0 : 100;
+          } else if (distanceKm <= 15) {
             tier = 'Interstate';
-            fee = (cartSubTotal >= 2000) ? 0 : 100;
+            fee = (cartSubTotal >= 1800) ? 0 : 150;
           } else {
-            tier = 'PAN India';
-            fee = (cartSubTotal >= 5000) ? 0 : 150;
+            const isGujarat = addressString.toLowerCase().includes('gujarat');
+            if (isGujarat) {
+              tier = 'Intercity';
+              fee = (cartSubTotal >= 2000) ? 0 : Math.ceil(weight) * 40;
+            } else {
+              tier = 'PAN India';
+              fee = (cartSubTotal >= 3500) ? 0 : Math.ceil(weight) * 100;
+            }
           }
 
           const details: DeliveryDetails = {
@@ -165,18 +172,24 @@ export default function DeliveryAddressInput({ onDeliveryCalculated, defaultAddr
       let newFee = 0;
       let newTier = activeDetails.tier;
 
-      if (distanceKm <= 15) {
+      if (distanceKm <= 5) {
         newTier = 'Hyperlocal';
-        newFee = (cartSubTotal >= 100) ? 0 : 10;
-      } else if (distanceKm <= 50) {
+        newFee = (cartSubTotal >= 400) ? 0 : 50;
+      } else if (distanceKm <= 10) {
         newTier = 'Intercity';
-        newFee = (cartSubTotal >= 500) ? 0 : 25;
-      } else if (distanceKm <= 500) {
+        newFee = (cartSubTotal >= 1200) ? 0 : 100;
+      } else if (distanceKm <= 15) {
         newTier = 'Interstate';
-        newFee = (cartSubTotal >= 2000) ? 0 : 100;
+        newFee = (cartSubTotal >= 1800) ? 0 : 150;
       } else {
-        newTier = 'PAN India';
-        newFee = (cartSubTotal >= 5000) ? 0 : 150;
+        const isGujarat = activeDetails.address.toLowerCase().includes('gujarat');
+        if (isGujarat) {
+          newTier = 'Intercity';
+          newFee = (cartSubTotal >= 2000) ? 0 : Math.ceil(weight) * 40;
+        } else {
+          newTier = 'PAN India';
+          newFee = (cartSubTotal >= 3500) ? 0 : Math.ceil(weight) * 100;
+        }
       }
 
       if (activeDetails.fee !== newFee) {

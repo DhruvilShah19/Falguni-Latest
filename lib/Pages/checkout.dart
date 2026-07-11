@@ -1,6 +1,7 @@
 // ignore_for_file: curly_braces_in_flow_control_structures, use_build_context_synchronously, avoid_print, deprecated_member_use, unused_import, prefer_const_constructors
 
 import 'dart:async';
+import 'dart:math' as math;
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:falguni_app/Widgets/plural_direct.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -135,13 +136,10 @@ class _CheckoutPageState extends State<CheckoutPage>
   }
 
   getDeliveryFee() {
-    FirebaseFirestore.instance.collection('Delivery Fee').doc('Delivery Fee').get().then((doc) {
-      if (doc.exists && mounted) {
-        setState(() {
-          deliveryFee = doc['Delivery Fee'] ?? 0;
-          debugPrint('flat delivery fee is $deliveryFee');
-        });
-      }
+    // Dynamic distance calculation will be done after address is selected.
+    // Initialize to 0 by default.
+    setState(() {
+      deliveryFee = 0;
     });
 
     if (userRef != null) {
@@ -546,7 +544,10 @@ class _CheckoutPageState extends State<CheckoutPage>
       },
       "cart_details": {
         "isPickup": pickupBool,
-        "isApp": true
+        "isApp": true,
+        "deliveryLat": deliveryAddressLat,
+        "deliveryLng": deliveryAddressLong,
+        "deliveryAddress": deliveryAddress
       },
       "order_meta": {"notify_url": notifyUrl},
       "order_note": "Falguni Application Order",
@@ -689,6 +690,39 @@ class _CheckoutPageState extends State<CheckoutPage>
   double deliveryAddressLong = 0;
   bool? stopFetchingData;
 
+  double calculateDistance(double lat1, double lon1, double lat2, double lon2) {
+    var p = 0.017453292519943295; // Math.PI / 180
+    var c = math.cos;
+    var a = 0.5 -
+        c((lat2 - lat1) * p) / 2 +
+        c(lat1 * p) * c(lat2 * p) * (1 - c((lon2 - lon1) * p)) / 2;
+    return 12742 * math.asin(math.sqrt(a)); // 2 * R; R = 6371 km
+  }
+
+  double parseWeightToKg(String unitString) {
+    if (unitString.isEmpty) return 1.0;
+    String str = unitString.toLowerCase();
+    RegExp regex = RegExp(r'([0-9.]+)\s*(kg|gm|g|ltr|ml)');
+    Match? match = regex.firstMatch(str);
+    if (match != null) {
+      double value = double.parse(match.group(1)!);
+      String unit = match.group(2)!;
+      if (unit == 'kg' || unit == 'ltr') return value;
+      if (unit == 'gm' || unit == 'g' || unit == 'ml') return value / 1000;
+    }
+    return 1.0;
+  }
+
+  double calculateTotalWeight() {
+    double totalWeight = 0;
+    for (var item in orders) {
+      double w = parseWeightToKg(item['selected'] ?? item['unitname1'] ?? '');
+      num qty = item['quantity'] ?? 1;
+      totalWeight += w * qty;
+    }
+    return totalWeight;
+  }
+
   getDeliveryLocationLatAndLong() async {
     setState(() {
       deliveryAddressLong = 0;
@@ -702,8 +736,28 @@ class _CheckoutPageState extends State<CheckoutPage>
             deliveryAddressLong = element.longitude;
             deliveryAddressLat = element.latitude;
           }
+          
+          if (deliveryAddressLat != 0 && deliveryAddressLong != 0) {
+            double distanceKm = calculateDistance(23.0360, 72.5294, deliveryAddressLat, deliveryAddressLong);
+            num cartSubTotal = subTotal;
+            if (distanceKm <= 5) {
+              deliveryFee = cartSubTotal >= 400 ? 0 : 50;
+            } else if (distanceKm <= 10) {
+              deliveryFee = cartSubTotal >= 1200 ? 0 : 100;
+            } else if (distanceKm <= 15) {
+              deliveryFee = cartSubTotal >= 1800 ? 0 : 150;
+            } else {
+              double weight = calculateTotalWeight();
+              bool isGujarat = deliveryAddress.toLowerCase().contains('gujarat');
+              if (isGujarat) {
+                deliveryFee = cartSubTotal >= 2000 ? 0 : weight.ceil() * 40;
+              } else {
+                deliveryFee = cartSubTotal >= 3500 ? 0 : weight.ceil() * 100;
+              }
+            }
+          }
         });
-        print('Lat is $deliveryAddressLat, Long is $deliveryAddressLong');
+        print('Lat is $deliveryAddressLat, Long is $deliveryAddressLong, Fee is $deliveryFee');
       }
     }
   }
