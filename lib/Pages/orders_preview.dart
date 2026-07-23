@@ -423,7 +423,27 @@ class _OrdersPreviewState extends State<OrdersPreview> {
     getOneSignalDetails();
     getOrderDetails();
     _getUserDetails();
+    // These used to be called from build(), firing a paid Google Geocoding
+    // API call on every rebuild (this screen listens to several Firestore
+    // .snapshots() streams, so it rebuilds constantly while open).
+    // Calling once here, guarded, is enough since the delivery address
+    // doesn't change for a given order.
+    getCurrentLocationLatAndLong();
+    getDeliveryLocationLatAndLong();
+    getLocation();
     super.initState();
+  }
+
+  @override
+  void didUpdateWidget(covariant OrdersPreview oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.orderModel.deliveryAddress !=
+        widget.orderModel.deliveryAddress) {
+      deliveryAddressLat = 0;
+      deliveryAddressLong = 0;
+      getCurrentLocationLatAndLong();
+      getDeliveryLocationLatAndLong();
+    }
   }
 
   Future<void> updatedriverNotification(HistoryModel historyModel) async {
@@ -897,11 +917,6 @@ class _OrdersPreviewState extends State<OrdersPreview> {
 
   @override
   Widget build(BuildContext context) {
-    // Still calling these like your original code
-    getCurrentLocationLatAndLong();
-    getDeliveryLocationLatAndLong();
-    getLocation();
-
     return Scaffold(
       extendBodyBehindAppBar: true,
       backgroundColor: kDarkBg,

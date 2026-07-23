@@ -35,7 +35,26 @@ class _TrackingState extends State<Tracking> {
   @override
   void initState() {
     getStatus();
+    // Geocode once per screen instance instead of on every build(), which
+    // was firing a paid Google Geocoding API call on every rebuild
+    // (e.g. every Firestore snapshot update while this screen is open).
+    _resolveRecipientCoordinates();
     super.initState();
+  }
+
+  @override
+  void didUpdateWidget(covariant Tracking oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Only re-geocode if the address actually changed (e.g. this screen
+    // instance got reused for a different order).
+    if (oldWidget.courierModel.recipientAddress !=
+        widget.courierModel.recipientAddress) {
+      deliveryAddressLat = 0;
+      deliveryAddressLong = 0;
+      userLat = 0;
+      userLong = 0;
+      _resolveRecipientCoordinates();
+    }
   }
 
   double deliveryAddressLat = 0;
@@ -43,42 +62,32 @@ class _TrackingState extends State<Tracking> {
   double userLat = 0;
   double userLong = 0;
 
-  getDeliveryLocationLatAndLong() async {
+  // Both deliveryAddressLat/Long and userLat/Long were being geocoded
+  // separately from the same recipientAddress -- that's two billed API
+  // calls for identical input. Resolved once and reused for both.
+  Future<void> _resolveRecipientCoordinates() async {
+    if (deliveryAddressLat != 0 || deliveryAddressLong != 0) return;
+    try {
       GeoCode geoCode = GeoCode();
-    if (deliveryAddressLat == 0 && deliveryAddressLong == 0) {
       Coordinates coordinates = await geoCode.forwardGeocoding(
-          address: widget.courierModel.recipientAddress,
-          );
+        address: widget.courierModel.recipientAddress,
+      );
       if (mounted) {
         setState(() {
           deliveryAddressLat = coordinates.latitude!;
           deliveryAddressLong = coordinates.longitude!;
-        });
-        // print(deliveryAddressLat);
-      }
-    }
-  }
-
-  getUserLatAndLong() async {
-     GeoCode geoCode = GeoCode();
-    if (userLat == 0 && userLong == 0) {
-      Coordinates coordinates = await geoCode.forwardGeocoding(
-          address: widget.courierModel.recipientAddress,
-       );
-      if (mounted) {
-        setState(() {
           userLat = coordinates.latitude!;
           userLong = coordinates.longitude!;
         });
-        // print(deliveryAddressLat);
       }
+    } catch (_) {
+      // Swallow geocoding failures (e.g. bad address) so the tracking UI
+      // still renders without lat/long overlay instead of crashing.
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    getUserLatAndLong();
-    getDeliveryLocationLatAndLong();
     return Column(
       children: [
         Padding(

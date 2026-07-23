@@ -1,27 +1,30 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { useJsApiLoader, GoogleMap, MarkerF, DirectionsRenderer, PolylineF, CircleF } from '@react-google-maps/api';
+import { useJsApiLoader } from '@react-google-maps/api';
 import usePlacesAutocomplete, { getGeocode, getLatLng } from 'use-places-autocomplete';
 import { MapPin, Search, Loader2, Navigation, Clock, CheckCircle2, ShieldCheck } from 'lucide-react';
 import { useCartStore } from '@/store/cartStore';
 
-const GOOGLE_API_KEY = 'AIzaSyCIG4hrwrTleFvlUvNuf9fD3PEqUH3Q2dI';
+// Single source of truth in .env.local (NEXT_PUBLIC_GOOGLE_MAPS_API_KEY).
+// Note: NEXT_PUBLIC_ vars still ship in the client bundle -- this only
+// centralizes the key for easier rotation, it does not hide it. Actual
+// protection is the HTTP referrer restriction set on the key in Cloud Console.
+const GOOGLE_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY ?? '';
 const libraries: ('places')[] = ['places'];
 
-// ── Premium 3D-optimised map style — warm cream base, gold accents ──
-const goldenMapStyle = [
-  { elementType: 'geometry',           stylers: [{ color: '#2B1B17' }] },
-  { elementType: 'labels.text.stroke', stylers: [{ color: '#2B1B17' }] },
-  { elementType: 'labels.text.fill',   stylers: [{ color: '#D4AF37' }] },
-  { featureType: 'administrative.locality', elementType: 'labels.text.fill', stylers: [{ color: '#C9A227' }] },
-  { featureType: 'poi',     stylers: [{ visibility: 'off' }] },
-  { featureType: 'transit', stylers: [{ visibility: 'off' }] },
-  { featureType: 'road',          elementType: 'geometry',        stylers: [{ color: '#3A2621' }] },
-  { featureType: 'road',          elementType: 'geometry.stroke', stylers: [{ color: '#2B1B17' }] },
-  { featureType: 'road',          elementType: 'labels.text.fill',stylers: [{ color: '#A88520' }] },
-  { featureType: 'water', elementType: 'geometry',             stylers: [{ color: '#1A110D' }] },
-];
+// ── Helper to calculate distance locally (Haversine formula) ──
+function getDistanceFromLatLonInKm(lat1: number, lon1: number, lat2: number, lon2: number) {
+  const R = 6371; // Radius of the earth in km
+  const dLat = (lat2 - lat1) * (Math.PI / 180);
+  const dLon = (lon2 - lon1) * (Math.PI / 180);
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(lat1 * (Math.PI / 180)) * Math.cos(lat2 * (Math.PI / 180)) *
+    Math.sin(dLon / 2) * Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c; // Distance in km
+}
 
 // Studio Falguni Location
 const STUDIO_FALGUNI_LATLNG = { lat: 23.0360, lng: 72.5294 }; // Falguni Gruh Udhyog (Vastrapur)
@@ -57,7 +60,6 @@ export default function DeliveryAddressInput({ onDeliveryCalculated, defaultAddr
   const [calculating, setCalculating] = useState(false);
   const [error, setError] = useState('');
   const [activeDetails, setActiveDetails] = useState<DeliveryDetails | null>(null);
-  const [directions, setDirections] = useState<google.maps.DirectionsResult | null>(null);
 
   const hasAutoCalculatedRef = React.useRef(false);
 
@@ -73,88 +75,51 @@ export default function DeliveryAddressInput({ onDeliveryCalculated, defaultAddr
       const results = await getGeocode({ address: addressString });
       const { lat, lng } = await getLatLng(results[0]);
 
-      // Fetch Directions for the Map UI
-      const directionsService = new google.maps.DirectionsService();
-      directionsService.route(
-        {
-          origin: STUDIO_FALGUNI_LATLNG,
-          destination: { lat, lng },
-          travelMode: google.maps.TravelMode.DRIVING,
-        },
-        (result, status) => {
-          if (status === google.maps.DirectionsStatus.OK) {
-            setDirections(result);
-          } else {
-            setDirections(null);
-          }
-        }
-      );
-
-      // Calculate driving distance
-      const distanceService = new google.maps.DistanceMatrixService();
+      const distanceKm = getDistanceFromLatLonInKm(STUDIO_FALGUNI_LATLNG.lat, STUDIO_FALGUNI_LATLNG.lng, lat, lng);
       
-      distanceService.getDistanceMatrix(
-        {
-          origins: [STUDIO_FALGUNI_LATLNG],
-          destinations: [{ lat, lng }],
-          travelMode: google.maps.TravelMode.DRIVING,
-        },
-        (response, status) => {
-          setCalculating(false);
-          if (status !== 'OK' || !response || response.rows[0].elements[0].status === 'ZERO_RESULTS') {
-            setError('Could not calculate delivery distance to this location. Please try another address.');
-            onDeliveryCalculated(null);
-            setActiveDetails(null);
-            return;
-          }
+      const distanceText = `${distanceKm.toFixed(1)} km`;
+      const durationSeconds = distanceKm * 150; // Estimate 2.5 minutes per km driving in city traffic
+      const durationText = `${Math.round(durationSeconds / 60)} mins`;
 
-          const element = response.rows[0].elements[0];
-          const distanceValueMeters = element.distance.value;
-          const distanceText = element.distance.text;
-          const distanceKm = distanceValueMeters / 1000;
-          const durationText = element.duration?.text || '';
-          const durationSeconds = element.duration?.value || 0;
+      // Determine Tier and Fee
+      let fee = 0;
+      let tier: DeliveryTier = 'Hyperlocal';
 
-          // Determine Tier and Fee
-          let fee = 0;
-          let tier: DeliveryTier = 'Hyperlocal';
-
-          if (distanceKm <= 5) {
-            tier = 'Hyperlocal';
-            fee = (cartSubTotal >= 400) ? 0 : 50;
-          } else if (distanceKm <= 10) {
-            tier = 'Intercity';
-            fee = (cartSubTotal >= 1200) ? 0 : 100;
-          } else if (distanceKm <= 15) {
-            tier = 'Interstate';
-            fee = (cartSubTotal >= 1800) ? 0 : 150;
-          } else {
-            const isGujarat = addressString.toLowerCase().includes('gujarat');
-            if (isGujarat) {
-              tier = 'Intercity';
-              fee = (cartSubTotal >= 2000) ? 0 : Math.ceil(weight) * 40;
-            } else {
-              tier = 'PAN India';
-              fee = (cartSubTotal >= 3500) ? 0 : Math.ceil(weight) * 100;
-            }
-          }
-
-          const details: DeliveryDetails = {
-            address: addressString,
-            lat,
-            lng,
-            distanceKm,
-            distanceText,
-            durationText,
-            durationSeconds,
-            fee,
-            tier
-          };
-
-          setActiveDetails(details);
-          onDeliveryCalculated(details);
+      if (distanceKm <= 5) {
+        tier = 'Hyperlocal';
+        fee = (cartSubTotal >= 400) ? 0 : 50;
+      } else if (distanceKm <= 10) {
+        tier = 'Intercity';
+        fee = (cartSubTotal >= 1200) ? 0 : 100;
+      } else if (distanceKm <= 15) {
+        tier = 'Interstate';
+        fee = (cartSubTotal >= 1800) ? 0 : 150;
+      } else {
+        const isGujarat = addressString.toLowerCase().includes('gujarat');
+        if (isGujarat) {
+          tier = 'Intercity';
+          fee = (cartSubTotal >= 2000) ? 0 : Math.ceil(weight) * 40;
+        } else {
+          tier = 'PAN India';
+          fee = (cartSubTotal >= 3500) ? 0 : Math.ceil(weight) * 100;
         }
-      );
+      }
+
+      const details: DeliveryDetails = {
+        address: addressString,
+        lat,
+        lng,
+        distanceKm,
+        distanceText,
+        durationText,
+        durationSeconds,
+        fee,
+        tier
+      };
+
+      setCalculating(false);
+      setActiveDetails(details);
+      onDeliveryCalculated(details);
 
     } catch (err) {
       console.error("Error formatting address: ", err);
@@ -268,70 +233,10 @@ export default function DeliveryAddressInput({ onDeliveryCalculated, defaultAddr
                                     {/* Result Display */}
       {activeDetails && (
         <div className="mt-5 animate-fade-up">
-          <div className="bg-gradient-to-br from-white/[0.03] to-transparent border border-white/10 rounded-[20px] md:rounded-[24px] p-4 md:p-6 backdrop-blur-sm grid grid-cols-1 md:grid-cols-2 gap-6 items-stretch transition-all">
+          <div className="bg-gradient-to-br from-white/[0.03] to-transparent border border-white/10 rounded-[20px] md:rounded-[24px] p-4 md:p-6 backdrop-blur-sm flex flex-col items-center transition-all">
             
-            {/* Left: Map Box (50%) */}
-            <div className="w-full h-48 md:h-auto md:min-h-[200px] rounded-[14px] overflow-hidden relative border border-white/5 bg-black shadow-inner">
-              <div className="absolute inset-0 bg-[#D4AF37]/5 pointer-events-none mix-blend-overlay z-10" />
-              <GoogleMap
-                mapContainerStyle={{ 
-                  width: '100%', 
-                  height: '100%',
-                  filter: 'invert(90%) hue-rotate(180deg) contrast(85%) grayscale(20%)'
-                }}
-                center={!directions ? { lat: activeDetails.lat, lng: activeDetails.lng } : undefined}
-                zoom={!directions ? 11 : undefined}
-                options={{
-                  disableDefaultUI: true,
-                  gestureHandling: 'cooperative',
-                  backgroundColor: '#000000',
-                }}
-              >
-                {directions ? (
-                  <DirectionsRenderer
-                    directions={directions}
-                    options={{
-                      suppressMarkers: false,
-                      polylineOptions: {
-                        strokeColor: '#0055ff', // Inverted becomes gold/yellow
-                        strokeWeight: 4,
-                      },
-                    }}
-                  />
-                ) : (
-                  <>
-                    <MarkerF position={{ lat: activeDetails.lat, lng: activeDetails.lng }} />
-                    <MarkerF position={STUDIO_FALGUNI_LATLNG} />
-                    <PolylineF 
-                      path={[STUDIO_FALGUNI_LATLNG, { lat: activeDetails.lat, lng: activeDetails.lng }]} 
-                      options={{ strokeColor: '#0055ff', strokeWeight: 4, geodesic: true }}
-                    />
-                  </>
-                )}
-                
-                {/* Zone Radius Visualization */}
-                {activeDetails.tier !== 'PAN India' && (
-                  <CircleF
-                    center={STUDIO_FALGUNI_LATLNG}
-                    radius={activeDetails.tier === 'Hyperlocal' ? 15000 : activeDetails.tier === 'Intercity' ? 50000 : 500000}
-                    options={{
-                      fillColor: '#0055ff', // Inverted becomes gold
-                      fillOpacity: 0.08,
-                      strokeColor: '#0055ff',
-                      strokeOpacity: 0.4,
-                      strokeWeight: 1.5,
-                      clickable: false,
-                      zIndex: 1,
-                    }}
-                  />
-                )}
-              </GoogleMap>
-              {/* Soft vignette around the map */}
-              <div className="absolute inset-0 shadow-[inset_0_0_20px_rgba(0,0,0,0.8)] pointer-events-none z-10" />
-            </div>
-
-            {/* Right: Info Box (50%) */}
-            <div className="w-full flex flex-col justify-center py-2 md:py-4">
+            {/* Info Box (Full Width) */}
+            <div className="w-full max-w-lg flex flex-col justify-center py-2 md:py-4 mx-auto">
               
               <div className="flex flex-col gap-1 mb-5">
                 <span className="inline-block w-max text-[#D4AF37] font-black text-[10px] uppercase tracking-widest bg-[#D4AF37]/10 border border-[#D4AF37]/20 px-2.5 py-1 rounded-md mb-2 shadow-sm">

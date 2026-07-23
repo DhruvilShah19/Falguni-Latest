@@ -4,7 +4,8 @@ import React from 'react';
 import { MapPin, Clock, Navigation, ShieldCheck } from 'lucide-react';
 import { useJsApiLoader, GoogleMap, MarkerF } from '@react-google-maps/api';
 
-const GOOGLE_API_KEY = 'AIzaSyCIG4hrwrTleFvlUvNuf9fD3PEqUH3Q2dI';
+// Single source of truth in .env.local (NEXT_PUBLIC_GOOGLE_MAPS_API_KEY).
+const GOOGLE_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY ?? '';
 const libraries: ("places")[] = ["places"];
 
 const STUDIO_FALGUNI_LATLNG = { lat: 23.0360, lng: 72.5294 }; // Falguni Gruh Udhyog (Vastrapur)

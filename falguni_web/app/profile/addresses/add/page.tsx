@@ -13,7 +13,8 @@ import Link from 'next/link';
 import { useJsApiLoader, GoogleMap } from '@react-google-maps/api';
 import usePlacesAutocomplete, { getGeocode, getLatLng } from 'use-places-autocomplete';
 
-const GOOGLE_API_KEY = 'AIzaSyCIG4hrwrTleFvlUvNuf9fD3PEqUH3Q2dI';
+// Single source of truth in .env.local (NEXT_PUBLIC_GOOGLE_MAPS_API_KEY).
+const GOOGLE_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY ?? '';
 const libraries: ('places' | 'geometry' | 'drawing' | 'visualization')[] = ['places'];
 const placesRequestOptions = { componentRestrictions: { country: 'in' } };
 
@@ -107,15 +108,36 @@ export default function AddAddressPage() {
     }
   };
 
+  // Every pan/zoom/tilt/locate-me action fires its own "idle" event, and each
+  // one used to trigger a full billed Geocoding API call with no debounce --
+  // a single user nudging the map a few times could fire 10-20+ paid reverse
+  // geocode requests. Debounce to one call after movement settles, and skip
+  // re-geocoding if the center hasn't meaningfully moved (tilt/heading-only
+  // changes also fire idle without moving the center).
+  const geocodeDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const lastGeocodedCenterRef = useRef<{ lat: number; lng: number } | null>(null);
+
   const handleIdle = useCallback(() => {
     if (!mapRef.current) return;
     const center = mapRef.current.getCenter();
     if (!center) return;
-    setIsLoadingAddress(true);
-    new google.maps.Geocoder().geocode({ location: { lat: center.lat(), lng: center.lng() } }, (results, status) => {
-      setIsLoadingAddress(false);
-      if (status === 'OK' && results?.[0]) setAddress(results[0].formatted_address);
-    });
+    const lat = center.lat();
+    const lng = center.lng();
+
+    const last = lastGeocodedCenterRef.current;
+    if (last && Math.abs(last.lat - lat) < 0.00005 && Math.abs(last.lng - lng) < 0.00005) {
+      return;
+    }
+
+    if (geocodeDebounceRef.current) clearTimeout(geocodeDebounceRef.current);
+    geocodeDebounceRef.current = setTimeout(() => {
+      setIsLoadingAddress(true);
+      new google.maps.Geocoder().geocode({ location: { lat, lng } }, (results, status) => {
+        setIsLoadingAddress(false);
+        if (status === 'OK' && results?.[0]) setAddress(results[0].formatted_address);
+      });
+      lastGeocodedCenterRef.current = { lat, lng };
+    }, 600);
   }, []);
 
   const handleLocateMe = () => {

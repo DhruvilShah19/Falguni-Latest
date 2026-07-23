@@ -56,6 +56,7 @@ class _AddCourierState extends State<AddCourier> {
                 setState(() {
                   userAddress = result.formattedAddress ?? "";
                 });
+                convertToCoordinate();
               }
             },
             onSuggestionSelected: (PlacesDetailsResponse? result) {
@@ -65,6 +66,7 @@ class _AddCourierState extends State<AddCourier> {
                   Navigator.of(context).pop();
                   print('Selected Address is $userAddress');
                 });
+                convertToCoordinate();
               }
             },
           );
@@ -87,6 +89,7 @@ class _AddCourierState extends State<AddCourier> {
                 setState(() {
                   recipientAddress = result.formattedAddress ?? "";
                 });
+                convertToCoordinate();
               }
             },
             onSuggestionSelected: (PlacesDetailsResponse? result) {
@@ -96,6 +99,7 @@ class _AddCourierState extends State<AddCourier> {
                   Navigator.of(context).pop();
                   print('Selected Address is $recipientAddress');
                 });
+                convertToCoordinate();
               }
             },
           );
@@ -235,9 +239,22 @@ class _AddCourierState extends State<AddCourier> {
     });
   }
 
+  // Previously called unconditionally from build(), so ANY setState anywhere
+  // in this widget (image upload progress, currency/kg lookups, etc.) fired
+  // two more geocode requests. Now only called right after an address is
+  // actually picked, and guarded so the same pair is never re-geocoded.
+  String _lastGeocodedUserAddress = '';
+  String _lastGeocodedRecipientAddress = '';
+
   convertToCoordinate() async {
+    if (userAddress == _lastGeocodedUserAddress &&
+        recipientAddress == _lastGeocodedRecipientAddress) {
+      return;
+    }
     GeoCode geoCode = GeoCode();
     if (userAddress != '' && recipientAddress != '') {
+      _lastGeocodedUserAddress = userAddress;
+      _lastGeocodedRecipientAddress = recipientAddress;
       Coordinates coordinates = await geoCode.forwardGeocoding(
         address: userAddress,
       );
@@ -501,9 +518,6 @@ class _AddCourierState extends State<AddCourier> {
 
   @override
   Widget build(BuildContext context) {
-    // still using your distance computation
-    convertToCoordinate();
-
     final priceValue =
         kgStatus == false ? (distance.round() / 1000 * km) : (weight * kg);
 
