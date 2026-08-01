@@ -60,7 +60,28 @@ class DeliveryChargesPage extends StatelessWidget {
   // fallback numbers instead -- same values as of the change that wired
   // this up, so it's never actually wrong, just possibly not the latest.
   static List<_DeliveryZone> get _zones {
-    final tiers = DeliveryConfig.distanceTiers;
+    // This screen is written assuming exactly 3 distance tiers (matching
+    // the current DISTANCE_TIERS on the website). Defend against a
+    // malformed or unexpectedly-shaped /api/delivery-config response
+    // crashing this screen with an index error -- fall back to the known-
+    // good defaults instead of trusting the fetched list blindly here.
+    final fetchedTiers = DeliveryConfig.distanceTiers;
+    final tiers = fetchedTiers.length >= 3
+        ? fetchedTiers
+        : const [
+            DistanceTierRule(
+                tier: 'Hyperlocal', maxDistanceKm: 5, fee: 50, freeAbove: 400),
+            DistanceTierRule(
+                tier: 'Intercity',
+                maxDistanceKm: 10,
+                fee: 100,
+                freeAbove: 1200),
+            DistanceTierRule(
+                tier: 'Interstate',
+                maxDistanceKm: 15,
+                fee: 150,
+                freeAbove: 1800),
+          ];
     final hyperlocal = tiers[0];
     final intercity = tiers[1];
     final interstate = tiers[2];

@@ -30,7 +30,6 @@ import 'package:uuid/uuid.dart';
 import 'order_success_page.dart';
 import 'delivery_addresses.dart';
 import '../Providers/delivery_config.dart';
-import 'wallet_page.dart';
 import 'checkout_step1_delivery.dart';
 import 'checkout_step2_payment.dart';
 import 'checkout_step3_completed.dart';
@@ -75,8 +74,10 @@ class _CheckoutPageState extends State<CheckoutPage>
   bool deliveryBool = false;
   bool pickupBool = false;
   bool isAddressEmpty = false;
-  num wallet = 0;
-  bool walletBool = false;
+  // Wallet payment was never a live payment path (checkout only ever offers
+  // Cashfree, matching the website) -- confirmed by the business owner.
+  // The old wallet-selection UI is gone; keeping these two out entirely so
+  // the old order-creation branch below can't be resurrected accidentally.
   bool payWithCard = true;
   bool selectedStepper3 = false;
   String currentMarketID = '';
@@ -232,7 +233,6 @@ class _CheckoutPageState extends State<CheckoutPage>
           email = value['email'] ?? 'user@example.com';
           phone = value['phone'];
           addressID = value['DeliveryAddressID'];
-          wallet = value['wallet'];
           currentMarketID = value['CurrentMarketID'];
           deliveryAddress = value['DeliveryAddress'];
           houseNumber = value['HouseNumber'];
@@ -278,13 +278,6 @@ class _CheckoutPageState extends State<CheckoutPage>
         .collection('vendors')
         .doc(vendorID)
         .update({'orderID': orderID + 1});
-  }
-
-  updateWallet() {
-    num totalAmount = subTotal + (deliveryBool == false ? 0 : deliveryFee);
-    // Deduct only the available balance (partial or full)
-    num amountToDeduct = wallet >= totalAmount ? totalAmount : wallet;
-    userRef!.update({'wallet': wallet - amountToDeduct});
   }
 
   // Helper method to show professional alert dialogs
@@ -427,6 +420,25 @@ class _CheckoutPageState extends State<CheckoutPage>
     Map<String, dynamic> details =
         cashFreeResponseData ?? const {"payment": "online"};
 
+    // 'success'    -- server explicitly confirmed payment (isPaid: true).
+    // 'processing' -- genuinely ambiguous: Cashfree order is still ACTIVE
+    //                 (not yet PAID, not confirmed failed either). This
+    //                 used to be folded into 'success' -- clearing the cart
+    //                 and showing "Order Placed!" -- on the assumption the
+    //                 webhook would "catch up" shortly. If the payment
+    //                 instead never completes, that left the customer
+    //                 believing they had an order (and an empty cart) when
+    //                 neither was true. Mirrors the same fix on the
+    //                 website's checkout/success page.
+    // 'failed'     -- server explicitly confirmed payment did NOT succeed.
+    // 'ambiguous'  -- couldn't reach OUR verify endpoint at all (network/
+    //                 server hiccup on this specific call). Treated
+    //                 optimistically, same as before: the Cashfree SDK
+    //                 already reported the checkout completed, and the
+    //                 webhook is a durable fallback regardless of whether
+    //                 this call ever lands.
+    String outcome = 'ambiguous';
+
     try {
       final response = await http.get(
         Uri.parse(
@@ -435,33 +447,73 @@ class _CheckoutPageState extends State<CheckoutPage>
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        final bool isPaid =
-            data['isPaid'] == true || data['cfStatus'] == 'ACTIVE';
+        final bool isPaid = data['isPaid'] == true;
+        final bool isActive = data['cfStatus'] == 'ACTIVE';
 
         if (isPaid) {
+          outcome = 'success';
           details = {
             'order_id': data['cfOrderId'] ?? orderId,
             'order_status': data['cfStatus'],
             'order_amount': data['amount'],
             'created_at': data['cfPaymentTime'],
           };
+        } else if (isActive) {
+          outcome = 'processing';
         } else {
+          outcome = 'failed';
           debugPrint(
               'Order verification did not confirm payment: ${response.body}');
         }
       } else {
+        // Non-200 from OUR verify endpoint is ambiguous (server hiccup),
+        // not a confirmed payment failure -- fall through to the
+        // optimistic path below, same as a network exception.
         debugPrint(
             'Order verification request failed: ${response.statusCode} ${response.body}');
       }
     } catch (e) {
       // A network hiccup on this confirmation call shouldn't strand the
-      // user -- the payment already succeeded with Cashfree, and the
-      // webhook will independently promote the DraftOrder into a real
-      // order even if this call never lands.
+      // user -- the Cashfree SDK already reported the checkout completed,
+      // and the webhook will independently promote the DraftOrder into a
+      // real order even if this call never lands.
       debugPrint('Order verification request threw: $e');
     }
 
     if (!mounted) return;
+
+    if (outcome == 'failed') {
+      // The server explicitly confirmed this payment did NOT go through --
+      // showing "Order Placed!" and wiping the cart here would be actively
+      // wrong, not just unhelpful: the customer would believe they have an
+      // order, or have lost their cart, when neither is true. Leave the
+      // cart intact and say so plainly instead.
+      setState(() => isProcessingPayment = false);
+      _showAlertDialog(
+        title: 'Payment Not Confirmed',
+        message:
+            'We could not confirm this payment went through, so your cart has not been cleared. If money was deducted from your account, please check Order History in a few minutes before trying again -- do not pay twice.',
+        buttonText: 'OK',
+        accentColor: const Color(0xFFE74C3C),
+        icon: Icons.error_outline,
+      );
+      return;
+    }
+
+    if (outcome == 'processing') {
+      // Same reasoning as 'failed' above on why the cart stays intact --
+      // we genuinely don't know yet whether this succeeded.
+      setState(() => isProcessingPayment = false);
+      _showAlertDialog(
+        title: 'Confirming Payment',
+        message:
+            "We haven't received final confirmation from your bank yet. If money was deducted, your order will appear automatically -- please check Order History in a few minutes rather than paying again.",
+        buttonText: 'OK',
+        accentColor: const Color(0xFFD4AF37),
+        icon: Icons.access_time,
+      );
+      return;
+    }
 
     deleteCartCollection().then((_) {
       if (!mounted) return;
@@ -775,6 +827,12 @@ class _CheckoutPageState extends State<CheckoutPage>
                 distanceKm, deliveryAddress, cartSubTotal, weight);
             deliveryFee = result.fee;
             deliveryTierName = result.tier;
+          } else {
+            // Address didn't resolve to a location -- don't leave a stale
+            // fee/tier badge from whatever address was selected previously
+            // showing next to an address that couldn't actually be geocoded.
+            deliveryFee = 0;
+            deliveryTierName = null;
           }
         });
         print('Lat is $deliveryAddressLat, Long is $deliveryAddressLong, Fee is $deliveryFee');
@@ -942,35 +1000,14 @@ class _CheckoutPageState extends State<CheckoutPage>
       );
     } else if (_index == 1) {
       return CheckoutStep2Payment(
-        walletBool: walletBool,
         payWithCard: payWithCard,
-        wallet: wallet,
         subTotal: subTotal,
         deliveryFee: deliveryFee,
         deliveryBool: deliveryBool,
         currencySymbol: currencySymbol,
-        onWalletChanged: (val) {
-          setState(() {
-            walletBool = true;
-            payWithCard = false;
-          });
-        },
         onOnlinePaymentChanged: (val) {
           setState(() {
-            walletBool = false;
             payWithCard = true;
-          });
-        },
-        onWalletTap: () {
-          Navigator.of(context)
-              .push(MaterialPageRoute(builder: (context) => const WalletPage()))
-              .then((value) {
-            Fluttertoast.showToast(
-                msg: "Please upload more money to continue".tr(),
-                toastLength: Toast.LENGTH_SHORT,
-                gravity: ToastGravity.TOP,
-                timeInSecForIosWeb: 1,
-                fontSize: 14.0);
           });
         },
         orders: orders,
@@ -1124,8 +1161,7 @@ class _CheckoutPageState extends State<CheckoutPage>
                                                           icon: Icons
                                                               .location_on_outlined,
                                                         );
-                                                      } else if (!walletBool &&
-                                                          !payWithCard) {
+                                                      } else if (!payWithCard) {
                                                         Fluttertoast.showToast(
                                                             msg:
                                                                 'Select Payment Method',
@@ -1141,169 +1177,11 @@ class _CheckoutPageState extends State<CheckoutPage>
                                                             textColor:
                                                                 Colors.white,
                                                             fontSize: 16.0);
-                                                      } else if (walletBool ==
-                                                              true &&
-                                                          wallet <
-                                                              (subTotal +
-                                                                  (deliveryBool ==
-                                                                          false
-                                                                      ? 0
-                                                                      : deliveryFee)) &&
-                                                          payWithCard ==
-                                                              false) {
-                                                        // Wallet selected but insufficient balance
-                                                        num shortfall = (subTotal +
-                                                                (deliveryBool ==
-                                                                        false
-                                                                    ? 0
-                                                                    : deliveryFee)) -
-                                                            wallet;
-                                                        _showAlertDialog(
-                                                          title:
-                                                              'Insufficient Wallet Balance',
-                                                          message:
-                                                              'Your wallet has $currencySymbol${Formatter().converter(wallet.toDouble())}, but you need $currencySymbol${Formatter().converter(shortfall.toDouble())} more.\n\nYou can:\n• Add funds to your wallet\n• Select Online Payment',
-                                                          buttonText:
-                                                              'Understood',
-                                                          accentColor:
-                                                              const Color(
-                                                                  0xFFE74C3C),
-                                                          icon: Icons
-                                                              .warning_outlined,
-                                                        );
-                                                      } else if (payWithCard ==
-                                                          true) {
+                                                      } else {
+                                                        // Payment always goes through Cashfree,
+                                                        // matching the website -- there is no
+                                                        // wallet-payment path anymore.
                                                         _initiateOnlinePayment();
-                                                      } else if (walletBool ==
-                                                          true) {
-                                                        // Logic for Wallet Payment Only
-                                                        Week currentWeek =
-                                                            Week.current();
-                                                        var day =
-                                                            DateTime.now();
-                                                        var dateDay =
-                                                            DateTime.now()
-                                                                .day;
-                                                        var month =
-                                                            DateTime.now();
-                                                        String formattedDate =
-                                                            DateFormat('MMMM')
-                                                                .format(month);
-                                                        String dayFormatter =
-                                                            DateFormat('EEEE')
-                                                                .format(day);
-                                                        deleteCartCollection();
-                                                        deleteVendorsID();
-                                                        updateVendorOrderID();
-                                                        num totalAmount = subTotal +
-                                                            (deliveryBool == false
-                                                                ? 0
-                                                                : deliveryFee);
-                                                        num amountDeducted =
-                                                            wallet >= totalAmount
-                                                                ? totalAmount
-                                                                : wallet;
-                                                        updateWallet();
-                                                        updateHistory(HistoryModel(
-                                                            timeCreated:
-                                                                DateTime.now(),
-                                                            message:
-                                                                'Placed an order'
-                                                                    .tr(),
-                                                            amount:
-                                                                '-$currencySymbol${Formatter().converter(amountDeducted.toDouble())}',
-                                                            paymentSystem:
-                                                                'Wallet'));
-                                                        DateTime now =
-                                                            DateTime.now();
-                                                        int currentMonth =
-                                                            now.month;
-                                                        int currentYear =
-                                                            now.year;
-                                                        addToOrder(
-                                                            OrderModel(
-                                                                month: currentMonth
-                                                                    .toString(),
-                                                                year: currentYear
-                                                                    .toString(),
-                                                                weekNumber:
-                                                                    currentWeek
-                                                                        .weekNumber,
-                                                                day: dayFormatter,
-                                                                date:
-                                                                    '$dayFormatter, $formattedDate $dateDay',
-                                                                pickupAddress:
-                                                                    pickupAddress,
-                                                                confirmationStatus:
-                                                                    false,
-                                                                uid: id,
-                                                                marketID:
-                                                                    currentMarketID,
-                                                                orderID:
-                                                                    orderID + 1,
-                                                                orders: orders,
-                                                                acceptDelivery:
-                                                                    false,
-                                                                deliveryFee:
-                                                                    pickupBool ==
-                                                                            false
-                                                                        ? deliveryFee
-                                                                        : 0,
-                                                                total: subTotal +
-                                                                    (deliveryBool ==
-                                                                            false
-                                                                        ? 0
-                                                                        : deliveryFee),
-                                                                vendorID: vendorID,
-                                                                paymentType:
-                                                                    'Online',
-                                                                userID: id,
-                                                                timeCreated: DateFormat
-                                                                        .yMMMMEEEEd()
-                                                                    .format(DateTime
-                                                                        .now())
-                                                                    .toString(),
-                                                                deliveryAddress:
-                                                                    pickupBool ==
-                                                                            true
-                                                                        ? ''
-                                                                        : deliveryAddress,
-                                                                houseNumber:
-                                                                    pickupBool ==
-                                                                            true
-                                                                        ? ''
-                                                                        : houseNumber,
-                                                                closesBusStop:
-                                                                    pickupBool ==
-                                                                            true
-                                                                        ? ''
-                                                                        : closestBustStop,
-                                                                deliveryBoyID:
-                                                                    '',
-                                                                status:
-                                                                    'Received',
-                                                                accept: false),
-                                                            id);
-                                                        updateHistoryVendor(HistoryModel(
-                                                            message:
-                                                                'New order alert Order ID #${orderID + 1}',
-                                                            amount:
-                                                                '$currencySymbol ${subTotal + (deliveryBool == false ? 0 : deliveryFee)}',
-                                                            paymentSystem:
-                                                                'Wallet',
-                                                            timeCreated:
-                                                                DateTime.now()));
-                                                        setState(() {
-                                                          _index = 2;
-                                                          selectedStepper3 =
-                                                              true;
-                                                          selectedStepper1 =
-                                                              false;
-                                                          selectedStepper2 =
-                                                              false;
-                                                        });
-                                                        _animationController!
-                                                            .forward();
                                                       }
                                                     },
                                               child: isProcessingPayment

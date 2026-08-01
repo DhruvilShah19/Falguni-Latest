@@ -13,7 +13,13 @@ const chivo = Chivo({
 export const metadata: Metadata = {
   title: 'Falguni Gruh Udhyog',
   description: 'Shop fresh, homemade products delivered to your door.',
-  icons: { icon: '/favicon.ico' },
+  // No explicit `icons` here on purpose: it used to point at
+  // `/favicon.ico`, which doesn't exist in `public/` and 404'd, so Chrome
+  // fell back to its default globe tab icon. Next.js auto-detects
+  // `app/icon.png` (and `app/apple-icon.png`) and wires up the right
+  // <link rel="icon"> tags on its own -- an explicit `icons` entry here
+  // would override that and needs to stay removed unless it points to a
+  // real file.
 };
 
 export const viewport: Viewport = {

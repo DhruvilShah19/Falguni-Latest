@@ -3,7 +3,6 @@
 import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
 import '../Model/formatter.dart';
-// import '../Pages/wallet_page.dart';
 
 class CheckoutStep2Payment extends StatelessWidget {
   // Design constants - matching cart & wallet pages
@@ -12,31 +11,23 @@ class CheckoutStep2Payment extends StatelessWidget {
   static const Color kBgTop = Color(0xFF2B1B17);
   static const Color kBgMid = Color(0xFF5C4033);
 
-  final bool walletBool;
   final bool payWithCard;
-  final num wallet;
   final num subTotal;
   final num deliveryFee;
   final bool deliveryBool;
   final String currencySymbol;
-  final Function(bool?) onWalletChanged;
   final Function(bool?) onOnlinePaymentChanged;
-  final Function() onWalletTap;
   final List<Map<String, dynamic>> orders;
   final Function() getMyCartToOrders;
 
   const CheckoutStep2Payment({
     super.key,
-    required this.walletBool,
     required this.payWithCard,
-    required this.wallet,
     required this.subTotal,
     required this.deliveryFee,
     required this.deliveryBool,
     required this.currencySymbol,
-    required this.onWalletChanged,
     required this.onOnlinePaymentChanged,
-    required this.onWalletTap,
     required this.orders,
     required this.getMyCartToOrders,
   });
@@ -44,7 +35,6 @@ class CheckoutStep2Payment extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     num totalAmount = subTotal + (deliveryBool == false ? 0 : deliveryFee);
-    bool hasEnoughWallet = wallet >= totalAmount;
 
     return Container(
       decoration: const BoxDecoration(
@@ -129,37 +119,6 @@ class CheckoutStep2Payment extends StatelessWidget {
                 ),
               ).tr(),
               const SizedBox(height: 12),
-
-              // // Wallet Payment Option
-              // _buildPaymentOption(
-              //   context: context,
-              //   title: 'Wallet',
-              //   subtitle: hasEnoughWallet
-              //       ? 'Pay full amount using your wallet balance'
-              //       : 'Use available wallet balance + another payment method',
-              //   icon: Icons.account_balance_wallet_outlined,
-              //   isSelected: walletBool,
-              //   balance:
-              //       '$currencySymbol${Formatter().converter(wallet.toDouble())}',
-              //   warning: hasEnoughWallet
-              //       ? null
-              //       : 'Wallet has $currencySymbol${Formatter().converter(wallet.toDouble())}. Need $currencySymbol${Formatter().converter((totalAmount - wallet).toDouble())} more.',
-              //   onTap: () {
-              //     if (orders.isEmpty) {
-              //       getMyCartToOrders();
-              //     }
-              //     onWalletChanged(!walletBool);
-              //   },
-              //   onAddMoney: () {
-              //     Navigator.push(
-              //       context,
-              //       MaterialPageRoute(builder: (_) => const WalletPage()),
-              //     );
-              //   },
-              //   additionalInfo:
-              //       'Balance: $currencySymbol${Formatter().converter(wallet.toDouble())}',
-              // ),
-              // const SizedBox(height: 12),
 
               // Online Payment Option
               _buildPaymentOption(

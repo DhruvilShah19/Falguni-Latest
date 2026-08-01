@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { adminDb } from '@/lib/firebase-admin';
+import { promoteDraftOrder, markExistingOrderReceived } from '@/lib/orderPromotion';
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -76,101 +76,30 @@ export async function GET(request: Request) {
 
     const isPaid = status === 'PAID' || hasSuccessPayment;
 
-    // 3. Update Firestore securely from the backend if payment is successful
+    // 3. Update Firestore securely from the backend if payment is successful.
+    // promoteDraftOrder does the read-check-create-delete atomically in a
+    // transaction, so this racing with the webhook (which can fire around
+    // the same time) can't create two Orders documents for one payment.
     if (isPaid) {
       try {
-        const draftOrdersRef = adminDb.collection('DraftOrders');
-        const draftDoc = await draftOrdersRef.doc(orderId).get();
-        
-        if (draftDoc.exists) {
-          // ── WE HAVE A DRAFT ORDER! ──
-          const draftData = draftDoc.data();
-          
-          // Create the Official Order in the Orders collection
-          const newOrderRef = await adminDb.collection('Orders').add({
-            ...draftData,
-            status: 'Received',
-            paymentStatus: 'Success',
-            cashFreeDetails: {
-              cf_order_id: orderId,
-              order_status: 'PAID',
-              order_amount: amount,
-              order_currency: 'INR',
-              created_at: cfPaymentTime || new Date().toISOString(),
-            }
-          });
-          
-          // Append to User History
-          try {
-            const userID = draftData?.userID;
-            if (userID) {
-              await adminDb.collection('users').doc(userID).collection('History').add({
-                timeCreated: new Date(),
-                message: 'Placed an order',
-                amount: `-₹${draftData?.total || amount}`,
-                paymentSystem: 'Online'
-              });
-            }
-          } catch (histErr) {
-            console.error('[Admin] Error writing user history:', histErr);
-          }
+        const cashFreeDetails = {
+          cf_order_id: orderId,
+          order_status: 'PAID',
+          order_amount: amount,
+          order_currency: 'INR',
+          created_at: cfPaymentTime || new Date().toISOString(),
+        };
 
-          // Append to Vendor Notifications
-          try {
-            const vendorID = draftData?.vendorID;
-            if (vendorID) {
-              await adminDb.collection('vendors').doc(vendorID).collection('Notifications').add({
-                timeCreated: new Date(),
-                message: `New order alert Order ID #${draftData?.orderID || 'Unknown'}`,
-                amount: `₹${draftData?.total || amount}`,
-                paymentSystem: 'Online'
-              });
-            }
-          } catch (notifErr) {
-            console.error('[Admin] Error writing vendor notification:', notifErr);
-          }
-          
-          // Increment vendor orderID (same as Flutter's updateVendorOrderID)
-          try {
-            const vendorID = draftData?.vendorID;
-            if (vendorID) {
-              const vendorRef = adminDb.collection('vendors').doc(vendorID);
-              const vendorSnap = await vendorRef.get();
-              if (vendorSnap.exists) {
-                const currentOrderID = Number(vendorSnap.data()?.['orderID'] || 0);
-                await vendorRef.update({ orderID: currentOrderID + 1 });
-              }
-            }
-          } catch (vendorErr) {
-            console.error('[Admin] Error incrementing vendor orderID:', vendorErr);
-          }
-          
-          // Delete the Draft
-          await draftDoc.ref.delete();
-          console.log(`[Admin] Successfully moved draft ${orderId} to real Order ${newOrderRef.id}.`);
-          
+        const result = await promoteDraftOrder(orderId, cashFreeDetails);
+
+        if (result.promoted) {
+          console.log(`[Admin] Successfully moved draft ${orderId} to real Order ${result.newOrderId}.`);
         } else {
-          // Fallback just in case webhook already moved it or old flow
-          const ordersRef = adminDb.collection('Orders');
-          // Try both field name conventions
-          let querySnapshot = await ordersRef.where('cashFreeDetails.cf_order_id', '==', orderId).limit(1).get();
-          if (querySnapshot.empty) {
-            querySnapshot = await ordersRef.where('cashfreeOrderId', '==', orderId).limit(1).get();
-          }
-          
-          if (!querySnapshot.empty) {
-            const docRef = querySnapshot.docs[0].ref;
-            await docRef.update({
-              status: 'Received',
-              paymentStatus: 'Success',
-              cashFreeDetails: {
-                cf_order_id: orderId,
-                order_status: 'PAID',
-                order_amount: amount,
-                order_currency: 'INR',
-                created_at: cfPaymentTime || new Date().toISOString(),
-              }
-            });
+          // Draft was already gone -- either the webhook promoted it first,
+          // or this is an old-style order. Just make sure it's marked
+          // Received rather than creating anything new.
+          const updated = await markExistingOrderReceived(orderId, cashFreeDetails);
+          if (updated) {
             console.log(`[Admin] Successfully updated existing order ${orderId} to Received.`);
           } else {
             console.error(`[Admin] Order with cashfreeOrderId ${orderId} not found in DraftOrders or Orders!`);

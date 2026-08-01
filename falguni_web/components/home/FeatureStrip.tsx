@@ -1,6 +1,6 @@
 'use client';
 const FEATURES = [
-  { icon: '🚚', title: 'Free Delivery',    desc: 'On orders above ₹500' },
+  { icon: '🚚', title: 'Free Delivery',    desc: 'On qualifying orders' },
   { icon: '🏡', title: 'Homemade Quality', desc: 'Crafted fresh daily'  },
   { icon: '⚡', title: 'Quick Dispatch',   desc: 'Same-day delivery'    },
   { icon: '🔒', title: 'Secure Payments',  desc: 'UPI, cards & COD'     },

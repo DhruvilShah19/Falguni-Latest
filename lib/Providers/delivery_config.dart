@@ -103,22 +103,34 @@ class DeliveryConfig {
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body) as Map<String, dynamic>;
 
-        roadDistanceFactor = (data['roadDistanceFactor'] as num).toDouble();
-        hyperlocalDeliveryHours =
+        // Parse everything into locals first, and only assign to the
+        // static fields once every piece has parsed successfully. Assigning
+        // field-by-field meant a parse failure partway through (e.g. a
+        // malformed distanceTiers entry) could leave roadDistanceFactor
+        // already updated to the new value while distanceTiers stayed on
+        // the old/fallback data -- a mixed, inconsistent state that's worse
+        // than either fully-fetched or fully-fallback.
+        final newRoadDistanceFactor =
+            (data['roadDistanceFactor'] as num).toDouble();
+        final newHyperlocalDeliveryHours =
             data['hyperlocalDeliveryHours'] as String? ??
                 hyperlocalDeliveryHours;
-
         final tiersJson = data['distanceTiers'] as List;
-        distanceTiers = tiersJson
+        final newDistanceTiers = tiersJson
             .map((e) => DistanceTierRule.fromJson(e as Map<String, dynamic>))
             .toList();
-
         final outstationJson =
             data['outstationTiers'] as Map<String, dynamic>;
-        gujaratOutstation = OutstationTierRule.fromJson(
+        final newGujaratOutstation = OutstationTierRule.fromJson(
             outstationJson['gujarat'] as Map<String, dynamic>);
-        panIndia = OutstationTierRule.fromJson(
+        final newPanIndia = OutstationTierRule.fromJson(
             outstationJson['panIndia'] as Map<String, dynamic>);
+
+        roadDistanceFactor = newRoadDistanceFactor;
+        hyperlocalDeliveryHours = newHyperlocalDeliveryHours;
+        distanceTiers = newDistanceTiers;
+        gujaratOutstation = newGujaratOutstation;
+        panIndia = newPanIndia;
 
         debugPrint('DeliveryConfig: loaded live pricing config from server.');
       } else {
