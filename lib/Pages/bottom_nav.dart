@@ -491,6 +491,24 @@ class _BottomNavPageState extends State<BottomNavPage> {
                         onTap: () => Navigator.of(context).pushNamed('/contact'),
                       ),
                       _drawerItem(
+                        icon: Icons.privacy_tip_outlined,
+                        title: "Privacy Policy".tr(),
+                        onTap: () =>
+                            Navigator.of(context).pushNamed('/privacy-policy'),
+                      ),
+                      _drawerItem(
+                        icon: Icons.description_outlined,
+                        title: "Terms & Conditions".tr(),
+                        onTap: () => Navigator.of(context)
+                            .pushNamed('/terms-and-conditions'),
+                      ),
+                      _drawerItem(
+                        icon: Icons.info_outline_rounded,
+                        title: "Website Disclaimer".tr(),
+                        onTap: () => Navigator.of(context)
+                            .pushNamed('/website-disclaimer'),
+                      ),
+                      _drawerItem(
                         icon: Icons.notifications_outlined,
                         title: "Notifications".tr(),
                         onTap: () {

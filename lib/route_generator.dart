@@ -5,6 +5,9 @@ import 'package:falguni_app/Pages/connectivity.dart';
 import 'package:falguni_app/Pages/delivery_addresses.dart';
 import 'package:falguni_app/Pages/delivery_charges_page.dart';
 import 'package:falguni_app/Pages/contact_page.dart';
+import 'package:falguni_app/Pages/privacy_policy_page.dart';
+import 'package:falguni_app/Pages/terms_and_conditions_page.dart';
+import 'package:falguni_app/Pages/website_disclaimer_page.dart';
 import 'package:falguni_app/Pages/forgot_password.dart';
 import 'package:falguni_app/Pages/language_settings.dart';
 import 'package:falguni_app/Widgets/wrapper.dart';
@@ -80,6 +83,12 @@ class RouteGenerator {
         return MaterialPageRoute(builder: (_) => const DeliveryChargesPage());
       case '/contact':
         return MaterialPageRoute(builder: (_) => const ContactPage());
+      case '/privacy-policy':
+        return MaterialPageRoute(builder: (_) => const PrivacyPolicyPage());
+      case '/terms-and-conditions':
+        return MaterialPageRoute(builder: (_) => const TermsAndConditionsPage());
+      case '/website-disclaimer':
+        return MaterialPageRoute(builder: (_) => const WebsiteDisclaimerPage());
       case '/language':
         return MaterialPageRoute(builder: (_) => const LanguageSettingsPage());
       case '/coupon':

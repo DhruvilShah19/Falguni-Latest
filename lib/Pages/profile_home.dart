@@ -178,6 +178,16 @@ class _ProfileHomeState extends State<ProfileHome> {
                       _menuItem(Icons.notifications_none_rounded,
                           "Notifications", '/notifications'),
                     ]),
+                    const Gap(20),
+                    _sectionHeader("Legal"),
+                    _buildMenuCard([
+                      _menuItem(Icons.privacy_tip_outlined, "Privacy Policy",
+                          '/privacy-policy'),
+                      _menuItem(Icons.description_outlined,
+                          "Terms & Conditions", '/terms-and-conditions'),
+                      _menuItem(Icons.info_outline_rounded,
+                          "Website Disclaimer", '/website-disclaimer'),
+                    ]),
                     const Gap(30),
                     _buildLogoutButton(),
                     const Gap(120), // Spacer for Floating Bottom Nav
