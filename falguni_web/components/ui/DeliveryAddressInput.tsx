@@ -2,7 +2,7 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import { useJsApiLoader } from '@react-google-maps/api';
-import { MapPin, Search, Loader2, Navigation, Clock, CheckCircle2, ShieldCheck } from 'lucide-react';
+import { MapPin, Search, Loader2, Navigation, Clock, CheckCircle2, ShieldCheck, Info } from 'lucide-react';
 import { useCartStore } from '@/store/cartStore';
 import {
   STUDIO_FALGUNI_LATLNG,
@@ -264,6 +264,11 @@ export default function DeliveryAddressInput({ onDeliveryCalculated, defaultAddr
                   </div>
                 </div>
               </div>
+
+              <p className="flex items-start gap-1.5 text-white/30 text-[9px] leading-relaxed mb-5 -mt-2">
+                <Info size={11} className="flex-shrink-0 mt-[1px]" />
+                <span>Estimated time is an approximation, not a guarantee -- actual delivery may vary with traffic, driver availability and other conditions.</span>
+              </p>
 
               <div className="w-full h-px bg-gradient-to-r from-transparent via-white/10 to-transparent my-1" />
 
