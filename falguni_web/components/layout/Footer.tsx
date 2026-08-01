@@ -89,8 +89,8 @@ export default function Footer() {
           © {new Date().getFullYear()} Falguni Gruh Udhyog. All rights reserved.
         </p>
         <div className="flex items-center justify-center gap-4">
-          {['Privacy Policy', 'Terms of Service'].map(t => (
-            <Link key={t} href="#"
+          {[['Privacy Policy', '/privacy-policy'], ['Terms of Service', '/terms-and-conditions'], ['Disclaimer', '/website-disclaimer']].map(([t, href]) => (
+            <Link key={t} href={href}
               className="text-xs transition hover:text-[var(--color-fg)]"
               style={{ color: 'var(--color-fg-muted)' }}>
               {t}
