@@ -25,6 +25,7 @@ import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'package:firebase_analytics/firebase_analytics.dart';
 import 'firebase_options.dart';
 import 'Providers/global_config.dart';
+import 'Providers/delivery_config.dart';
 
 int? initScreen;
 @pragma('vm:entry-point')
@@ -129,6 +130,11 @@ void main() async {
     options: DefaultFirebaseOptions.currentPlatform,
   );
   await GlobalConfig.init();
+  // Not awaited: this only refines the delivery-fee DISPLAY estimate, and
+  // the app already ships with fallback values that match the website's
+  // current pricing, so there's no reason to hold up app startup on it.
+  // By the time a user reaches checkout, it's almost always finished.
+  DeliveryConfig.init();
   FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
   requestFCMPermission();
   if (!kIsWeb) {

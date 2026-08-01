@@ -480,6 +480,17 @@ class _BottomNavPageState extends State<BottomNavPage> {
                         onTap: () => Navigator.of(context).pushNamed('/faq'),
                       ),
                       _drawerItem(
+                        icon: Icons.local_shipping_outlined,
+                        title: "Delivery Charges".tr(),
+                        onTap: () =>
+                            Navigator.of(context).pushNamed('/delivery-charges'),
+                      ),
+                      _drawerItem(
+                        icon: Icons.support_agent_outlined,
+                        title: "Contact Us".tr(),
+                        onTap: () => Navigator.of(context).pushNamed('/contact'),
+                      ),
+                      _drawerItem(
                         icon: Icons.notifications_outlined,
                         title: "Notifications".tr(),
                         onTap: () {

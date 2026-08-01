@@ -25,6 +25,10 @@ class CheckoutStep1Delivery extends StatelessWidget {
   final VoidCallback onDeliveryAddressTap;
   final Function(bool?) onDeliveryChanged;
   final Function(bool?) onPickupChanged;
+  // Matches the website's DeliveryTier labels (Hyperlocal / Intercity /
+  // Interstate / Gujarat Outstation / PAN India) -- null until a distance
+  // has been resolved for the selected address.
+  final String? deliveryTierName;
 
   const CheckoutStep1Delivery({
     super.key,
@@ -40,6 +44,7 @@ class CheckoutStep1Delivery extends StatelessWidget {
     required this.onDeliveryAddressTap,
     required this.onDeliveryChanged,
     required this.onPickupChanged,
+    this.deliveryTierName,
   });
 
   @override
@@ -270,6 +275,58 @@ class CheckoutStep1Delivery extends StatelessWidget {
                           )
                         ],
                       ),
+                      if (deliveryTierName != null) ...[
+                        const SizedBox(height: 10),
+                        Wrap(
+                          crossAxisAlignment: WrapCrossAlignment.center,
+                          spacing: 8,
+                          runSpacing: 6,
+                          children: [
+                            Container(
+                              decoration: BoxDecoration(
+                                color: kGold.withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(6),
+                                border: Border.all(
+                                  color: kGold.withOpacity(0.2),
+                                ),
+                              ),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 4,
+                              ),
+                              child: Text(
+                                '$deliveryTierName Delivery'.toUpperCase(),
+                                style: const TextStyle(
+                                  color: kGold,
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w900,
+                                  letterSpacing: 0.5,
+                                ),
+                              ),
+                            ),
+                            if (deliveryTierName == 'Hyperlocal')
+                              Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    Icons.access_time,
+                                    size: 11,
+                                    color: kGold.withOpacity(0.7),
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    'Delivery hours: 11 AM – 8 PM',
+                                    style: TextStyle(
+                                      color: Colors.white.withOpacity(0.6),
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                          ],
+                        ),
+                      ],
                       const SizedBox(height: 12),
                       if (deliveryAddressLat != 0 && deliveryAddressLong != 0)
                         ClipRRect(

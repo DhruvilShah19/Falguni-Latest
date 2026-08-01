@@ -89,37 +89,62 @@ export function parseWeightToKg(unitString: string): number {
   return 1.0;
 }
 
+export interface DistanceTierRule {
+  tier: DeliveryTier;
+  maxDistanceKm: number;
+  fee: number;
+  freeAbove: number;
+}
+
+// Ordered by ascending maxDistanceKm -- calculateDeliveryFee walks this list
+// and returns the first tier whose cutoff the distance falls within. This is
+// also the array the /api/delivery-config endpoint serializes directly, so
+// the app fetches these exact numbers instead of hardcoding its own copy.
+export const DISTANCE_TIERS: DistanceTierRule[] = [
+  { tier: 'Hyperlocal', maxDistanceKm: 5, fee: 50, freeAbove: 400 },
+  { tier: 'Intercity', maxDistanceKm: 10, fee: 100, freeAbove: 1200 },
+  { tier: 'Interstate', maxDistanceKm: 15, fee: 150, freeAbove: 1800 },
+];
+
+export interface OutstationTierRule {
+  tier: DeliveryTier;
+  feePerKg: number;
+  freeAbove: number;
+}
+
+// Applies beyond the last DISTANCE_TIERS cutoff -- priced by weight instead
+// of a flat fee, split by whether the address text mentions Gujarat.
+export const OUTSTATION_TIERS: { gujarat: OutstationTierRule; panIndia: OutstationTierRule } = {
+  gujarat: { tier: 'Gujarat Outstation', feePerKg: 40, freeAbove: 2000 },
+  panIndia: { tier: 'PAN India', feePerKg: 100, freeAbove: 3500 },
+};
+
+// Informational only (shown on the Hyperlocal badge/page) -- not enforced
+// anywhere in the fee logic itself.
+export const HYPERLOCAL_DELIVERY_HOURS = '11 AM – 8 PM';
+
 // The core tier + fee formula. distanceKm should be Infinity (or anything
 // >15) to force the weight-based outstation branch when no lat/lng is
 // available -- this is the deliberate "charge more rather than accidentally
 // undercharge" fallback used when a delivery location can't be resolved.
 export function calculateDeliveryFee(distanceKm: number, address: string, subTotal: number, weightKg: number): DeliveryFeeResult {
-  if (distanceKm <= 5) {
-    return { tier: 'Hyperlocal', fee: subTotal >= 400 ? 0 : 50 };
-  }
-  if (distanceKm <= 10) {
-    return { tier: 'Intercity', fee: subTotal >= 1200 ? 0 : 100 };
-  }
-  if (distanceKm <= 15) {
-    return { tier: 'Interstate', fee: subTotal >= 1800 ? 0 : 150 };
+  for (const rule of DISTANCE_TIERS) {
+    if (distanceKm <= rule.maxDistanceKm) {
+      return { tier: rule.tier, fee: subTotal >= rule.freeAbove ? 0 : rule.fee };
+    }
   }
 
   const isGujarat = address.toLowerCase().includes('gujarat');
-  if (isGujarat) {
-    return { tier: 'Gujarat Outstation', fee: subTotal >= 2000 ? 0 : Math.ceil(weightKg) * 40 };
-  }
-  return { tier: 'PAN India', fee: subTotal >= 3500 ? 0 : Math.ceil(weightKg) * 100 };
+  const rule = isGujarat ? OUTSTATION_TIERS.gujarat : OUTSTATION_TIERS.panIndia;
+  return { tier: rule.tier, fee: subTotal >= rule.freeAbove ? 0 : Math.ceil(weightKg) * rule.feePerKg };
 }
 
 // The free-delivery threshold for each tier -- used both by the fee formula
 // above (implicitly) and by any "add ₹X more for free delivery" UI, so the
 // banner and the actual charge can never drift apart again.
 export function getFreeDeliveryThreshold(tier: DeliveryTier): number {
-  switch (tier) {
-    case 'Hyperlocal': return 400;
-    case 'Intercity': return 1200;
-    case 'Interstate': return 1800;
-    case 'Gujarat Outstation': return 2000;
-    case 'PAN India': return 3500;
-  }
+  const distanceRule = DISTANCE_TIERS.find((r) => r.tier === tier);
+  if (distanceRule) return distanceRule.freeAbove;
+  if (tier === OUTSTATION_TIERS.panIndia.tier) return OUTSTATION_TIERS.panIndia.freeAbove;
+  return OUTSTATION_TIERS.gujarat.freeAbove;
 }

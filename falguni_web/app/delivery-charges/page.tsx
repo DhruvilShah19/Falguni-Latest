@@ -3,18 +3,27 @@
 import Link from 'next/link';
 import PageShell from '@/components/layout/PageShell';
 import { ArrowLeft, MapPin, Truck, PackageCheck, Info } from 'lucide-react';
+import { DISTANCE_TIERS, OUTSTATION_TIERS } from '@/lib/deliveryPricing';
 
-// Keep this in sync with the actual pricing logic in lib/deliveryPricing.ts --
-// this page is customer-facing copy, not a live calculation, so if the real
-// thresholds/fees ever change there, update the numbers below to match.
+const inr = (n: number) => `₹${n.toLocaleString('en-IN')}`;
+
+// Only presentational content lives here (color, display range text, worked
+// examples, the small weight-breakdown tables) -- every actual number
+// (fee, free-delivery threshold) is pulled from DISTANCE_TIERS /
+// OUTSTATION_TIERS in lib/deliveryPricing.ts, the same constants
+// /api/delivery-config serves to the app and calculateDeliveryFee uses for
+// the real charge. There is exactly one place left to edit a price.
+const [hyperlocal, intercity, interstate] = DISTANCE_TIERS;
+const { gujarat, panIndia } = OUTSTATION_TIERS;
+
 const ZONES = [
   {
     color: '#4ADE80', // green
     tier: 'Hyperlocal Delivery',
-    range: 'Within 5 km',
-    charge: '₹50',
+    range: `Within ${hyperlocal.maxDistanceKm} km`,
+    charge: inr(hyperlocal.fee),
     chargeNote: 'flat fee',
-    freeAbove: '₹400',
+    freeAbove: inr(hyperlocal.freeAbove),
     examples: [
       { label: 'Order Value ₹300', result: 'Delivery ₹50' },
       { label: 'Order Value ₹650', result: 'FREE Delivery' },
@@ -23,10 +32,10 @@ const ZONES = [
   {
     color: '#60A5FA', // blue
     tier: 'Intercity Delivery',
-    range: '5 – 10 km',
-    charge: '₹100',
+    range: `${hyperlocal.maxDistanceKm} – ${intercity.maxDistanceKm} km`,
+    charge: inr(intercity.fee),
     chargeNote: 'flat fee',
-    freeAbove: '₹1,200',
+    freeAbove: inr(intercity.freeAbove),
     examples: [
       { label: 'Order Value ₹900', result: 'Delivery ₹100' },
       { label: 'Order Value ₹1,500', result: 'FREE Delivery' },
@@ -35,10 +44,10 @@ const ZONES = [
   {
     color: '#FB923C', // orange
     tier: 'Interstate Delivery',
-    range: '10 – 15 km',
-    charge: '₹150',
+    range: `${intercity.maxDistanceKm} – ${interstate.maxDistanceKm} km`,
+    charge: inr(interstate.fee),
     chargeNote: 'flat fee',
-    freeAbove: '₹1,800',
+    freeAbove: inr(interstate.freeAbove),
     examples: [
       { label: 'Order Value ₹1,400', result: 'Delivery ₹150' },
       { label: 'Order Value ₹2,000', result: 'FREE Delivery' },
@@ -47,34 +56,34 @@ const ZONES = [
   {
     color: '#D4AF37', // gold
     tier: 'Gujarat Outstation',
-    range: 'Above 15 km — anywhere in Gujarat',
-    charge: '₹40',
+    range: `Above ${interstate.maxDistanceKm} km — anywhere in Gujarat`,
+    charge: inr(gujarat.feePerKg),
     chargeNote: 'per kg',
-    freeAbove: '₹2,000',
+    freeAbove: inr(gujarat.freeAbove),
     weightTable: [
-      { weight: '2 kg', charge: '₹80' },
-      { weight: '5 kg', charge: '₹200' },
-      { weight: '8 kg', charge: '₹320' },
+      { weight: '2 kg', charge: inr(2 * gujarat.feePerKg) },
+      { weight: '5 kg', charge: inr(5 * gujarat.feePerKg) },
+      { weight: '8 kg', charge: inr(8 * gujarat.feePerKg) },
     ],
     examples: [
-      { label: 'Order Value ₹1,700 (4 kg)', result: 'Delivery ₹160' },
+      { label: 'Order Value ₹1,700 (4 kg)', result: `Delivery ${inr(4 * gujarat.feePerKg)}` },
       { label: 'Order Value ₹2,300 (4 kg)', result: 'FREE Delivery' },
     ],
   },
   {
     color: '#F87171', // red
     tier: 'PAN India Delivery',
-    range: 'Above 15 km — outside Gujarat',
-    charge: '₹100',
+    range: `Above ${interstate.maxDistanceKm} km — outside Gujarat`,
+    charge: inr(panIndia.feePerKg),
     chargeNote: 'per kg',
-    freeAbove: '₹3,500',
+    freeAbove: inr(panIndia.freeAbove),
     weightTable: [
-      { weight: '1 kg', charge: '₹100' },
-      { weight: '3 kg', charge: '₹300' },
-      { weight: '5 kg', charge: '₹500' },
+      { weight: '1 kg', charge: inr(1 * panIndia.feePerKg) },
+      { weight: '3 kg', charge: inr(3 * panIndia.feePerKg) },
+      { weight: '5 kg', charge: inr(5 * panIndia.feePerKg) },
     ],
     examples: [
-      { label: 'Order Value ₹2,800 (3 kg)', result: 'Delivery ₹300' },
+      { label: 'Order Value ₹2,800 (3 kg)', result: `Delivery ${inr(3 * panIndia.feePerKg)}` },
       { label: 'Order Value ₹3,800 (3 kg)', result: 'FREE Delivery' },
     ],
   },

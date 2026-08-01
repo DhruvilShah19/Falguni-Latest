@@ -110,6 +110,10 @@ class _FaqPageState extends State<FaqPage> {
             "When will I receive my order?",
             "Local orders: 2–3 days. Outside Gujarat: 3–4 days. International orders: Based on destination shipping policies.",
           ),
+          _faq(
+            "How are delivery charges calculated?",
+            "Delivery is priced by distance from our store up to 15 km, and by weight beyond that -- with free delivery once your order crosses each zone's threshold. See Delivery Charges under your Profile menu for the full breakdown.",
+          ),
 
           const SizedBox(height: 50),
         ],

@@ -29,6 +29,7 @@ import 'package:uuid/uuid.dart';
 
 import 'order_success_page.dart';
 import 'delivery_addresses.dart';
+import '../Providers/delivery_config.dart';
 import 'wallet_page.dart';
 import 'checkout_step1_delivery.dart';
 import 'checkout_step2_payment.dart';
@@ -67,6 +68,10 @@ class _CheckoutPageState extends State<CheckoutPage>
   bool selectedStepper1 = true;
   bool selectedStepper2 = false;
   num deliveryFee = 0;
+  // Mirrors the website's DeliveryTier labels (lib/deliveryPricing.ts) so
+  // customers see the same "Hyperlocal Delivery" / "Interstate Delivery"
+  // etc. badge on both platforms instead of just a bare fee number.
+  String? deliveryTierName;
   bool deliveryBool = false;
   bool pickupBool = false;
   bool isAddressEmpty = false;
@@ -400,66 +405,72 @@ class _CheckoutPageState extends State<CheckoutPage>
     setState(() => isProcessingPayment = false);
     debugPrint("Verify Payment: $orderId");
 
-    // Success scenario: Save order and history, then navigate to success page
-    updateVendorOrderID();
-    Week currentWeek = Week.current();
-    var day = DateTime.now();
-    var dateDay = DateTime.now().day;
-    var month = DateTime.now();
-    String formattedDate = DateFormat('MMMM').format(month);
-    String dayFormatter = DateFormat('EEEE').format(day);
-    DateTime now = DateTime.now();
-    int currentMonth = now.month;
-    int currentYear = now.year;
+    // The server already created a "DraftOrders" record with the
+    // authoritative, server-calculated delivery fee back when
+    // /api/cashfree/create-order was called (same server-side fee logic the
+    // website uses, including the road-distance correction). Previously this
+    // callback wrote its OWN separate Orders document from locally
+    // calculated values here -- which not only used the old, less accurate
+    // distance formula, but also created a SECOND, duplicate order once the
+    // Cashfree webhook independently promoted the same draft into Orders
+    // (the webhook's dedupe check looks for a top-level `cashfreeOrderId`
+    // field that this local write never set). Calling the same
+    // /api/cashfree/verify endpoint the website's checkout success page uses
+    // fixes both problems at once: it re-confirms payment with Cashfree
+    // directly and lets the server promote the DraftOrder into the real
+    // Orders collection itself, so there's exactly one order record, with
+    // the correct fee, on both platforms.
+    _confirmOrderServerSide(orderId);
+  }
 
-    addToOrder(
-      OrderModel(
-        month: currentMonth.toString(),
-        year: currentYear.toString(),
-        weekNumber: currentWeek.weekNumber,
-        day: dayFormatter,
-        date: '$dayFormatter, $formattedDate $dateDay',
-        pickupAddress: pickupAddress,
-        confirmationStatus: false,
-        uid: uid, // Assuming 'id' is the user's UID
-        marketID: currentMarketID,
-        orderID: orderID + 1,
-        orders: orders,
-        acceptDelivery: false,
-        deliveryFee: pickupBool == false ? deliveryFee : 0,
-        total: subTotal + (deliveryBool == false ? 0 : deliveryFee),
-        vendorID: vendorID,
-        paymentType: 'Online',
-        userID: id,
-        timeCreated: DateFormat.yMMMMEEEEd().format(DateTime.now()).toString(),
-        createdAt: FieldValue.serverTimestamp(),
-        deliveryAddress: pickupBool == true ? '' : deliveryAddress,
-        houseNumber: pickupBool == true ? '' : houseNumber,
-        closesBusStop: pickupBool == true ? '' : closestBustStop,
-        deliveryBoyID: '',
-        status: 'Received',
-        accept: false,
-        cashFreeDetails: cashFreeResponseData,
-      ),
-      uid, // Pass user ID here
-    );
+  Future<void> _confirmOrderServerSide(String orderId) async {
+    Map<String, dynamic> details =
+        cashFreeResponseData ?? const {"payment": "online"};
 
-    updateHistoryVendor(HistoryModel(
-      message: 'New order alert Order ID #${orderID + 1}',
-      amount:
-          '$currencySymbol ${subTotal + (deliveryBool == false ? 0 : deliveryFee)}',
-      paymentSystem: 'Online',
-      timeCreated: DateTime.now(),
-    ));
+    try {
+      final response = await http.get(
+        Uri.parse(
+            'https://falguni-latest.vercel.app/api/cashfree/verify?orderId=$orderId'),
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        final bool isPaid =
+            data['isPaid'] == true || data['cfStatus'] == 'ACTIVE';
+
+        if (isPaid) {
+          details = {
+            'order_id': data['cfOrderId'] ?? orderId,
+            'order_status': data['cfStatus'],
+            'order_amount': data['amount'],
+            'created_at': data['cfPaymentTime'],
+          };
+        } else {
+          debugPrint(
+              'Order verification did not confirm payment: ${response.body}');
+        }
+      } else {
+        debugPrint(
+            'Order verification request failed: ${response.statusCode} ${response.body}');
+      }
+    } catch (e) {
+      // A network hiccup on this confirmation call shouldn't strand the
+      // user -- the payment already succeeded with Cashfree, and the
+      // webhook will independently promote the DraftOrder into a real
+      // order even if this call never lands.
+      debugPrint('Order verification request threw: $e');
+    }
+
+    if (!mounted) return;
 
     deleteCartCollection().then((_) {
+      if (!mounted) return;
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
           builder: (context) => OrderSuccessPage(
-            orderId: '${orderID + 1}',
-            cashFreeDetails:
-                cashFreeResponseData ?? const {"payment": "online"},
+            orderId: orderId,
+            cashFreeDetails: details,
           ),
         ),
       );
@@ -690,6 +701,9 @@ class _CheckoutPageState extends State<CheckoutPage>
   double deliveryAddressLong = 0;
   bool? stopFetchingData;
 
+  // Straight-line (Haversine) distance -- kept as a pure primitive, same as
+  // the website's getDistanceFromLatLonInKm. Use getRoadDistanceEstimateKm
+  // below for actual tier/fee decisions.
   double calculateDistance(double lat1, double lon1, double lat2, double lon2) {
     var p = 0.017453292519943295; // Math.PI / 180
     var c = math.cos;
@@ -697,6 +711,18 @@ class _CheckoutPageState extends State<CheckoutPage>
         c((lat2 - lat1) * p) / 2 +
         c(lat1 * p) * c(lat2 * p) * (1 - c((lon2 - lon1) * p)) / 2;
     return 12742 * math.asin(math.sqrt(a)); // 2 * R; R = 6371 km
+  }
+
+  // Straight-line distance understates real road distance -- roads bend
+  // around blocks and can't cross buildings/rivers directly.
+  // DeliveryConfig.roadDistanceFactor comes from the website's
+  // /api/delivery-config (falling back to the same 1.3x default if that
+  // fetch hasn't completed), so both platforms use the same correction
+  // instead of the app carrying its own hardcoded copy.
+  double getRoadDistanceEstimateKm(
+      double lat1, double lon1, double lat2, double lon2) {
+    return calculateDistance(lat1, lon1, lat2, lon2) *
+        DeliveryConfig.roadDistanceFactor;
   }
 
   double parseWeightToKg(String unitString) {
@@ -738,23 +764,17 @@ class _CheckoutPageState extends State<CheckoutPage>
           }
           
           if (deliveryAddressLat != 0 && deliveryAddressLong != 0) {
-            double distanceKm = calculateDistance(23.0360, 72.5294, deliveryAddressLat, deliveryAddressLong);
+            double distanceKm = getRoadDistanceEstimateKm(23.0360, 72.5294, deliveryAddressLat, deliveryAddressLong);
             num cartSubTotal = subTotal;
-            if (distanceKm <= 5) {
-              deliveryFee = cartSubTotal >= 400 ? 0 : 50;
-            } else if (distanceKm <= 10) {
-              deliveryFee = cartSubTotal >= 1200 ? 0 : 100;
-            } else if (distanceKm <= 15) {
-              deliveryFee = cartSubTotal >= 1800 ? 0 : 150;
-            } else {
-              double weight = calculateTotalWeight();
-              bool isGujarat = deliveryAddress.toLowerCase().contains('gujarat');
-              if (isGujarat) {
-                deliveryFee = cartSubTotal >= 2000 ? 0 : weight.ceil() * 40;
-              } else {
-                deliveryFee = cartSubTotal >= 3500 ? 0 : weight.ceil() * 100;
-              }
-            }
+            double weight = calculateTotalWeight();
+            // Tier/fee thresholds come from DeliveryConfig (fetched from
+            // the website's /api/delivery-config, same numbers
+            // calculateDeliveryFee uses in lib/deliveryPricing.ts) instead
+            // of a separate hardcoded if/else chain here.
+            final result = DeliveryConfig.calculateFee(
+                distanceKm, deliveryAddress, cartSubTotal, weight);
+            deliveryFee = result.fee;
+            deliveryTierName = result.tier;
           }
         });
         print('Lat is $deliveryAddressLat, Long is $deliveryAddressLong, Fee is $deliveryFee');
@@ -895,6 +915,7 @@ class _CheckoutPageState extends State<CheckoutPage>
         deliveryAddressLong: deliveryAddressLong,
         isAddressEmpty: isAddressEmpty,
         getMyCart: getMyCart,
+        deliveryTierName: deliveryTierName,
         onDeliveryAddressTap: () {
           Navigator.of(context).pushNamed('/delivery-address').then((value) {
             getDeliveryLocationLatAndLong();
