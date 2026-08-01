@@ -138,7 +138,21 @@ class _AddDeliveryAddressState extends State<AddDeliveryAddress> {
     });
     final res = await http.get(url);
     if (res.statusCode != 200) return [];
-    return json.decode(res.body)['predictions'] ?? [];
+    final data = json.decode(res.body);
+    // Google's Places endpoint always returns HTTP 200, even when the
+    // request itself was rejected (bad/expired key, API not enabled,
+    // referrer-restricted key used outside a browser, etc.) -- the real
+    // outcome is in the 'status' field. Previously this was never checked,
+    // so a rejected key just silently produced an empty suggestion list
+    // with no error anywhere, which is exactly what made this bug
+    // invisible until a user reported "autocomplete doesn't show up".
+    final status = data['status'];
+    if (status != 'OK' && status != 'ZERO_RESULTS') {
+      debugPrint(
+          'Places Autocomplete error: $status ${data['error_message'] ?? ''}');
+      return [];
+    }
+    return data['predictions'] ?? [];
   }
 
   Future<LatLng?> _getPlaceLatLng(String placeId) async {
