@@ -2,17 +2,17 @@
 
 import React from 'react';
 import { MapPin, Clock, Navigation, ShieldCheck } from 'lucide-react';
-import { useJsApiLoader, GoogleMap, MarkerF } from '@react-google-maps/api';
 
 // Single source of truth in .env.local (NEXT_PUBLIC_GOOGLE_MAPS_API_KEY).
+// This card is a purely decorative "here's our store" map with a fixed pin --
+// it never needs to be interactive, so it uses the Maps Embed API (a plain
+// iframe) instead of the billed Maps JavaScript API. Embed API is free and
+// unlimited, unlike Dynamic Maps loads.
 const GOOGLE_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY ?? '';
-const libraries: ("places")[] = ["places"];
 
 const STUDIO_FALGUNI_LATLNG = { lat: 23.0360, lng: 72.5294 }; // Falguni Gruh Udhyog (Vastrapur)
 
 export default function StorePickupCard() {
-  const { isLoaded } = useJsApiLoader({ googleMapsApiKey: GOOGLE_API_KEY, libraries });
-
   return (
     <div className="mt-5 animate-fade-up">
       <div className="bg-gradient-to-br from-white/[0.03] to-transparent border border-white/10 rounded-[20px] md:rounded-[24px] p-4 md:p-6 backdrop-blur-sm grid grid-cols-1 md:grid-cols-2 gap-6 items-stretch transition-all">
@@ -21,26 +21,18 @@ export default function StorePickupCard() {
         <div className="w-full h-48 md:h-auto md:min-h-[200px] rounded-[14px] overflow-hidden relative border border-white/5 bg-black shadow-inner group">
           <div className="absolute inset-0 bg-[#D4AF37]/5 pointer-events-none mix-blend-overlay z-10" />
           
-          {isLoaded ? (
-            <GoogleMap
-              mapContainerStyle={{ 
-                width: '100%', 
-                height: '100%',
-                filter: 'invert(90%) hue-rotate(180deg) contrast(85%) grayscale(20%)'
-              }}
-              center={STUDIO_FALGUNI_LATLNG}
-              zoom={15}
-              options={{
-                disableDefaultUI: true,
-                gestureHandling: 'cooperative',
-                backgroundColor: '#000000',
-              }}
-            >
-              <MarkerF position={STUDIO_FALGUNI_LATLNG} />
-            </GoogleMap>
-          ) : (
-            <div className="w-full h-full bg-white/5 animate-pulse" />
-          )}
+          <iframe
+            title="Falguni Gruh Udhyog store location"
+            src={`https://www.google.com/maps/embed/v1/place?key=${GOOGLE_API_KEY}&q=${STUDIO_FALGUNI_LATLNG.lat},${STUDIO_FALGUNI_LATLNG.lng}&zoom=15`}
+            width="100%"
+            height="100%"
+            style={{
+              border: 0,
+              filter: 'invert(90%) hue-rotate(180deg) contrast(85%) grayscale(20%)',
+            }}
+            loading="lazy"
+            referrerPolicy="no-referrer-when-downgrade"
+          />
 
           {/* Soft vignette around the map */}
           <div className="absolute inset-0 shadow-[inset_0_0_20px_rgba(0,0,0,0.8)] pointer-events-none z-10" />

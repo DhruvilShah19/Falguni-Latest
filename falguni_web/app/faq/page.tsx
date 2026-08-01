@@ -29,6 +29,10 @@ const FAQS = [
   {
     question: "When will I receive my order?",
     answer: "Local orders: 2–3 days. Outside Gujarat: 3–4 days. International orders: Based on destination shipping policies."
+  },
+  {
+    question: "How are delivery charges calculated?",
+    answer: "Delivery is priced by distance from our store up to 15 km, and by weight beyond that -- with free delivery once your order crosses each zone's threshold. See the full Delivery Charges page for the complete breakdown."
   }
 ];
 

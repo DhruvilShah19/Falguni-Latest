@@ -1,30 +1,6 @@
 import { NextResponse } from 'next/server';
 import { adminDb } from '@/lib/firebase-admin';
-
-function getDistanceFromLatLonInKm(lat1: number, lon1: number, lat2: number, lon2: number) {
-  const R = 6371; // Radius of the earth in km
-  const dLat = (lat2 - lat1) * (Math.PI/180);
-  const dLon = (lon2 - lon1) * (Math.PI/180); 
-  const a = 
-    Math.sin(dLat/2) * Math.sin(dLat/2) +
-    Math.cos(lat1 * (Math.PI/180)) * Math.cos(lat2 * (Math.PI/180)) * 
-    Math.sin(dLon/2) * Math.sin(dLon/2); 
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); 
-  return R * c; // Distance in km
-}
-
-function parseWeightToKg(unitString: string): number {
-  if (!unitString) return 1.0;
-  const str = unitString.toLowerCase();
-  const match = str.match(/([0-9.]+)\s*(kg|gm|g|ltr|ml)/);
-  if (match) {
-    const value = parseFloat(match[1]);
-    const unit = match[2];
-    if (unit === 'kg' || unit === 'ltr') return value;
-    if (unit === 'gm' || unit === 'g' || unit === 'ml') return value / 1000;
-  }
-  return 1.0;
-}
+import { getRoadDistanceEstimateKm, parseWeightToKg, calculateDeliveryFee, STUDIO_FALGUNI_LATLNG } from '@/lib/deliveryPricing';
 
 export async function POST(req: Request) {
   try {
@@ -76,27 +52,15 @@ export async function POST(req: Request) {
     let finalTotal = discountedTotal;
     let fee = 0;
     if (cart_details && !cart_details.isPickup) {
-      if (cart_details.deliveryLat && cart_details.deliveryLng) {
-        const d = getDistanceFromLatLonInKm(23.0360, 72.5294, Number(cart_details.deliveryLat), Number(cart_details.deliveryLng));
-        if (d <= 5) fee = subTotal >= 400 ? 0 : 50;
-        else if (d <= 10) fee = subTotal >= 1200 ? 0 : 100;
-        else if (d <= 15) fee = subTotal >= 1800 ? 0 : 150;
-        else {
-          const isGujarat = (cart_details.deliveryAddress || '').toLowerCase().includes('gujarat');
-          if (isGujarat) {
-            fee = subTotal >= 2000 ? 0 : Math.ceil(totalWeightKg) * 40;
-          } else {
-            fee = subTotal >= 3500 ? 0 : Math.ceil(totalWeightKg) * 100;
-          }
-        }
-      } else {
-        const isGujarat = (cart_details.deliveryAddress || '').toLowerCase().includes('gujarat');
-        if (isGujarat) {
-          fee = subTotal >= 2000 ? 0 : Math.ceil(totalWeightKg) * 40;
-        } else {
-          fee = subTotal >= 3500 ? 0 : Math.ceil(totalWeightKg) * 100;
-        }
-      }
+      const deliveryAddress = cart_details.deliveryAddress || '';
+      // If lat/lng weren't submitted, distance = Infinity forces the
+      // weight-based outstation branch below -- the deliberate "charge more
+      // rather than accidentally undercharge" fallback for an unresolvable
+      // delivery location.
+      const distanceKm = (cart_details.deliveryLat && cart_details.deliveryLng)
+        ? getRoadDistanceEstimateKm(STUDIO_FALGUNI_LATLNG.lat, STUDIO_FALGUNI_LATLNG.lng, Number(cart_details.deliveryLat), Number(cart_details.deliveryLng))
+        : Infinity;
+      fee = calculateDeliveryFee(distanceKm, deliveryAddress, subTotal, totalWeightKg).fee;
       finalTotal += fee;
     }
 

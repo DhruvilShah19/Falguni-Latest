@@ -3,7 +3,7 @@ import Image from 'next/image';
 
 const SHOP   = [['Categories','/categories'],['All Products','/products'],['Flash Sales','/products?flash=true']];
 const ACCOUNT= [['My Profile','/profile'],['My Orders','/orders'],['Favourites','/favorites'],['Cart','/cart']];
-const HELP   = [['FAQ','/faq'],['Contact Us','/contact'],['Track Order','/orders']];
+const HELP   = [['FAQ','/faq'],['Delivery Charges','/delivery-charges'],['Contact Us','/contact'],['Track Order','/orders']];
 
 export default function Footer() {
   return (
