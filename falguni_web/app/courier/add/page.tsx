@@ -10,6 +10,7 @@ import PageShell from '@/components/layout/PageShell';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import { ArrowLeft, Upload, Package, MapPin, User, Scale, AlignLeft, Check, Image as ImageIcon } from 'lucide-react';
 import Link from 'next/link';
+import AddressAutocompleteField from '@/components/ui/AddressAutocompleteField';
 
 export default function AddCourierPage() {
   const router = useRouter();
@@ -188,20 +189,20 @@ export default function AddCourierPage() {
               <div className="flex flex-col gap-6">
                 <SectionTitle text="Locations" />
                 
-                <InputField 
-                  icon={MapPin} 
-                  label="Sender Address" 
-                  value={sendersAddress} 
-                  onChange={setSendersAddress} 
-                  required 
+                <AddressAutocompleteField
+                  icon={MapPin}
+                  label="Sender Address"
+                  value={sendersAddress}
+                  onChange={setSendersAddress}
+                  required
                 />
-                
-                <InputField 
-                  icon={MapPin} 
-                  label="Recipient Address" 
-                  value={recipientAddress} 
-                  onChange={setRecipientAddress} 
-                  required 
+
+                <AddressAutocompleteField
+                  icon={MapPin}
+                  label="Recipient Address"
+                  value={recipientAddress}
+                  onChange={setRecipientAddress}
+                  required
                 />
 
                 <div className="my-2" />
