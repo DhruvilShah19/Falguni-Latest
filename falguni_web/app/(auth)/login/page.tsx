@@ -21,27 +21,35 @@ export default function LoginPage() {
       await signInWithEmailAndPassword(auth, email, password);
       router.push('/');
     } catch (err: any) {
-      setError(friendlyError(err.code));
+      console.error('Email login error:', err);
+      setError(friendlyError(err));
     } finally { setLoading(false); }
   };
 
   const handleGoogle = async () => {
     setLoading(true); setError('');
     try {
-      await signInWithPopup(auth, new GoogleAuthProvider());
+      const provider = new GoogleAuthProvider();
+      provider.setCustomParameters({ prompt: 'select_account' });
+      await signInWithPopup(auth, provider);
       router.push('/');
     } catch (err: any) {
-      setError(friendlyError(err.code));
+      console.error('Google Sign-In Error:', err);
+      setError(friendlyError(err));
     } finally { setLoading(false); }
   };
 
   const handleApple = async () => {
     setLoading(true); setError('');
     try {
-      await signInWithPopup(auth, new OAuthProvider('apple.com'));
+      const provider = new OAuthProvider('apple.com');
+      provider.addScope('email');
+      provider.addScope('name');
+      await signInWithPopup(auth, provider);
       router.push('/');
     } catch (err: any) {
-      setError(friendlyError(err.code));
+      console.error('Apple Sign-In Error:', err);
+      setError(friendlyError(err));
     } finally { setLoading(false); }
   };
 
@@ -202,13 +210,25 @@ function GoogleIcon() {
   );
 }
 
-function friendlyError(code: string): string {
+function friendlyError(err: any): string {
+  const code = typeof err === 'string' ? err : err?.code || '';
+  const message = typeof err === 'object' ? err?.message : '';
+
   const map: Record<string, string> = {
-    'auth/user-not-found':      'No account found with this email.',
-    'auth/wrong-password':      'Incorrect password.',
-    'auth/invalid-credential':  'Invalid email or password.',
-    'auth/too-many-requests':   'Too many attempts. Try again later.',
-    'auth/invalid-email':       'Please enter a valid email.',
+    'auth/user-not-found': 'No account found with this email.',
+    'auth/wrong-password': 'Incorrect password.',
+    'auth/invalid-credential': 'Invalid email or password.',
+    'auth/too-many-requests': 'Too many attempts. Try again later.',
+    'auth/invalid-email': 'Please enter a valid email.',
+    'auth/unauthorized-domain': `This deployment domain (${typeof window !== 'undefined' ? window.location.hostname : 'current domain'}) is not authorized in Firebase Console > Authentication > Settings > Authorized domains.`,
+    'auth/operation-not-allowed': 'This sign-in method is not enabled in Firebase Console (Authentication > Sign-in method).',
+    'auth/popup-blocked': 'Sign-in popup was blocked by your browser. Please allow popups for this site.',
+    'auth/popup-closed-by-user': 'Sign-in was cancelled before completing.',
+    'auth/cancelled-popup-request': 'Sign-in was cancelled.',
+    'auth/account-exists-with-different-credential': 'An account already exists with the same email using a different sign-in method.',
   };
-  return map[code] ?? 'Something went wrong. Please try again.';
+
+  if (map[code]) return map[code];
+  if (message && !message.includes('Firebase:')) return message;
+  return 'Something went wrong. Please try again.';
 }
