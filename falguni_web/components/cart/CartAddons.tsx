@@ -1,13 +1,12 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { collection, query, where, or, getDocs, limit, onSnapshot } from 'firebase/firestore';
+import { collection, query, where, getDocs, limit, onSnapshot } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { getRecentPurchasedProducts, addToCart, updateCartItem } from '@/lib/firestore';
 import { useAuthStore } from '@/store/authStore';
 import { useCartStore } from '@/store/cartStore';
-import ProductCard from '@/components/ui/ProductCard';
-import type { ProductsModel, CartItem } from '@/types';
+import type { ProductsModel } from '@/types';
 import { RefreshCcw, Heart, Sparkles, Plus, Check } from 'lucide-react';
 import Image from 'next/image';
 
@@ -49,45 +48,44 @@ const UpsellCard = ({ product, firebaseUser }: { product: ProductsModel, firebas
   const hasDiscount = oldPrice > 0 && oldPrice > price;
 
   return (
-    <div className="flex flex-col group h-full">
-      {/* Image container mimicking BoutiqueItem */}
-      <div className="relative w-full aspect-[3/4] overflow-hidden rounded-2xl shadow-xl mb-3 md:mb-4 bg-black/20">
-        <div className="absolute inset-0 bg-[#D4AF37]/5 z-10 pointer-events-none group-hover:bg-transparent transition-colors duration-700" />
+    <div className="flex flex-col group h-full bg-white border border-[var(--color-border)] rounded-2xl p-3 shadow-xs">
+      {/* Image container */}
+      <div className="relative w-full aspect-square overflow-hidden rounded-xl mb-3 bg-[#F5EBE1] border border-[var(--color-border)]">
         <Image 
           src={product.image1 || '/placeholder.png'} 
           alt={product.name || 'Product'} 
           fill
           sizes="(max-width: 768px) 50vw, 25vw"
-          className="object-cover scale-100 group-hover:scale-105 transition-transform duration-[1.5s] ease-out saturate-110" 
+          className="object-cover scale-100 group-hover:scale-105 transition-transform duration-500 ease-out" 
         />
       </div>
       
-      {/* Centered Info container mimicking BoutiqueItem */}
-      <div className="flex flex-col items-center text-center px-1">
-        <span className="text-[#D4AF37] text-[8px] font-bold tracking-[0.2em] uppercase mb-1.5">
-          {(product.brandName || product.category || 'Collection').toUpperCase()}
-        </span>
-        
-        <h4 className="font-serif text-sm text-white leading-snug mb-2 group-hover:text-[#D4AF37] transition-colors duration-500 line-clamp-2 px-2">
-          {product.name}
-        </h4>
-        
-        <div className="w-6 h-[1px] bg-white/20 mb-2.5" />
-        
-        <div className="flex items-center justify-center gap-1.5 mb-3 w-full">
-          <span className="text-sm font-light tracking-widest text-white/90">₹{price}</span>
-          {hasDiscount && (
-            <span className="text-white/40 text-[9px] line-through font-medium">₹{oldPrice}</span>
-          )}
+      {/* Info container */}
+      <div className="flex flex-col items-center text-center flex-1 justify-between">
+        <div className="w-full flex flex-col items-center">
+          <span className="text-[var(--color-primary)] text-[9px] font-bold tracking-widest uppercase mb-1">
+            {(product.brandName || product.category || 'Specialty').toUpperCase()}
+          </span>
+          
+          <h4 className="font-serif text-xs md:text-sm text-[var(--color-fg)] leading-snug mb-1 group-hover:text-[var(--color-primary)] transition-colors line-clamp-2">
+            {product.name}
+          </h4>
+          
+          <div className="flex items-center justify-center gap-1.5 mb-3 w-full">
+            <span className="text-xs md:text-sm font-bold text-[var(--color-fg)]">₹{price}</span>
+            {hasDiscount && (
+              <span className="text-[var(--color-fg-muted)] text-[10px] line-through font-medium">₹{oldPrice}</span>
+            )}
+          </div>
         </div>
         
         <button 
           onClick={handleAdd}
           disabled={adding || !firebaseUser}
-          className={`w-[90%] py-1.5 rounded-full text-[9px] font-bold uppercase tracking-[0.1em] flex items-center justify-center gap-1.5 transition-all duration-300 border ${
+          className={`w-full py-2 rounded-xl text-[10px] font-bold uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all ${
             added 
-              ? 'bg-green-500/20 border-green-500/50 text-green-400' 
-              : 'border-[#D4AF37]/30 text-[#D4AF37] hover:bg-[#D4AF37]/10'
+              ? 'bg-emerald-100 text-emerald-800 border border-emerald-300' 
+              : 'bg-[#F5EBE1] text-[var(--color-primary)] hover:bg-[var(--color-primary)] hover:text-white'
           }`}
         >
           {added ? (
@@ -95,7 +93,7 @@ const UpsellCard = ({ product, firebaseUser }: { product: ProductsModel, firebas
           ) : adding ? (
              <div className="w-3 h-3 rounded-full border-2 border-current border-t-transparent animate-spin" />
           ) : (
-             <><Plus size={12} strokeWidth={2} /> Add to Cart</>
+             <><Plus size={12} strokeWidth={2} /> Add</>
           )}
         </button>
       </div>
@@ -178,13 +176,13 @@ export default function CartAddons() {
     
     return (
       <div className="mb-8 last:mb-0">
-        <h3 className="text-white font-bold text-sm mb-4 flex items-center gap-2">
+        <h3 className="text-[var(--color-fg)] font-serif text-base mb-4 flex items-center gap-2 font-bold">
           {icon} <span className="tracking-wide">{title}</span>
         </h3>
         
         <div className="relative">
-          <div className="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-[#2B1B17] to-transparent z-10 pointer-events-none" />
-          <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-[#2B1B17] to-transparent z-10 pointer-events-none" />
+          <div className="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-[var(--color-bg)] to-transparent z-10 pointer-events-none" />
+          <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-[var(--color-bg)] to-transparent z-10 pointer-events-none" />
           
           <div className="flex gap-4 overflow-x-auto pb-4 px-4 -mx-4 scrollbar-hide snap-x">
             {items.map((product, idx) => (

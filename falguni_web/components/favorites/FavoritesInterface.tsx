@@ -3,79 +3,263 @@
 import { useState, useMemo, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { Search, X, ChevronLeft, ChevronRight, SlidersHorizontal, Heart, Trash2 } from 'lucide-react';
+import { 
+  Search, X, Star, Heart, ShoppingBag, 
+  Check, SlidersHorizontal, ArrowLeft, Sparkles, 
+  ArrowRight 
+} from 'lucide-react';
 import { useAuthStore } from '@/store/authStore';
-import { subscribeToFavorites, removeFromFavorites } from '@/lib/firestore';
+import { useCartStore } from '@/store/cartStore';
+import { subscribeToFavorites, removeFromFavorites, addToCart, updateCartItem } from '@/lib/firestore';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import type { ProductsModel } from '@/types';
 
-// 3D Interactive version of BoutiqueItem for Favorites
-function Favorite3DItem({ product, userId }: { product: ProductsModel, userId: string }) {
-  const price = product.unitPrice1 ?? 0;
-  const [isRemoving, setIsRemoving] = useState(false);
+interface Variant {
+  name: string;
+  price: number;
+  unitIndex: number;
+}
 
+function FavoriteProductCard({ 
+  product, 
+  userId,
+  onAnnounce
+}: { 
+  product: ProductsModel; 
+  userId: string;
+  onAnnounce: (msg: string) => void;
+}) {
+  const productId = product.productID || product.uid || '';
+  const [isRemoving, setIsRemoving] = useState(false);
+  const [addingToCart, setAddingToCart] = useState(false);
+  const [addedToCart, setAddedToCart] = useState(false);
+
+  // Extract variants from product
+  const variants: Variant[] = useMemo(() => {
+    const list: Variant[] = [];
+    if (product.unitname1 && product.unitPrice1) list.push({ name: product.unitname1, price: product.unitPrice1, unitIndex: 1 });
+    if (product.unitname2 && product.unitPrice2) list.push({ name: product.unitname2, price: product.unitPrice2, unitIndex: 2 });
+    if (product.unitname3 && product.unitPrice3) list.push({ name: product.unitname3, price: product.unitPrice3, unitIndex: 3 });
+    if (product.unitname4 && product.unitPrice4) list.push({ name: product.unitname4, price: product.unitPrice4, unitIndex: 4 });
+    if (product.unitname5 && product.unitPrice5) list.push({ name: product.unitname5, price: product.unitPrice5, unitIndex: 5 });
+    if (list.length === 0) list.push({ name: 'Standard Pack', price: product.unitPrice1 || 0, unitIndex: 1 });
+    return list;
+  }, [product]);
+
+  const [selectedVariant, setSelectedVariant] = useState<Variant>(variants[0]);
+
+  // Handle Remove from Favorites
   const handleRemove = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     if (isRemoving) return;
     setIsRemoving(true);
-    await removeFromFavorites(userId, product.productID || product.uid);
+    try {
+      await removeFromFavorites(userId, productId);
+      onAnnounce(`${product.name} removed from your favorites.`);
+    } catch (err) {
+      console.error('Error removing favorite:', err);
+      setIsRemoving(false);
+    }
   };
 
-  return (
-    <div className={`relative group flex flex-col md:flex-row items-center gap-6 md:gap-8 lg:gap-16 mb-12 md:mb-16 transition-all duration-700 ${isRemoving ? 'opacity-0 scale-95 translate-x-10' : 'opacity-100'}`}>
-      
-      {/* 3D Image Left Side */}
-      <Link href={`/products/${product.productID || product.uid}`} className="w-[85%] md:w-1/2 flex justify-center perspective-[1500px]">
-        <div className="relative w-full max-w-[280px] md:max-w-sm aspect-[4/5] rounded-2xl md:rounded-3xl overflow-hidden shadow-2xl transition-all duration-700 ease-out transform-gpu md:group-hover:[transform:rotateY(12deg)_rotateX(5deg)_scale(1.02)] border border-white/5">
-          <div className="absolute inset-0 bg-gradient-to-tr from-[#D4AF37]/20 to-transparent z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-700 mix-blend-overlay pointer-events-none" />
-          {product.image1 ? (
-            <Image 
-              src={product.image1} 
-              alt={product.name} 
-              fill 
-              sizes="(max-width: 768px) 100vw, 50vw"
-              className="object-cover scale-105 group-hover:scale-100 transition-transform duration-[2s] ease-out saturate-110" 
-            />
-          ) : (
-            <div className="w-full h-full bg-[#2B1B17] flex items-center justify-center text-4xl md:text-6xl opacity-20">✨</div>
-          )}
-        </div>
-      </Link>
+  // Handle Add to Cart
+  const handleAddToCart = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (addingToCart || addedToCart) return;
 
-      {/* Details Right Side */}
-      <div className="w-full md:w-1/2 flex flex-col justify-center items-center md:items-start text-center md:text-left px-2 md:px-0">
-        <span className="text-[#D4AF37] text-[10px] md:text-sm font-bold tracking-[0.4em] uppercase mb-3 md:mb-4 flex items-center gap-3 md:gap-4">
-          <span className="w-8 md:w-12 h-[1px] bg-[#D4AF37]/50" />
-          {(product.brandName || product.category || 'Collection').toUpperCase()}
-          <span className="w-8 md:w-12 h-[1px] bg-[#D4AF37]/50" />
-        </span>
+    setAddingToCart(true);
+    try {
+      const docId = `${product.vendorId || 'falguni'}_${productId}_unit${selectedVariant.unitIndex}`;
+      const existing = useCartStore.getState().items.find(i => i.cartDocId === docId);
+
+      if (existing) {
+        const newQty = (existing.quantity || 1) + 1;
+        await updateCartItem(userId, docId, {
+          quantity: newQty,
+          price: selectedVariant.price * newQty,
+        });
+      } else {
+        await addToCart(
+          userId,
+          {
+            ...product,
+            selected: selectedVariant.name,
+            selectedPrice: selectedVariant.price,
+            price: selectedVariant.price,
+            quantity: 1,
+            cartDocId: docId,
+          },
+          docId
+        );
+      }
+
+      setAddedToCart(true);
+      onAnnounce(`${product.name} (${selectedVariant.name}) added to cart.`);
+      setTimeout(() => setAddedToCart(false), 2200);
+    } catch (err) {
+      console.error('Error adding to cart:', err);
+    } finally {
+      setAddingToCart(false);
+    }
+  };
+
+  // Calculate Rating
+  const rating = product.totalNumberOfUserRating > 0
+    ? (product.totalRating / product.totalNumberOfUserRating).toFixed(1)
+    : '4.8';
+  const reviewsCount = product.totalNumberOfUserRating || 24;
+
+  return (
+    <article
+      aria-label={`${product.name} - ₹${selectedVariant.price}`}
+      className={`bg-white rounded-2xl border border-[#EFE6DC] p-3.5 sm:p-4 flex flex-col justify-between shadow-xs hover:shadow-md hover:border-[#733617]/30 transition-all group relative ${
+        isRemoving ? 'opacity-0 scale-95 transition-all duration-300' : 'opacity-100'
+      }`}
+    >
+      <div className="flex flex-col flex-1">
         
-        <Link href={`/products/${product.productID || product.uid}`}>
-          <h3 className="font-serif text-3xl md:text-5xl lg:text-6xl text-white leading-tight mb-4 md:mb-8 group-hover:text-[#D4AF37] transition-colors duration-500 italic md:pr-8">
+        {/* ── Image Box with Vegetarian Mark & Remove Button ── */}
+        <div className="relative w-full aspect-square rounded-xl overflow-hidden mb-3 bg-[#FAF7F2] flex items-center justify-center">
+          
+          {/* Indian Vegetarian Dot Mark */}
+          <div 
+            className="absolute top-2.5 left-2.5 z-10 w-4 h-4 bg-white/95 rounded-xs border border-green-700 flex items-center justify-center shadow-xs"
+            title="100% Vegetarian"
+            aria-label="100% Vegetarian"
+          >
+            <div className="w-1.5 h-1.5 rounded-full bg-green-700" />
+          </div>
+
+          {/* Remove from Favorites Button */}
+          <button
+            type="button"
+            onClick={handleRemove}
+            disabled={isRemoving}
+            aria-label={`Remove ${product.name} from favorites`}
+            title="Remove from favorites"
+            className="absolute top-2.5 right-2.5 z-10 w-8 h-8 rounded-full bg-white/95 border border-[#EFE6DC] text-red-500 hover:text-white hover:bg-red-600 hover:border-red-600 flex items-center justify-center transition-all shadow-xs focus-visible:ring-2 focus-visible:ring-red-600 focus-visible:outline-hidden cursor-pointer"
+          >
+            <Heart size={14} className="fill-current" aria-hidden="true" />
+          </button>
+
+          {/* Product Photo */}
+          <Link 
+            href={`/products/${productId}`} 
+            className="w-full h-full relative"
+            aria-label={`View details of ${product.name}`}
+          >
+            {product.image1 ? (
+              <Image
+                src={product.image1}
+                alt={product.name}
+                fill
+                sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+                className="object-cover group-hover:scale-105 transition-transform duration-500"
+              />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center text-[#733617]/30 font-serif text-3xl">
+                ✨
+              </div>
+            )}
+          </Link>
+        </div>
+
+        {/* ── Category Kicker ── */}
+        <div className="mb-1">
+          <span className="text-[10px] font-bold tracking-widest uppercase text-[#733617]">
+            {product.category || 'Falguni Special'}
+          </span>
+        </div>
+
+        {/* ── Title ── */}
+        <Link href={`/products/${productId}`} className="group-hover:text-[#733617] transition-colors">
+          <h3 className="font-serif font-bold text-sm sm:text-base text-[#2D1508] line-clamp-2 leading-snug mb-1.5">
             {product.name}
           </h3>
         </Link>
-        
-        <p className="text-white/50 text-xs md:text-base leading-relaxed max-w-sm md:max-w-md mb-6 md:mb-8 font-light tracking-wide line-clamp-3">
-          {product.description || 'A timeless selection curated for your refined taste. Discover the exquisite blend of flavors.'}
-        </p>
-        
-        <div className="flex flex-col sm:flex-row items-center sm:items-center gap-4 md:gap-6 w-full justify-center md:justify-start">
-          <span className="text-2xl md:text-3xl font-light tracking-widest text-white">
-            ₹{price}
-          </span>
-          
-          <button 
-            onClick={handleRemove}
-            className="group/btn flex items-center justify-center gap-2 md:gap-3 px-6 md:px-8 py-3 md:py-4 rounded-full bg-white/[0.02] border border-white/10 hover:bg-red-500/10 hover:border-red-500/30 transition-all text-white/70 hover:text-red-400 w-full sm:w-auto"
-          >
-            <Trash2 size={16} className="group-hover/btn:scale-110 transition-transform" />
-            <span className="text-[10px] md:text-xs font-bold tracking-widest uppercase">Remove</span>
-          </button>
+
+        {/* ── Rating & Reviews ── */}
+        <div className="flex items-center gap-1.5 mb-3 text-xs text-[#65544A]">
+          <div className="flex items-center text-[#D49B4B]">
+            <Star size={12} className="fill-current" aria-hidden="true" />
+          </div>
+          <span className="font-bold text-[#2D1508] text-[11px]">{rating}</span>
+          <span className="text-[11px] text-[#8A796F]">({reviewsCount})</span>
         </div>
+
+        {/* ── Weight Variant Selector (if multiple exist) ── */}
+        {variants.length > 1 && (
+          <div className="mb-3">
+            <label htmlFor={`variant-${productId}`} className="sr-only">
+              Select Pack Size
+            </label>
+            <select
+              id={`variant-${productId}`}
+              value={selectedVariant.unitIndex}
+              onChange={(e) => {
+                const found = variants.find(v => v.unitIndex === Number(e.target.value));
+                if (found) setSelectedVariant(found);
+              }}
+              className="w-full bg-[#FAF7F2] border border-[#EFE6DC] rounded-lg px-2.5 py-1.5 text-xs text-[#2D1508] font-medium outline-hidden focus:border-[#733617] focus-visible:ring-2 focus-visible:ring-[#733617] transition-all cursor-pointer"
+            >
+              {variants.map((v) => (
+                <option key={v.unitIndex} value={v.unitIndex}>
+                  {v.name} – ₹{v.price}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
+
       </div>
-    </div>
+
+      {/* ── Price & Add to Cart Footer ── */}
+      <div className="pt-3 border-t border-[#FAF7F2] flex flex-col gap-2.5 mt-2">
+        <div className="flex items-baseline justify-between">
+          <div className="flex items-baseline gap-1">
+            <span className="text-base sm:text-lg font-bold text-[#2D1508]">
+              ₹{selectedVariant.price}
+            </span>
+            <span className="text-[11px] text-[#8A796F]">
+              / {selectedVariant.name}
+            </span>
+          </div>
+          <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full">
+            In Stock
+          </span>
+        </div>
+
+        {/* Add to Cart Button */}
+        <button
+          type="button"
+          onClick={handleAddToCart}
+          disabled={addingToCart}
+          aria-label={`Add ${product.name} to cart`}
+          className={`w-full py-2.5 px-4 rounded-xl font-bold uppercase tracking-wider text-xs flex items-center justify-center gap-2 transition-all cursor-pointer focus-visible:ring-2 focus-visible:ring-[#733617] focus-visible:outline-hidden ${
+            addedToCart 
+              ? 'bg-emerald-700 text-white shadow-xs' 
+              : 'bg-[#733617] hover:bg-[#5A290F] text-white shadow-xs'
+          }`}
+        >
+          {addedToCart ? (
+            <>
+              <Check size={15} strokeWidth={2.5} aria-hidden="true" />
+              <span>Added to Cart</span>
+            </>
+          ) : addingToCart ? (
+            <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" aria-hidden="true" />
+          ) : (
+            <>
+              <ShoppingBag size={14} aria-hidden="true" />
+              <span>Add to Cart</span>
+            </>
+          )}
+        </button>
+      </div>
+
+    </article>
   );
 }
 
@@ -85,9 +269,8 @@ export default function FavoritesInterface() {
   const [loading, setLoading] = useState(true);
   
   const [query, setQuery] = useState('');
-  const [sortOption, setSortOption] = useState<'popular' | 'relevance' | 'priceLow' | 'priceHigh' | 'ratingHigh'>('popular');
-  const [currentPage, setCurrentPage] = useState(1);
-  const ITEMS_PER_PAGE = 5;
+  const [sortOption, setSortOption] = useState<'popular' | 'ratingHigh' | 'priceLow' | 'priceHigh'>('popular');
+  const [announcement, setAnnouncement] = useState('');
 
   useEffect(() => {
     if (authLoading) return;
@@ -105,12 +288,12 @@ export default function FavoritesInterface() {
     return () => unsubscribe();
   }, [firebaseUser, authLoading]);
 
-  // Reset to page 1 when search or sort changes
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [query, sortOption]);
+  const handleAnnounce = (msg: string) => {
+    setAnnouncement(msg);
+    setTimeout(() => setAnnouncement(''), 3000);
+  };
 
-  const results = useMemo(() => {
+  const filteredResults = useMemo(() => {
     let filtered = [...favorites];
 
     if (query.trim()) {
@@ -139,185 +322,247 @@ export default function FavoritesInterface() {
     return filtered;
   }, [query, favorites, sortOption]);
 
-  const totalPages = Math.ceil(results.length / ITEMS_PER_PAGE);
-  const paginatedResults = results.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
-
   if (authLoading || loading) {
     return (
-      <div className="min-h-screen bg-[#2B1B17] flex items-center justify-center">
+      <div className="min-h-screen bg-[#FAF7F2] flex items-center justify-center" aria-live="polite" aria-busy="true">
         <LoadingSpinner />
       </div>
     );
   }
 
+  // Unauthenticated State
   if (!firebaseUser) {
     return (
-      <div className="min-h-screen bg-[#2B1B17] flex flex-col items-center justify-center pt-24 px-4 relative overflow-hidden">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(212,175,55,0.05),transparent_60%)] pointer-events-none" />
-        <Heart size={48} className="text-[#D4AF37]/30 mb-8" />
-        <h1 className="font-serif text-4xl md:text-5xl text-white italic mb-6">Your Wishlist</h1>
-        <p className="text-white/50 mb-10 text-center max-w-sm">Please sign in to view and manage your curated collection of favorite items.</p>
-        <Link href="/login" className="px-8 py-3 rounded-xl font-bold tracking-widest uppercase text-xs bg-[#D4AF37] text-black hover:bg-[#F9EED2] transition-colors">
-          Sign In
-        </Link>
+      <div className="min-h-screen bg-[#FAF7F2] text-[#2D1508] flex flex-col pt-4 sm:pt-6 pb-20 sm:pb-28">
+        <div className="max-w-[1360px] mx-auto w-full px-4 sm:px-6 lg:px-8 flex flex-col gap-6 sm:gap-8">
+          
+          <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-xs text-[#8A796F] font-medium">
+            <Link href="/" className="hover:text-[#733617] transition-colors">Home</Link>
+            <span className="text-[#B5A599]" aria-hidden="true">&gt;</span>
+            <span className="text-[#733617] font-semibold" aria-current="page">My Favorites</span>
+          </nav>
+
+          <div className="bg-white border border-[#EFE6DC] rounded-2xl p-8 sm:p-12 flex flex-col items-center text-center shadow-xs max-w-lg mx-auto w-full">
+            <div className="w-16 h-16 rounded-full bg-[#FAF7F2] border border-[#EFE6DC] flex items-center justify-center text-[#733617] mb-4 shadow-xs">
+              <Heart size={28} className="fill-[#733617]/20" aria-hidden="true" />
+            </div>
+            <h1 className="font-serif text-2xl sm:text-3xl font-bold text-[#2D1508] mb-2">
+              Sign In to View Your Favorites
+            </h1>
+            <p className="text-xs sm:text-sm text-[#65544A] max-w-sm mb-6 leading-relaxed">
+              Log in to see your handpicked authentic Gujarati sweets, farsan, and snacks ready to order anytime.
+            </p>
+            <Link
+              href="/login?redirect=/favorites"
+              className="inline-flex items-center gap-2 bg-[#733617] hover:bg-[#5A290F] text-white px-6 py-3 rounded-xl font-bold uppercase tracking-wider text-xs transition-all shadow-xs focus-visible:ring-2 focus-visible:ring-[#733617] focus-visible:outline-hidden"
+            >
+              <span>Sign In with Phone or Email</span>
+              <ArrowRight size={15} aria-hidden="true" />
+            </Link>
+          </div>
+
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#2B1B17] flex flex-col pb-20 relative overflow-hidden">
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(212,175,55,0.05),transparent_80%)] pointer-events-none" />
+    <div className="min-h-screen bg-[#FAF7F2] text-[#2D1508] flex flex-col pt-4 sm:pt-6 pb-20 sm:pb-28">
+      <div className="max-w-[1360px] mx-auto w-full px-4 sm:px-6 lg:px-8 flex flex-col gap-6 sm:gap-8">
+        
+        {/* ── 1. Breadcrumbs ── */}
+        <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-xs text-[#8A796F] font-medium">
+          <Link 
+            href="/" 
+            className="hover:text-[#733617] focus-visible:ring-2 focus-visible:ring-[#733617] focus-visible:outline-hidden rounded-xs transition-colors"
+          >
+            Home
+          </Link>
+          <span className="text-[#B5A599]" aria-hidden="true">&gt;</span>
+          <Link 
+            href="/profile" 
+            className="hover:text-[#733617] focus-visible:ring-2 focus-visible:ring-[#733617] focus-visible:outline-hidden rounded-xs transition-colors"
+          >
+            My Account
+          </Link>
+          <span className="text-[#B5A599]" aria-hidden="true">&gt;</span>
+          <span className="text-[#733617] font-semibold" aria-current="page">My Favorites</span>
+        </nav>
 
-      {/* ── Premium Header Banner ── */}
-      <div className="relative w-full overflow-hidden bg-[#2B1B17] border-b border-[#D4AF37]/10 pt-28 pb-12 md:pt-36 md:pb-20 flex flex-col items-center justify-center mb-6 md:mb-12">
-         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(212,175,55,0.15),transparent_70%)] pointer-events-none" />
-
-         <div className="relative z-10 text-center px-4 w-full">
-            <div className="animate-fade-up text-[9px] md:text-xs tracking-[0.25em] md:tracking-[0.3em] font-bold text-[#D4AF37] mb-3 md:mb-4 flex items-center justify-center gap-2 md:gap-3">
-               <span className="w-6 md:w-8 h-px bg-[#D4AF37]/50" />
-               MAISON FALGUNI
-               <span className="w-6 md:w-8 h-px bg-[#D4AF37]/50" />
-            </div>
+        {/* ── 2. Top Header Banner Card ── */}
+        <header className="relative w-full overflow-hidden bg-white border border-[#EFE6DC] rounded-2xl p-5 sm:p-7 shadow-xs">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-5 relative z-10">
             
-            <h1 className="animate-fade-up font-serif text-2xl md:text-5xl lg:text-6xl text-white drop-shadow-[0_0_15px_rgba(212,175,55,0.2)] mb-2 md:mb-4" style={{ animationDelay: '100ms' }}>
-              Favorites
-            </h1>
-            
-            <p className="animate-fade-up text-[var(--color-fg-muted)] max-w-lg mx-auto text-[11px] md:text-base leading-relaxed px-2" style={{ animationDelay: '200ms' }}>
-              Discover your curated collection of premium sweets, savory namkeens, and healthy dry fruits.
-            </p>
-         </div>
-      </div>
-
-      <div className="max-w-7xl mx-auto w-full px-4 md:px-8 relative z-10 py-12">
-        {favorites.length > 0 && (
-          <div className="flex flex-col gap-12 animate-fade-up border-b border-[#D4AF37]/10 pb-12 mb-16" style={{ animationDelay: '100ms' }}>
-            
-            <div className="flex flex-col md:flex-row gap-8 items-start md:items-center justify-between">
-              {/* Summary Text / Left Side */}
-              <div className="flex flex-col">
-                <span className="text-white text-3xl md:text-4xl font-serif italic mb-2">{favorites.length} <span className="text-[#D4AF37]">Acquisitions</span></span>
-                <span className="text-white/40 text-[10px] font-bold tracking-[0.2em] uppercase">Curated for your taste</span>
-              </div>
-
-              {/* Search Bar / Right Side */}
-              <div className="relative group w-full md:w-96">
-                <div className="absolute inset-y-0 left-5 flex items-center pointer-events-none z-20">
-                  <Search size={16} className="text-[#D4AF37]/50 group-focus-within:text-[#D4AF37] transition-colors" />
+            <div className="flex items-start sm:items-center gap-4">
+              <Link
+                href="/profile"
+                aria-label="Back to My Account"
+                className="w-10 h-10 rounded-full bg-[#FAF7F2] border border-[#EFE6DC] flex items-center justify-center hover:bg-white text-[#733617] transition-all shadow-xs shrink-0 focus-visible:ring-2 focus-visible:ring-[#733617] focus-visible:outline-hidden"
+              >
+                <ArrowLeft size={18} aria-hidden="true" />
+              </Link>
+              <div>
+                <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#FAF7F2] border border-[#EFE6DC] text-[10px] font-bold uppercase tracking-[0.15em] text-[#733617] mb-1.5">
+                  <Sparkles size={11} className="text-[#C88A2C]" aria-hidden="true" />
+                  <span>Falguni Parivar • પસંદગીના નાસ્તા</span>
                 </div>
-                <input
-                  type="text"
-                  value={query}
-                  onChange={(e) => setQuery(e.target.value)}
-                  placeholder="Search favorites..."
-                  className="relative z-10 w-full h-12 pl-12 pr-12 bg-white/[0.02] border border-white/10 rounded-full text-sm font-light text-white placeholder-white/20 focus:outline-none focus:border-[#D4AF37]/50 focus:bg-white/[0.05] transition-all"
-                />
-                {query && (
-                  <button 
-                    onClick={() => setQuery('')}
-                    className="absolute inset-y-0 right-4 flex items-center text-white/20 hover:text-white transition-colors z-20"
-                  >
-                    <X size={14} />
-                  </button>
-                )}
+                <h1 className="font-serif text-2xl sm:text-3xl font-bold text-[#2D1508] tracking-tight">
+                  My Favorite Items
+                </h1>
+                <p className="text-xs sm:text-sm text-[#65544A] mt-1 leading-relaxed">
+                  Your handpicked authentic Gujarati sweets, farsan, and snacks ready to order anytime.
+                </p>
               </div>
             </div>
 
-            {/* Sort Filters */}
-            <div className="flex items-center gap-4 md:gap-6 flex-wrap pt-4 border-t border-white/5">
-              <span className="text-[#D4AF37]/50 text-[10px] font-bold tracking-[0.3em] uppercase flex items-center gap-2 mr-2 w-full md:w-auto mb-2 md:mb-0">
-                <SlidersHorizontal size={14} /> Sort By
-              </span>
-              
-              <button 
-                onClick={() => setSortOption('popular')}
-                className={`text-[9px] md:text-[10px] font-bold tracking-[0.2em] uppercase pb-2 border-b-2 transition-all ${sortOption === 'popular' ? 'text-[#D4AF37] border-[#D4AF37]' : 'text-white/30 border-transparent hover:text-white'}`}
-              >
-                Popular
-              </button>
-
-              <button 
-                onClick={() => setSortOption('ratingHigh')}
-                className={`text-[9px] md:text-[10px] font-bold tracking-[0.2em] uppercase pb-2 border-b-2 transition-all ${sortOption === 'ratingHigh' ? 'text-[#D4AF37] border-[#D4AF37]' : 'text-white/30 border-transparent hover:text-white'}`}
-              >
-                Highest Rated
-              </button>
-
-              <button 
-                onClick={() => setSortOption('priceLow')}
-                className={`text-[9px] md:text-[10px] font-bold tracking-[0.2em] uppercase pb-2 border-b-2 transition-all ${sortOption === 'priceLow' ? 'text-[#D4AF37] border-[#D4AF37]' : 'text-white/30 border-transparent hover:text-white'}`}
-              >
-                Price: Asc
-              </button>
-              
-              <button 
-                onClick={() => setSortOption('priceHigh')}
-                className={`text-[9px] md:text-[10px] font-bold tracking-[0.2em] uppercase pb-2 border-b-2 transition-all ${sortOption === 'priceHigh' ? 'text-[#D4AF37] border-[#D4AF37]' : 'text-white/30 border-transparent hover:text-white'}`}
-              >
-                Price: Desc
-              </button>
+            {/* Saved Count Badge */}
+            <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-[#FAF7F2] border border-[#EFE6DC] text-xs font-bold text-[#733617] self-start sm:self-auto shrink-0">
+              <Heart size={14} className="fill-[#733617]" aria-hidden="true" />
+              <span>{favorites.length} Saved {favorites.length === 1 ? 'Item' : 'Items'}</span>
             </div>
+
+          </div>
+        </header>
+
+        {/* ── Screen Reader Announcement Live Region ── */}
+        <div aria-live="polite" aria-atomic="true" className="sr-only">
+          {announcement}
+        </div>
+
+        {/* ── Toolbar: Search & Sort ── */}
+        {favorites.length > 0 && (
+          <div className="bg-white border border-[#EFE6DC] rounded-2xl p-4 sm:p-5 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
+            
+            {/* Search Input */}
+            <div className="relative flex-1 max-w-md">
+              <label htmlFor="favorites-search" className="sr-only">
+                Search in favorites
+              </label>
+              <input
+                id="favorites-search"
+                type="text"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Search your saved snacks & sweets..."
+                className="w-full text-xs sm:text-sm text-[#2D1508] bg-[#FAF7F2] border border-[#EFE6DC] focus:border-[#733617] focus:bg-white rounded-xl py-2.5 pl-10 pr-9 outline-hidden transition-all placeholder:text-[#2D1508]/40 focus-visible:ring-2 focus-visible:ring-[#733617]"
+              />
+              <Search 
+                size={16} 
+                className="absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none text-[#733617]" 
+                aria-hidden="true" 
+              />
+              {query && (
+                <button
+                  type="button"
+                  onClick={() => setQuery('')}
+                  aria-label="Clear search text"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[#8A796F] hover:text-[#2D1508] p-1"
+                >
+                  <X size={14} aria-hidden="true" />
+                </button>
+              )}
+            </div>
+
+            {/* Sort Filter Tabs */}
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-[#8A796F] flex items-center gap-1.5 mr-1">
+                <SlidersHorizontal size={13} className="text-[#733617]" aria-hidden="true" />
+                <span>Sort:</span>
+              </span>
+
+              {[
+                { id: 'popular', label: 'Popular' },
+                { id: 'ratingHigh', label: 'Highest Rated' },
+                { id: 'priceLow', label: 'Price: Low' },
+                { id: 'priceHigh', label: 'Price: High' },
+              ].map((tab) => {
+                const isActive = sortOption === tab.id;
+                return (
+                  <button
+                    key={tab.id}
+                    type="button"
+                    onClick={() => setSortOption(tab.id as any)}
+                    aria-pressed={isActive}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer focus-visible:ring-2 focus-visible:ring-[#733617] focus-visible:outline-hidden ${
+                      isActive 
+                        ? 'bg-[#733617] text-white shadow-xs' 
+                        : 'bg-[#FAF7F2] text-[#65544A] hover:bg-[#EFE6DC] hover:text-[#2D1508]'
+                    }`}
+                  >
+                    {tab.label}
+                  </button>
+                );
+              })}
+            </div>
+
           </div>
         )}
 
-        {/* Content Area */}
-        {favorites.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-20 text-center animate-fade-in">
-            <Heart size={48} className="text-[#D4AF37]/20 mb-6" />
-            <h3 className="font-serif text-3xl text-white italic mb-4">No Favorites Yet</h3>
-            <p className="text-white/40 text-sm max-w-sm mb-8">You haven't added any creations to your wishlist. Explore our lookbook to discover your next obsession.</p>
-            <Link href="/products" className="px-8 py-3 rounded-xl border border-[#D4AF37]/30 text-[#D4AF37] hover:bg-[#D4AF37]/10 transition-colors uppercase tracking-widest text-xs font-bold">
-              Explore Collections
-            </Link>
-          </div>
-        ) : results.length > 0 ? (
-          <div className="pb-12">
-            <div className="flex flex-col gap-8 animate-fade-in">
-              {paginatedResults.map((product, idx) => (
-                <div key={product.uid ?? product.productID} style={{ animationDelay: `${Math.min(idx, 8) * 100}ms` }} className="animate-fade-up">
-                  <Favorite3DItem product={product} userId={firebaseUser.uid} />
-                </div>
+        {/* ── Main Content Area ── */}
+        <main>
+          {favorites.length === 0 ? (
+            /* Empty Favorites List */
+            <div 
+              role="region" 
+              aria-label="No favorites"
+              className="bg-white border border-[#EFE6DC] rounded-2xl p-8 sm:p-14 flex flex-col items-center text-center shadow-xs"
+            >
+              <div className="w-16 h-16 rounded-full bg-[#FAF7F2] border border-[#EFE6DC] flex items-center justify-center text-[#733617] mb-4 shadow-xs">
+                <Heart size={28} className="fill-[#733617]/20" aria-hidden="true" />
+              </div>
+              <h2 className="font-serif text-xl sm:text-2xl font-bold text-[#2D1508] mb-2">
+                Your Favorites List is Empty
+              </h2>
+              <p className="text-xs sm:text-sm text-[#65544A] max-w-md mb-6 leading-relaxed">
+                You haven't saved any items yet. Tap the heart icon on any sweets, farsan, or snacks while browsing to re-order them anytime.
+              </p>
+              <Link
+                href="/products"
+                className="inline-flex items-center gap-2 bg-[#733617] hover:bg-[#5A290F] text-white px-6 py-3 rounded-xl font-bold uppercase tracking-wider text-xs transition-all shadow-xs focus-visible:ring-2 focus-visible:ring-[#733617] focus-visible:outline-hidden"
+              >
+                <span>Explore All Products</span>
+                <ArrowRight size={15} aria-hidden="true" />
+              </Link>
+            </div>
+          ) : filteredResults.length > 0 ? (
+            /* Product Cards Grid */
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
+              {filteredResults.map((product) => (
+                <FavoriteProductCard
+                  key={product.uid ?? product.productID}
+                  product={product}
+                  userId={firebaseUser.uid}
+                  onAnnounce={handleAnnounce}
+                />
               ))}
             </div>
-
-            {/* ── Editorial Pagination (Client Driven) ── */}
-            {totalPages > 1 && (
-              <div className="flex items-center justify-center gap-12 mt-16 pt-12 border-t border-white/5">
-                <button 
-                  onClick={() => {
-                    setCurrentPage(p => Math.max(1, p - 1));
-                    window.scrollTo({ top: 0, behavior: 'smooth' });
-                  }}
-                  disabled={currentPage === 1}
-                  className={`flex items-center gap-3 text-[10px] font-bold tracking-[0.3em] uppercase transition-colors ${currentPage > 1 ? 'text-white/50 hover:text-[#D4AF37]' : 'text-white/10 cursor-not-allowed'}`}
-                >
-                  <ChevronLeft size={16} /> Prev
-                </button>
-                
-                <span className="text-xl font-serif italic text-white/80">
-                  {currentPage} <span className="text-white/20 mx-2">/</span> {totalPages}
-                </span>
-
-                <button 
-                  onClick={() => {
-                    setCurrentPage(p => Math.min(totalPages, p + 1));
-                    window.scrollTo({ top: 0, behavior: 'smooth' });
-                  }}
-                  disabled={currentPage === totalPages}
-                  className={`flex items-center gap-3 text-[10px] font-bold tracking-[0.3em] uppercase transition-colors ${currentPage < totalPages ? 'text-white/50 hover:text-[#D4AF37]' : 'text-white/10 cursor-not-allowed'}`}
-                >
-                  Next <ChevronRight size={16} />
-                </button>
+          ) : (
+            /* No Search Match */
+            <div 
+              role="region" 
+              aria-label="No search results"
+              className="bg-white border border-[#EFE6DC] rounded-2xl p-8 sm:p-12 flex flex-col items-center text-center shadow-xs"
+            >
+              <div className="w-14 h-14 rounded-full bg-[#FAF7F2] border border-[#EFE6DC] flex items-center justify-center text-[#733617] mb-3">
+                <Search size={22} aria-hidden="true" />
               </div>
-            )}
-          </div>
-        ) : (
-          <div className="flex flex-col items-center justify-center py-20 text-center animate-fade-in">
-            <Search size={48} className="text-[#D4AF37]/20 mb-6" />
-            <h3 className="font-serif text-3xl text-white italic mb-4">No match found</h3>
-            <p className="text-white/40 text-sm max-w-sm">None of your favorites match "{query}".</p>
-          </div>
-        )}
+              <h2 className="font-serif text-xl font-bold text-[#2D1508] mb-1">
+                No matching favorites found
+              </h2>
+              <p className="text-xs text-[#65544A] mb-5">
+                No saved items match "{query}". Try checking for spelling or clear your search.
+              </p>
+              <button
+                type="button"
+                onClick={() => setQuery('')}
+                className="px-5 py-2 rounded-xl bg-[#FAF7F2] border border-[#EFE6DC] hover:bg-white text-[#733617] text-xs font-bold uppercase tracking-wider transition-all shadow-xs cursor-pointer focus-visible:ring-2 focus-visible:ring-[#733617] focus-visible:outline-hidden"
+              >
+                Clear Search
+              </button>
+            </div>
+          )}
+        </main>
+
       </div>
     </div>
   );

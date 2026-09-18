@@ -4,13 +4,12 @@ import { getFirestore, initializeFirestore } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
 
 const firebaseConfig = {
-  apiKey: 'AIzaSyB_HaVk-0R-2iFcc5O9wFSJvlwXajESIMk',
-  authDomain: 'falguni-admin.firebaseapp.com',
-  projectId: 'falguni-admin',
-  storageBucket: 'falguni-admin.appspot.com',
-  messagingSenderId: '7031551502',
-  appId: '1:7031551502:web:e7d1b7330c564fd83c6e5f',
-  measurementId: 'G-DDSSY84LHT',
+  apiKey: 'AIzaSyAKm3lkXENu0lVNWw5VPAVHAZotDmjEjKU',
+  authDomain: 'falgunigruhudhyog-cd439.firebaseapp.com',
+  projectId: 'falgunigruhudhyog-cd439',
+  storageBucket: 'falgunigruhudhyog-cd439.firebasestorage.app',
+  messagingSenderId: '84686827194',
+  appId: '1:84686827194:web:68d0693c15f65526e05c83',
 };
 
 // Prevent re-initializing on hot reload

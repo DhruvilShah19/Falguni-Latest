@@ -14,10 +14,13 @@ interface CartState {
   couponDiscount: number; // percentage
   isPickup: boolean;
   deliveryDetails: DeliveryDetails | null;
+  giftNote: string;
   setItems: (items: CartItem[]) => void;
   setCoupon: (code: string, discount: number) => void;
   clearCoupon: () => void;
   setFulfillment: (isPickup: boolean, details: DeliveryDetails | null) => void;
+  setIsPickup: (isPickup: boolean) => void;
+  setGiftNote: (note: string) => void;
   totalQuantity: () => number;
   subTotal: () => number;
   discountedTotal: () => number;
@@ -31,6 +34,7 @@ export const useCartStore = create<CartState>((set, get) => ({
   couponDiscount: 0,
   isPickup: false,
   deliveryDetails: null,
+  giftNote: '',
 
   setItems: (items) => set({ items }),
 
@@ -39,6 +43,10 @@ export const useCartStore = create<CartState>((set, get) => ({
   clearCoupon: () => set({ couponCode: '', couponDiscount: 0 }),
   
   setFulfillment: (isPickup, details) => set({ isPickup, deliveryDetails: details }),
+
+  setIsPickup: (isPickup) => set({ isPickup }),
+
+  setGiftNote: (note) => set({ giftNote: note }),
 
   totalQuantity: () =>
     get().items.reduce((sum, item) => sum + (item.quantity ?? 1), 0),

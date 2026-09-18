@@ -36,11 +36,23 @@ export async function promoteDraftOrder(
       return null;
     }
     const data = draftSnap.data() ?? null;
+    const finalUid = (data?.uid && !isNaN(Date.parse(data.uid)) && data.uid !== data.userID) 
+      ? data.uid 
+      : new Date().toISOString();
+
+    const normalizedCfDetails = {
+      ...cashFreeDetails,
+      order_id: cashFreeDetails?.order_id || cashFreeDetails?.cf_order_id || orderId,
+      cf_order_id: cashFreeDetails?.cf_order_id || cashFreeDetails?.order_id || orderId,
+    };
+
     transaction.set(newOrderRef, {
       ...data,
+      uid: finalUid,
       status: 'Received',
       paymentStatus: 'Success',
-      cashFreeDetails,
+      paymentType: data?.paymentType || 'Cash Free',
+      cashFreeDetails: normalizedCfDetails,
     });
     transaction.delete(draftRef);
     return data;
@@ -103,6 +115,9 @@ export async function markExistingOrderReceived(
 ): Promise<boolean> {
   const ordersRef = adminDb.collection('Orders');
   let querySnapshot = await ordersRef.where('cashFreeDetails.cf_order_id', '==', orderId).limit(1).get();
+  if (querySnapshot.empty) {
+    querySnapshot = await ordersRef.where('cashFreeDetails.order_id', '==', orderId).limit(1).get();
+  }
   if (querySnapshot.empty) {
     querySnapshot = await ordersRef.where('cashfreeOrderId', '==', orderId).limit(1).get();
   }

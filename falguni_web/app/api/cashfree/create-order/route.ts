@@ -12,6 +12,23 @@ export async function POST(req: Request) {
       return NextResponse.json({ message: 'Customer ID is required.' }, { status: 400 });
     }
 
+    // 0. Enforce Store Status (Open / Closed for new orders)
+    const storeStatusDoc = await adminDb.collection('Store Settings').doc('Store Status').get();
+    if (storeStatusDoc.exists) {
+      const storeStatus = storeStatusDoc.data();
+      if (storeStatus?.isOpen === false) {
+        return NextResponse.json(
+          {
+            message:
+              storeStatus?.closedMessage ||
+              'Our store is currently closed for new orders. Please check back during operating hours (9:00 AM – 9:00 PM)!',
+            isStoreClosed: true,
+          },
+          { status: 403 }
+        );
+      }
+    }
+
     // 1. Calculate Server-Side Subtotal securely from the Database Cart
     const cartSnapshot = await adminDb.collection('users').doc(customerId).collection('Cart').get();
     if (cartSnapshot.empty) {
@@ -30,21 +47,33 @@ export async function POST(req: Request) {
 
     // 2. Validate and Apply Server-Side Coupon
     let discountedTotal = subTotal;
+    let discountPercentage = 0;
+    let appliedCouponCode: string | null = null;
+
     if (cart_details?.isApp) {
       const userSnap = await adminDb.collection('users').doc(customerId).get();
       if (userSnap.exists) {
         const couponReward = Number(userSnap.data()?.['Coupon Reward'] || 0);
         if (couponReward > 0) {
+          discountPercentage = couponReward;
           discountedTotal = subTotal - (subTotal * couponReward) / 100;
         }
       }
     } else if (cart_details?.couponCode) {
-      const couponSnap = await adminDb.collection('Coupons').where('coupon', '==', cart_details.couponCode).limit(1).get();
-      if (!couponSnap.empty) {
-        const couponData = couponSnap.docs[0].data();
-        const discountPercentage = Number(couponData.percentage || 0);
-        if (discountPercentage > 0) {
-          discountedTotal = subTotal - (subTotal * discountPercentage) / 100;
+      // Check if global promotional coupons system is enabled in Admin Settings
+      const couponSystemSnap = await adminDb.collection('Coupon System').doc('Coupon System').get();
+      const isCouponSystemEnabled = couponSystemSnap.exists ? (couponSystemSnap.data()?.Status ?? true) : true;
+
+      if (isCouponSystemEnabled) {
+        const couponSnap = await adminDb.collection('Coupons').where('coupon', '==', cart_details.couponCode).limit(1).get();
+        if (!couponSnap.empty) {
+          const couponData = couponSnap.docs[0].data();
+          const pct = Number(couponData.percentage || 0);
+          if (pct > 0) {
+            discountPercentage = pct;
+            discountedTotal = subTotal - (subTotal * pct) / 100;
+            appliedCouponCode = cart_details.couponCode;
+          }
         }
       }
     }
@@ -52,15 +81,19 @@ export async function POST(req: Request) {
     let finalTotal = discountedTotal;
     let fee = 0;
     if (cart_details && !cart_details.isPickup) {
-      const deliveryAddress = cart_details.deliveryAddress || '';
-      // If lat/lng weren't submitted, distance = Infinity forces the
-      // weight-based outstation branch below -- the deliberate "charge more
-      // rather than accidentally undercharge" fallback for an unresolvable
-      // delivery location.
-      const distanceKm = (cart_details.deliveryLat && cart_details.deliveryLng)
-        ? getRoadDistanceEstimateKm(STUDIO_FALGUNI_LATLNG.lat, STUDIO_FALGUNI_LATLNG.lng, Number(cart_details.deliveryLat), Number(cart_details.deliveryLng))
-        : Infinity;
-      fee = calculateDeliveryFee(distanceKm, deliveryAddress, subTotal, totalWeightKg).fee;
+      if (cart_details.deliverySpeed === 'express') {
+        fee = 80;
+      } else if (subTotal >= 699) {
+        // Standard Free Delivery for orders >= 699
+        fee = 0;
+      } else {
+        const deliveryAddress = cart_details.deliveryAddress || '';
+        const distanceKm = (cart_details.deliveryLat && cart_details.deliveryLng)
+          ? getRoadDistanceEstimateKm(STUDIO_FALGUNI_LATLNG.lat, STUDIO_FALGUNI_LATLNG.lng, Number(cart_details.deliveryLat), Number(cart_details.deliveryLng))
+          : Infinity;
+        const calculated = calculateDeliveryFee(distanceKm, deliveryAddress, subTotal, totalWeightKg).fee;
+        fee = calculated > 0 ? calculated : 60;
+      }
       finalTotal += fee;
     }
 
@@ -83,19 +116,6 @@ export async function POST(req: Request) {
     const daysSinceStart = Math.floor((now.getTime() - startOfYear.getTime()) / (24 * 60 * 60 * 1000));
     const weekNumber = Math.ceil((daysSinceStart + startOfYear.getDay() + 1) / 7);
 
-    let discountPercentage = 0;
-    if (cart_details?.couponCode) {
-      const couponSnap = await adminDb.collection('Coupons').where('coupon', '==', cart_details.couponCode).limit(1).get();
-      if (!couponSnap.empty) {
-        discountPercentage = Number(couponSnap.docs[0].data().percentage || 0);
-      }
-    } else if (cart_details?.isApp) {
-      const userSnap = await adminDb.collection('users').doc(customerId).get();
-      if (userSnap.exists) {
-        discountPercentage = Number(userSnap.data()?.['Coupon Reward'] || 0);
-      }
-    }
-
     // Fetch vendorID and orderID from Firestore (same as Flutter app)
     let vendorID = '';
     let nextOrderID = 100000;
@@ -112,6 +132,22 @@ export async function POST(req: Request) {
       }
     } catch (e) {
       console.error('Error fetching vendor details:', e);
+    }
+
+    if (!vendorID) {
+      const firstVendor = items.find(i => i.vendorId || i.vendorID)?.vendorId || items.find(i => i.vendorId || i.vendorID)?.vendorID;
+      if (firstVendor) {
+        vendorID = firstVendor;
+      } else {
+        try {
+          const anyVendorSnap = await adminDb.collection('vendors').limit(1).get();
+          if (!anyVendorSnap.empty) {
+            vendorID = anyVendorSnap.docs[0].id;
+          }
+        } catch (_e) {
+          // best-effort
+        }
+      }
     }
 
     // Fetch user's CurrentMarketID from their user doc
@@ -163,19 +199,31 @@ export async function POST(req: Request) {
         productID: i.productID || '',
       })),
       subTotal: subTotal,
-      couponCode: cart_details?.couponCode || null,
+      couponCode: appliedCouponCode || null,
       couponDiscount: discountPercentage,
       discountedSubTotal: discountedTotal,
       deliveryFee: fee,
-      total: order_amount,
       deliveryAddress: cart_details?.isPickup ? '' : (cart_details?.deliveryAddress || ''),
-      pickupAddress: cart_details?.isPickup ? 'Pick Up' : '',
+      pickupAddress: cart_details?.isPickup
+        ? `${cart_details?.pickupStoreTitle ? cart_details.pickupStoreTitle + ': ' : ''}${cart_details?.pickupStoreAddress || 'Shop No 1, Hirak Complex, Opposite Shakti Enclave, Nehru Park, Mahavir Nagar Society, Vastrapur, Ahmedabad, Gujarat 380015'}`
+        : '',
+      isPickup: !!cart_details?.isPickup,
+      pickupStoreTitle: cart_details?.pickupStoreTitle || (cart_details?.isPickup ? 'Falguni Gruh Udhyog - Vastrapur Flagship' : ''),
+      pickupContactName: cart_details?.pickupContactName || cart_details?.fullName || customer_details.customer_name || '',
+      pickupContactPhone: cart_details?.pickupContactPhone || cart_details?.phone || customer_details.customer_phone || '',
       houseNumber: '',
       closesBusStop: '',
       phone: cart_details?.phone || customer_details.customer_phone || '',
-      paymentType: 'Online',
-      paymentMethod: 'Online',
+      paymentType: 'Cash Free',
+      paymentMethod: 'Online (Cashfree)',
       cashfreeOrderId: order_id,
+      cashFreeDetails: {
+        order_id: order_id,
+        cf_order_id: order_id,
+        order_status: 'ACTIVE',
+        order_amount: order_amount,
+        order_currency: 'INR',
+      },
       status: 'Pending Payment',
       confirmationStatus: false,
       acceptDelivery: false,

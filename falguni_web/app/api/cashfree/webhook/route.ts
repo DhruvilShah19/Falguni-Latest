@@ -45,6 +45,7 @@ export async function POST(req: Request) {
         // call (which can fire around the same time) can't create two
         // Orders documents for one payment.
         const cashFreeDetails = {
+          order_id: orderId,
           cf_order_id: orderId,
           order_status: 'PAID',
           order_amount: payload.data.order.order_amount,

@@ -3,19 +3,37 @@
 import { useEffect, useState } from 'react';
 import { collection, getDocs } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
+import { useSettingsStore } from '@/store/settingsStore';
 import PageShell from '@/components/layout/PageShell';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
-import { ArrowLeft, Tag, Copy, CheckCircle2, Scissors } from 'lucide-react';
+import { 
+  Tag, 
+  Copy, 
+  CheckCircle2, 
+  Scissors, 
+  ChevronRight, 
+  Sparkles, 
+  ShoppingBag, 
+  ArrowRight, 
+  Percent,
+  Clock
+} from 'lucide-react';
 import Link from 'next/link';
 
 interface CouponModel {
   uid: string;
-  coupon: string;
-  percentage: number;
+  coupon?: string;
+  code?: string;
+  percentage?: number;
+  discount?: number;
   title?: string;
+  description?: string;
+  minOrder?: number;
+  expiry?: string;
 }
 
 export default function PromoCodesPage() {
+  const { enableCoupons } = useSettingsStore();
   const [coupons, setCoupons] = useState<CouponModel[]>([]);
   const [loading, setLoading] = useState(true);
   const [copiedId, setCopiedId] = useState<string | null>(null);
@@ -41,114 +59,246 @@ export default function PromoCodesPage() {
   const handleCopy = (code: string, id: string) => {
     navigator.clipboard.writeText(code);
     setCopiedId(id);
-    setTimeout(() => setCopiedId(null), 2000);
+    setTimeout(() => setCopiedId(null), 2500);
   };
 
   return (
     <PageShell>
-      <div className="min-h-screen bg-[#2B1B17] flex flex-col pb-20 relative overflow-hidden">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(212,175,55,0.05),transparent_80%)] pointer-events-none" />
+      <div className="min-h-screen bg-[#FAF7F2]">
+        <div className="max-w-[1360px] mx-auto px-4 sm:px-6 lg:px-8 pt-4 sm:pt-6 pb-20 sm:pb-28">
+          
+          {/* Breadcrumb Hierarchy */}
+          <nav aria-label="Breadcrumb" className="flex items-center gap-2 text-xs text-[#733617]/70 font-medium mb-6">
+            <Link href="/" className="hover:text-[#733617] transition-colors">Home</Link>
+            <ChevronRight size={12} className="text-[#733617]/40" />
+            <span className="text-[#2D1508] font-bold">Exclusive Offers & Coupons</span>
+          </nav>
 
-        {/* ── Premium Header Banner ── */}
-        <div className="relative w-full overflow-hidden bg-[#2B1B17] border-b border-[#D4AF37]/10 pt-28 pb-12 md:pt-36 md:pb-20 flex flex-col items-center justify-center mb-6 md:mb-12">
-           <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(212,175,55,0.15),transparent_70%)] pointer-events-none" />
+          {/* Hero Header Card */}
+          <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#F5EBE1] via-[#FAF7F2] to-[#EFE6DC] border border-[#EFE6DC] p-6 sm:p-10 mb-10 shadow-xs">
+            <div className="max-w-2xl relative z-10">
+              <div className="inline-flex items-center gap-2 text-[#733617] text-xs font-bold uppercase tracking-[0.2em] mb-3 bg-white/80 backdrop-blur-xs px-3 py-1 rounded-full border border-[#EFE6DC]">
+                <Sparkles size={13} className="text-[#733617]" />
+                <span>કૂપન અને ઑફર્સ • EXCLUSIVE VOUCHERS</span>
+              </div>
+              <h1 className="text-3xl sm:text-4xl lg:text-5xl font-serif font-bold text-[#2D1508] tracking-tight mb-3">
+                {enableCoupons ? 'Exclusive Offers & Coupons' : 'Coupons Temporarily Paused'}
+              </h1>
+              <p className="text-sm sm:text-base text-[#733617]/85 leading-relaxed">
+                {enableCoupons
+                  ? 'Enjoy hand-curated savings on our authentic Gujarati sweets, savory namkeens, and festive specials. Copy any code below and apply it directly at checkout!'
+                  : 'Promotional coupon codes are currently paused by the store. Exclusive seasonal savings and festive offers will return soon!'}
+              </p>
+            </div>
 
-           {/* Back Button */}
-           <div className="absolute top-28 md:top-36 left-4 md:left-8 z-50">
-               <Link 
-                 href="/profile" 
-                 className="inline-flex items-center gap-2 text-white/50 hover:text-[#D4AF37] transition-colors text-[9px] md:text-xs font-bold uppercase tracking-widest"
-               >
-                 <ArrowLeft size={14} /> Back
-               </Link>
-           </div>
+            {/* Decorative background embellishment */}
+            <div className="absolute right-0 top-0 translate-x-1/4 -translate-y-1/4 w-80 h-80 rounded-full bg-[#733617]/5 pointer-events-none blur-2xl" />
+          </div>
 
-           <div className="relative z-10 text-center px-4 w-full mt-4 md:mt-0">
-             <div className="animate-fade-up text-[9px] md:text-xs tracking-[0.25em] md:tracking-[0.3em] font-bold text-[#D4AF37] mb-3 md:mb-4 flex items-center justify-center gap-2 md:gap-3">
-               <span className="w-6 md:w-8 h-px bg-[#D4AF37]/50" />
-               PROMOTIONS
-               <span className="w-6 md:w-8 h-px bg-[#D4AF37]/50" />
-             </div>
-             
-             <h1 className="animate-fade-up font-serif text-2xl md:text-5xl lg:text-6xl text-white drop-shadow-[0_0_15px_rgba(212,175,55,0.2)] mb-2 md:mb-4" style={{ animationDelay: '100ms' }}>
-               Exclusive Offers
-             </h1>
-             
-             <p className="animate-fade-up text-[var(--color-fg-muted)] max-w-lg mx-auto text-[11px] md:text-base leading-relaxed px-2" style={{ animationDelay: '200ms' }}>
-               Unlock premium savings on your favorite authentic delicacies. Apply these codes at checkout.
-             </p>
-           </div>
-        </div>
-
-        <div className="max-w-4xl mx-auto w-full px-5 md:px-8 relative z-10">
-
-          {/* Content */}
-          {loading ? (
-            <div className="py-20 flex justify-center">
+          {/* Main Content */}
+          {!enableCoupons ? (
+            <div className="text-center py-20 bg-white border border-[#EFE6DC] rounded-3xl p-8 sm:p-12 shadow-xs max-w-xl mx-auto">
+              <div className="w-16 h-16 bg-[#FAF7F2] border border-[#EFE6DC] rounded-2xl flex items-center justify-center mx-auto mb-4 text-[#733617]">
+                <Tag size={28} />
+              </div>
+              <h3 className="text-2xl text-[#2D1508] font-serif font-bold mb-2">Coupons Currently Paused</h3>
+              <p className="text-[#733617]/80 text-sm leading-relaxed mb-6">
+                Promotional coupon codes are currently paused by the store. You can still explore our entire catalog of handcrafted snacks and sweets!
+              </p>
+              <Link 
+                href="/products" 
+                className="inline-flex items-center gap-2 bg-[#733617] hover:bg-[#5c2b12] text-white px-6 py-3 rounded-xl font-bold text-xs uppercase tracking-wider transition-colors shadow-xs"
+              >
+                <ShoppingBag size={15} />
+                Explore Delicacies
+              </Link>
+            </div>
+          ) : loading ? (
+            <div className="py-24 flex flex-col items-center justify-center gap-3">
               <LoadingSpinner />
+              <p className="text-xs font-medium text-[#733617]/70">Checking available offers...</p>
             </div>
           ) : coupons.length === 0 ? (
-            <div className="text-center py-20 bg-white/[0.02] border border-white/5 rounded-[32px]">
-              <div className="w-20 h-20 bg-white/[0.03] rounded-full flex items-center justify-center mx-auto mb-6">
-                <Tag size={32} className="text-[#D4AF37]/50" />
+            <div className="text-center py-20 bg-white border border-[#EFE6DC] rounded-3xl p-8 sm:p-12 shadow-xs max-w-xl mx-auto">
+              <div className="w-16 h-16 bg-[#FAF7F2] border border-[#EFE6DC] rounded-2xl flex items-center justify-center mx-auto mb-4 text-[#733617]">
+                <Tag size={28} />
               </div>
-              <h3 className="text-xl text-white font-serif mb-2">No active promotions</h3>
-              <p className="text-white/40">Check back later for exclusive Falguni offers.</p>
+              <h3 className="text-2xl text-[#2D1508] font-serif font-bold mb-2">No Active Promotions Today</h3>
+              <p className="text-[#733617]/80 text-sm leading-relaxed mb-6">
+                We are preparing exciting festive offers! Follow our updates or explore our everyday fresh assortment now.
+              </p>
+              <Link 
+                href="/products" 
+                className="inline-flex items-center gap-2 bg-[#733617] hover:bg-[#5c2b12] text-white px-6 py-3 rounded-xl font-bold text-xs uppercase tracking-wider transition-colors shadow-xs"
+              >
+                <ShoppingBag size={15} />
+                Explore Specialties
+              </Link>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {coupons.map((coupon) => (
-                <div 
-                  key={coupon.uid}
-                  className="relative group overflow-hidden bg-[#1A110D] rounded-3xl border border-[#D4AF37]/20 shadow-[0_10px_30px_rgba(0,0,0,0.5)] hover:border-[#D4AF37]/50 transition-all duration-500"
-                >
-                  {/* Dashed Gold Border (Ticket Style) */}
-                  <div className="absolute inset-2 border-2 border-dashed border-[#D4AF37]/20 rounded-2xl pointer-events-none group-hover:border-[#D4AF37]/40 transition-colors" />
-                  
-                  {/* Scissor Icon Decor */}
-                  <div className="absolute top-0 right-8 -translate-y-1/2 bg-[#1A110D] px-2 opacity-50">
-                    <Scissors size={14} className="text-[#D4AF37]" />
-                  </div>
+            <div className="space-y-12">
+              {/* Vouchers Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {coupons.map((coupon) => {
+                  const codeString = coupon.coupon || coupon.code || 'FALGUNI';
+                  const discountVal = coupon.percentage ?? coupon.discount ?? 10;
+                  const isCopied = copiedId === coupon.uid;
 
-                  <div className="p-8 relative z-10 flex flex-col h-full">
-                    <div className="flex items-start justify-between mb-8">
-                      <div>
-                        <h2 className="text-[#D4AF37] text-4xl md:text-5xl font-serif italic mb-1 drop-shadow-md">
-                          {coupon.percentage}% <span className="text-2xl">OFF</span>
-                        </h2>
-                        {coupon.title && (
-                          <p className="text-white/60 text-sm font-medium tracking-wide">
-                            {coupon.title}
+                  return (
+                    <div 
+                      key={coupon.uid}
+                      className="relative group bg-white rounded-3xl border border-[#EFE6DC] shadow-xs hover:shadow-md hover:border-[#733617]/50 transition-all duration-300 flex flex-col overflow-hidden"
+                    >
+                      {/* Left and Right Perforation Notches */}
+                      <div className="absolute top-[65%] -left-3 w-6 h-6 rounded-full bg-[#FAF7F2] border-r border-[#EFE6DC] z-10 pointer-events-none" />
+                      <div className="absolute top-[65%] -right-3 w-6 h-6 rounded-full bg-[#FAF7F2] border-l border-[#EFE6DC] z-10 pointer-events-none" />
+
+                      {/* Card Header & Discount Badge */}
+                      <div className="p-6 sm:p-7 flex-1 flex flex-col justify-between">
+                        <div className="flex items-start justify-between gap-4 mb-4">
+                          <div>
+                            <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-[#733617] bg-[#FAF7F2] px-2.5 py-1 rounded-full border border-[#EFE6DC] mb-3">
+                              <Tag size={11} />
+                              Verified Voucher
+                            </span>
+                            <div className="flex items-baseline gap-1 text-[#733617]">
+                              <span className="text-4xl sm:text-5xl font-serif font-black tracking-tight">{discountVal}%</span>
+                              <span className="text-xl sm:text-2xl font-serif font-bold uppercase">OFF</span>
+                            </div>
+                          </div>
+                          
+                          <div className="w-12 h-12 rounded-2xl bg-[#FAF7F2] border border-[#EFE6DC] flex items-center justify-center text-[#733617] group-hover:scale-105 transition-transform">
+                            <Percent size={22} />
+                          </div>
+                        </div>
+
+                        {/* Title & Description */}
+                        <div>
+                          <h3 className="text-[#2D1508] font-serif font-bold text-lg mb-1">
+                            {coupon.title || `Special ${discountVal}% Discount`}
+                          </h3>
+                          <p className="text-xs sm:text-sm text-[#733617]/80 line-clamp-2 leading-relaxed">
+                            {coupon.description || `Valid on authentic Gujarati sweets, fresh namkeens, and gourmet grocery items.`}
                           </p>
-                        )}
+                        </div>
                       </div>
-                      <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#D4AF37]/20 to-transparent flex items-center justify-center border border-[#D4AF37]/30 shadow-inner">
-                        <Tag size={20} className="text-[#D4AF37]" />
-                      </div>
-                    </div>
 
-                    <div className="mt-auto pt-6 border-t border-dashed border-[#D4AF37]/20 flex items-center justify-between gap-4">
-                      <div className="px-4 py-2 bg-black/40 rounded-xl border border-white/5 flex-1 text-center">
-                        <span className="text-white font-bold tracking-[0.2em] text-lg uppercase drop-shadow-sm">
-                          {coupon.coupon}
+                      {/* Perforated Divider */}
+                      <div className="relative px-6 flex items-center">
+                        <div className="w-full border-t border-dashed border-[#EFE6DC]" />
+                        <span className="absolute right-6 -top-2.5 bg-white px-1 text-[#733617]/50">
+                          <Scissors size={12} />
                         </span>
                       </div>
-                      
-                      <button
-                        onClick={() => handleCopy(coupon.coupon, coupon.uid)}
-                        className={`flex-shrink-0 w-12 h-12 rounded-xl flex items-center justify-center transition-all ${
-                          copiedId === coupon.uid 
-                            ? 'bg-green-500/20 border border-green-500/50 text-green-400' 
-                            : 'bg-[#D4AF37]/10 border border-[#D4AF37]/30 text-[#D4AF37] hover:bg-[#D4AF37] hover:text-[#1A110D]'
-                        }`}
-                        title="Copy Code"
-                      >
-                        {copiedId === coupon.uid ? <CheckCircle2 size={20} /> : <Copy size={20} />}
-                      </button>
+
+                      {/* Card Footer: Voucher Code & Copy Action */}
+                      <div className="p-6 sm:p-7 pt-5 bg-gradient-to-b from-white to-[#FAF7F2]/50 flex flex-col gap-3">
+                        <div className="flex items-center gap-2">
+                          <div className="flex-1 bg-[#FAF7F2] border border-[#EFE6DC] rounded-xl px-4 py-2.5 flex items-center justify-between group-hover:border-[#733617]/30 transition-colors">
+                            <span className="text-xs text-[#733617]/70 font-semibold uppercase tracking-wider">Code</span>
+                            <span className="text-base sm:text-lg font-mono font-bold text-[#2D1508] tracking-widest select-all">
+                              {codeString}
+                            </span>
+                          </div>
+
+                          <button
+                            onClick={() => handleCopy(codeString, coupon.uid)}
+                            className={`px-4 py-2.5 rounded-xl font-bold text-xs uppercase tracking-wider flex items-center gap-1.5 transition-all shadow-2xs cursor-pointer ${
+                              isCopied 
+                                ? 'bg-emerald-600 text-white' 
+                                : 'bg-[#733617] hover:bg-[#5a2a12] text-white'
+                            }`}
+                            title="Copy Promo Code"
+                          >
+                            {isCopied ? (
+                              <>
+                                <CheckCircle2 size={15} />
+                                <span>Copied</span>
+                              </>
+                            ) : (
+                              <>
+                                <Copy size={15} />
+                                <span>Copy</span>
+                              </>
+                            )}
+                          </button>
+                        </div>
+
+                        <div className="flex items-center justify-between text-[11px] text-[#733617]/70 pt-1">
+                          <span className="flex items-center gap-1">
+                            <Clock size={12} /> Limited Period Offer
+                          </span>
+                          <Link 
+                            href="/shop"
+                            className="font-bold text-[#733617] hover:underline inline-flex items-center gap-1"
+                          >
+                            Shop Now <ArrowRight size={11} />
+                          </Link>
+                        </div>
+                      </div>
                     </div>
+                  );
+                })}
+              </div>
+
+              {/* "How to Redeem" Guide Section */}
+              <div className="mt-14 rounded-3xl bg-white border border-[#EFE6DC] p-8 sm:p-10 shadow-xs">
+                <div className="text-center max-w-xl mx-auto mb-10">
+                  <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-[#733617] bg-[#FAF7F2] px-3 py-1 rounded-full border border-[#EFE6DC]">
+                    Easy Savings
+                  </span>
+                  <h2 className="text-2xl sm:text-3xl font-serif font-bold text-[#2D1508] mt-3 mb-2">
+                    How to Redeem Your Voucher
+                  </h2>
+                  <p className="text-xs sm:text-sm text-[#733617]/80">
+                    Claim your savings in three simple steps when shopping with Falguni Gruh Udhyog.
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8 relative">
+                  {/* Step 1 */}
+                  <div className="flex flex-col items-center text-center p-5 rounded-2xl bg-[#FAF7F2]/60 border border-[#EFE6DC]">
+                    <div className="w-12 h-12 rounded-2xl bg-[#733617] text-white font-serif font-bold text-lg flex items-center justify-center mb-4 shadow-2xs">
+                      1
+                    </div>
+                    <h3 className="text-base font-serif font-bold text-[#2D1508] mb-1.5">Pick Your Delicacies</h3>
+                    <p className="text-xs text-[#733617]/80 leading-relaxed">
+                      Explore our handpicked collection of fresh namkeens, authentic sweets, and spices, and add items to your cart.
+                    </p>
+                  </div>
+
+                  {/* Step 2 */}
+                  <div className="flex flex-col items-center text-center p-5 rounded-2xl bg-[#FAF7F2]/60 border border-[#EFE6DC]">
+                    <div className="w-12 h-12 rounded-2xl bg-[#733617] text-white font-serif font-bold text-lg flex items-center justify-center mb-4 shadow-2xs">
+                      2
+                    </div>
+                    <h3 className="text-base font-serif font-bold text-[#2D1508] mb-1.5">Copy the Promo Code</h3>
+                    <p className="text-xs text-[#733617]/80 leading-relaxed">
+                      Tap the "Copy" button on any active coupon above to copy the voucher code instantly to your clipboard.
+                    </p>
+                  </div>
+
+                  {/* Step 3 */}
+                  <div className="flex flex-col items-center text-center p-5 rounded-2xl bg-[#FAF7F2]/60 border border-[#EFE6DC]">
+                    <div className="w-12 h-12 rounded-2xl bg-[#733617] text-white font-serif font-bold text-lg flex items-center justify-center mb-4 shadow-2xs">
+                      3
+                    </div>
+                    <h3 className="text-base font-serif font-bold text-[#2D1508] mb-1.5">Apply at Checkout</h3>
+                    <p className="text-xs text-[#733617]/80 leading-relaxed">
+                      Paste the code in the 'Have a coupon?' section on the checkout page to enjoy immediate savings on your order.
+                    </p>
                   </div>
                 </div>
-              ))}
+
+                <div className="mt-8 pt-6 border-t border-[#EFE6DC] text-center">
+                  <Link 
+                    href="/shop"
+                    className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-[#733617] hover:underline"
+                  >
+                    Start Shopping Authentic Delicacies <ArrowRight size={13} />
+                  </Link>
+                </div>
+              </div>
             </div>
           )}
 

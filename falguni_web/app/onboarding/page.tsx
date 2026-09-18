@@ -62,7 +62,10 @@ export default function OnboardingPage() {
   const onTouchEnd = (e: React.TouchEvent) => {
     if (touchStartX.current === null) return;
     const delta = touchStartX.current - e.changedTouches[0].clientX;
-    if (Math.abs(delta) > 50) delta > 0 ? next() : prev();
+    if (Math.abs(delta) > 50) {
+      if (delta > 0) next();
+      else prev();
+    }
     touchStartX.current = null;
   };
 
@@ -77,8 +80,7 @@ export default function OnboardingPage() {
 
   return (
     <div
-      className="min-h-dvh w-full flex flex-col md:flex-row"
-      style={{ background: 'linear-gradient(160deg, #2B1B17 0%, #5C4033 55%, #2B1B17 100%)' }}
+      className="min-h-dvh w-full flex flex-col md:flex-row bg-[var(--color-bg)]"
       onTouchStart={onTouchStart}
       onTouchEnd={onTouchEnd}
     >
@@ -87,11 +89,11 @@ export default function OnboardingPage() {
           MOBILE LAYOUT  (< md)
           Full-screen: image top, content bottom
       ════════════════════════════════════════ */}
-      <div className="flex flex-col flex-1 md:hidden">
+      <div className="flex flex-col flex-1 md:hidden bg-[var(--color-bg)]">
 
         {/* Image */}
-        <div className={`relative mx-5 mt-12 rounded-3xl overflow-hidden flex-shrink-0 transition-opacity duration-380 ${sliding ? 'opacity-0' : 'opacity-100'}`}
-          style={{ height: '42vh' }}>
+        <div className={`relative mx-5 mt-10 rounded-3xl overflow-hidden flex-shrink-0 border border-[var(--color-border)] shadow-sm transition-opacity duration-380 ${sliding ? 'opacity-0' : 'opacity-100'}`}
+          style={{ height: '44vh' }}>
           <Image
             src={slide.image}
             alt={slide.title}
@@ -101,20 +103,19 @@ export default function OnboardingPage() {
             priority
           />
           {/* Bottom scrim */}
-          <div className="absolute inset-x-0 bottom-0 h-20"
-            style={{ background: 'linear-gradient(to top, #3D2318, transparent)' }} />
+          <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-black/40 to-transparent" />
         </div>
 
         {/* Content */}
         <div className={`flex-1 flex flex-col justify-between px-6 pt-6 pb-10 transition-all duration-380 ${contentAnim}`}>
-          <div className="flex flex-col gap-3">
-            <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#D4AF37]">
+          <div className="flex flex-col gap-2.5">
+            <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-[#733617]">
               {slide.tag}
             </span>
-            <h1 className="text-xl font-black text-white leading-tight">
+            <h1 className="text-2xl font-serif font-bold text-[#2D1508] leading-tight">
               {slide.title}
             </h1>
-            <p className="text-sm text-white/60 leading-relaxed">
+            <p className="text-sm text-[var(--color-fg-muted)] leading-relaxed">
               {slide.body}
             </p>
           </div>
@@ -125,7 +126,7 @@ export default function OnboardingPage() {
             {!isLast ? (
               <button
                 onClick={finish}
-                className="text-sm font-semibold text-[#D4AF37] hover:opacity-70 transition min-w-[48px]"
+                className="text-sm font-bold text-[#733617] hover:opacity-80 transition min-w-[48px]"
               >
                 Skip
               </button>
@@ -154,46 +155,42 @@ export default function OnboardingPage() {
             className="object-cover"
             priority
           />
-          {/* Right edge scrim to blend into right panel */}
-          <div className="absolute inset-y-0 right-0 w-32"
-            style={{ background: 'linear-gradient(to right, transparent, #3D2318)' }} />
-
           {/* Slide counter badge */}
-          <div className="absolute top-8 left-8 px-3 py-1.5 rounded-full bg-black/30 backdrop-blur-sm border border-white/10">
-            <span className="text-xs font-semibold text-white/70">
+          <div className="absolute top-8 left-8 px-3.5 py-1.5 rounded-full bg-black/40 backdrop-blur-md border border-white/20">
+            <span className="text-xs font-bold text-white tracking-wider">
               {current + 1} / {SLIDES.length}
             </span>
           </div>
         </div>
 
         {/* Right: Content panel */}
-        <div className="w-1/2 flex flex-col justify-between px-14 py-14 relative">
+        <div className="w-1/2 flex flex-col justify-between px-16 py-14 bg-white relative">
 
           {/* Logo */}
           <div className="mb-6">
-            <p className="text-[#D4AF37] font-black text-2xl tracking-tight">Falguni</p>
-            <p className="text-white/40 text-xs">Gruh Udhyog</p>
+            <p className="text-[#733617] font-serif font-bold text-2xl tracking-tight">Falguni</p>
+            <p className="text-[var(--color-fg-muted)] text-xs uppercase tracking-wider font-bold">Gruh Udhyog</p>
           </div>
 
           {/* Text */}
-          <div className={`flex-1 flex flex-col justify-center gap-5 transition-all duration-380 ${contentAnim}`}>
-            <span className="text-xs font-bold uppercase tracking-[0.2em] text-[#D4AF37]">
+          <div className={`flex-1 flex flex-col justify-center gap-4 max-w-md transition-all duration-380 ${contentAnim}`}>
+            <span className="text-xs font-bold uppercase tracking-[0.2em] text-[#733617]">
               {slide.tag}
             </span>
-            <h1 className="text-3xl xl:text-4xl font-black text-white leading-tight">
+            <h1 className="text-3xl xl:text-4xl font-serif font-bold text-[#2D1508] leading-tight">
               {slide.title}
             </h1>
-            <p className="text-base text-white/60 leading-relaxed max-w-sm">
+            <p className="text-base text-[var(--color-fg-muted)] leading-relaxed">
               {slide.body}
             </p>
           </div>
 
           {/* Controls: Skip (left) · Dots (center) · Next (right) */}
-          <div className="flex items-center justify-between mt-12">
+          <div className="flex items-center justify-between mt-12 max-w-md">
             {!isLast ? (
               <button
                 onClick={finish}
-                className="text-sm font-semibold text-[#D4AF37] hover:opacity-70 transition min-w-[48px]"
+                className="text-sm font-bold text-[#733617] hover:opacity-80 transition min-w-[48px]"
               >
                 Skip
               </button>
@@ -224,7 +221,7 @@ function Dots({ total, current, onDot }: { total: number; current: number; onDot
           style={{
             width: i === current ? 24 : 8,
             height: 8,
-            background: i === current ? '#D4AF37' : 'rgba(255,255,255,0.25)',
+            background: i === current ? '#733617' : '#EFE6DC',
           }}
         />
       ))}
@@ -236,8 +233,7 @@ function NextButton({ isLast, onClick }: { isLast: boolean; onClick: () => void 
   return (
     <button
       onClick={onClick}
-      className="flex items-center gap-2 px-6 py-2.5 rounded-full font-bold text-sm transition-all hover:opacity-90 active:scale-95"
-      style={{ background: '#D4AF37', color: '#2B1B17' }}
+      className="flex items-center gap-2 px-6 py-3 rounded-full font-bold text-sm transition-all hover:bg-[#5C2B12] active:scale-95 bg-[#733617] text-white shadow-sm"
     >
       {isLast ? 'Get Started' : 'Next'}
       <span className="text-base leading-none">{isLast ? '🎉' : '→'}</span>

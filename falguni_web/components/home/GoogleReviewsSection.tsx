@@ -1,137 +1,124 @@
 'use client';
-import React, { useEffect, useState } from 'react';
-import SectionHeader from '@/components/ui/SectionHeader';
-import { Star } from 'lucide-react';
-import Image from 'next/image';
+import React, { useRef } from 'react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 const REVIEWS = [
   {
+    name: 'Hetal Shah',
+    text: 'Best khakhra I have ever had! Super fresh and the taste is simply amazing.',
+  },
+  {
+    name: 'Jay Mehta',
+    text: 'Chavdo, sweets, namkeen, everything is so fresh and full of authentic taste.',
+  },
+  {
+    name: 'Kinjal Patel',
+    text: 'Fafda and jalebi are simply awesome. Consistent quality as always!',
+  },
+  {
+    name: 'Dhaval Desai',
+    text: 'Love the variety and the homemade touch in every product.',
+  },
+  {
     name: 'Krupa Patel',
-    time: '2 months ago',
-    text: 'Authentic Gujarati snacks! Their Khakhra and Chevdo taste exactly like home. Very fresh and crisp.',
-    initial: 'K',
-    color: '#D4AF37'
+    text: 'Authentic Gujarati snacks! Their Khakhra and Chevdo taste exactly like home.',
   },
   {
     name: 'Rahul Shah',
-    time: '1 month ago',
-    text: 'Best place in Vastrapur for traditional sweets and namkeen. The quality is unmatched and they use the best ingredients.',
-    initial: 'R',
-    color: '#FF4E50'
+    text: 'Best place in Vastrapur for traditional sweets and namkeen. The quality is unmatched.',
   },
-  {
-    name: 'Ami Desai',
-    time: '3 weeks ago',
-    text: 'Highly recommend! I always buy my festive snacks from Falguni Gruh Udhyog. The taste has remained consistent for years.',
-    initial: 'A',
-    color: '#4A90E2'
-  },
-  {
-    name: 'Nirav Patel',
-    time: '2 months ago',
-    text: 'Premium quality snacks. It is a bit crowded during festivals but totally worth the wait for the fresh fafda and jalebi.',
-    initial: 'N',
-    color: '#50E3C2'
-  },
-  {
-    name: 'Megha Trivedi',
-    time: '5 months ago',
-    text: 'Amazing customer service and delicious food. They ship worldwide too which is great for my family abroad!',
-    initial: 'M',
-    color: '#B8E986'
-  }
 ];
 
 export default function GoogleReviewsSection() {
-  const [paused, setPaused] = useState(false);
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  const scroll = (direction: 'left' | 'right') => {
+    if (scrollRef.current) {
+      const scrollAmount = direction === 'left' ? -340 : 340;
+      scrollRef.current.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+    }
+  };
 
   return (
-    <section className="mb-12 md:mb-24 overflow-hidden">
-      <SectionHeader title="Customer Love" subtitle="Real Reviews" />
+    <section className="py-10 md:py-16 bg-[#FAF7F2]">
+      <div className="max-w-[1360px] mx-auto px-4 md:px-8">
 
-      {/* Google Badge / Header */}
-      <div className="flex flex-col items-center justify-center mb-6 md:mb-10 px-4 md:px-5 text-center">
-        <div className="flex items-center gap-2 mb-2">
-           <span className="text-3xl md:text-4xl font-bold text-white">4.8</span>
-           <div className="flex flex-col items-start gap-1">
-             <div className="flex gap-1">
-               {[1,2,3,4,5].map(i => <Star key={i} size={14} fill="#FABB05" color="#FABB05" className="w-3 h-3 md:w-3.5 md:h-3.5" />)}
-             </div>
-             <span className="text-[10px] md:text-xs text-[var(--color-fg-muted)] font-medium">Based on 1,400+ reviews</span>
-           </div>
-        </div>
-        
-        {/* Fake Google Logo (CSS colored text to avoid loading SVGs) */}
-        <div className="flex items-center gap-1.5 font-bold tracking-tight text-xl mb-4">
-           <span className="text-[#4285F4]">G</span>
-           <span className="text-[#EA4335]">o</span>
-           <span className="text-[#FBBC05]">o</span>
-           <span className="text-[#4285F4]">g</span>
-           <span className="text-[#34A853]">l</span>
-           <span className="text-[#EA4335]">e</span>
-        </div>
+        {/* ── Section Header with Rating & Arrows matching mockup ── */}
+        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8">
+          <div>
+            <h2 className="font-serif text-2xl md:text-3xl lg:text-[34px] font-bold text-[#2D1508] tracking-tight">
+              What Our Customers Say
+            </h2>
+            <div className="flex items-center gap-3 mt-2">
+              <span className="font-serif font-bold text-lg text-[#2D1508]">
+                4.8/5
+              </span>
+              <div className="flex text-[#D49B4B] text-sm">
+                {[...Array(5)].map((_, i) => (
+                  <span key={i}>★</span>
+                ))}
+              </div>
+              <span className="text-xs text-[#65544A] font-medium">
+                Based on 1,400+ reviews
+              </span>
+            </div>
+          </div>
 
-        <a 
-          href="https://www.google.com/search?sca_esv=a708274f6968f4df&rlz=1C5CHFA_enUS1216US1216&sxsrf=ANbL-n7gV0g08D5rJVBBa39Rxr0jllfEqg:1780434852853&q=falguni+gruh+udhyog+(vastrapur)+reviews#lrd=0x395e84b646aaaaab:0x7acfa7e161f5e01a,1"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="px-5 py-2 md:px-6 md:py-2 rounded-full border border-[var(--color-border)] text-xs md:text-sm font-bold text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black transition-colors"
-        >
-          Read all on Google
-        </a>
-      </div>
-
-      {/* Infinite Scrolling Marquee */}
-      <div 
-        className="relative flex w-full"
-        onMouseEnter={() => setPaused(true)}
-        onMouseLeave={() => setPaused(false)}
-      >
-        <div className="absolute inset-y-0 left-0 w-12 md:w-32 bg-gradient-to-r from-[var(--color-bg)] to-transparent z-10" />
-        <div className="absolute inset-y-0 right-0 w-12 md:w-32 bg-gradient-to-l from-[var(--color-bg)] to-transparent z-10" />
-        
-        {/* We create two exact copies of the track to loop infinitely */}
-        <div className={`flex w-max animate-marquee ${paused ? '[animation-play-state:paused]' : ''}`}>
-          {[...REVIEWS, ...REVIEWS, ...REVIEWS].map((review, i) => (
-            <div 
-              key={i} 
-              className="w-[260px] md:w-[350px] mx-2 md:mx-3 p-4 md:p-6 rounded-xl md:rounded-2xl bg-[var(--color-surface)] border border-[var(--color-border)] flex flex-col gap-2 md:gap-3 flex-shrink-0"
+          {/* Nav buttons */}
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => scroll('left')}
+              aria-label="Previous review"
+              className="w-9 h-9 rounded-full bg-white border border-[#EFE6DC] flex items-center justify-center text-[#2D1508] hover:bg-[#FAF7F2] hover:text-[#733617] shadow-xs transition-colors"
             >
-              {/* Reviewer Info */}
-              <div className="flex gap-2 md:gap-3 items-center">
-                <div 
-                  className="w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center text-white font-bold text-sm md:text-lg"
-                  style={{ backgroundColor: review.color }}
-                >
-                  {review.initial}
-                </div>
-                <div className="flex flex-col">
-                   <span className="text-xs md:text-sm font-bold text-[var(--color-fg)]">{review.name}</span>
-                   <span className="text-[10px] md:text-xs text-[var(--color-fg-muted)]">{review.time}</span>
-                </div>
-                <div className="ml-auto w-5 h-5 flex items-center justify-center">
-                   <svg viewBox="0 0 48 48" className="w-full h-full">
-                     <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z" />
-                     <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z" />
-                     <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z" />
-                     <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z" />
-                     <path fill="none" d="M0 0h48v48H0z" />
-                   </svg>
+              <ChevronLeft size={18} />
+            </button>
+            <button
+              onClick={() => scroll('right')}
+              aria-label="Next review"
+              className="w-9 h-9 rounded-full bg-white border border-[#EFE6DC] flex items-center justify-center text-[#2D1508] hover:bg-[#FAF7F2] hover:text-[#733617] shadow-xs transition-colors"
+            >
+              <ChevronRight size={18} />
+            </button>
+          </div>
+        </div>
+
+        {/* ── Testimonial Cards Carousel / Grid ── */}
+        <div
+          ref={scrollRef}
+          className="overflow-x-auto scrollbar-hide flex gap-4 md:gap-5 pb-4 pt-1 snap-x snap-mandatory"
+        >
+          {REVIEWS.map((review, i) => (
+            <div
+              key={i}
+              className="snap-start shrink-0 w-[260px] sm:w-[280px] md:w-[310px] bg-white rounded-2xl border border-[#EFE6DC] p-5 md:p-6 flex flex-col justify-between shadow-[0_2px_12px_rgba(45,21,8,0.03)] hover:shadow-md transition-all"
+            >
+              <div>
+                {/* Terracotta Quote Mark */}
+                <span className="font-serif text-3xl font-bold text-[#733617] leading-none select-none block mb-2">
+                  “
+                </span>
+
+                <p className="text-xs sm:text-sm text-[#4A3B32] leading-relaxed mb-6">
+                  {review.text}
+                </p>
+              </div>
+
+              <div>
+                <p className="font-semibold text-xs sm:text-sm text-[#2D1508] mb-1">
+                  {review.name}
+                </p>
+                <div className="flex text-[#D49B4B] text-xs">
+                  {[...Array(5)].map((_, starIdx) => (
+                    <span key={starIdx}>★</span>
+                  ))}
                 </div>
               </div>
-              {/* Stars */}
-              <div className="flex gap-0.5">
-                {[1,2,3,4,5].map(s => <Star key={s} size={12} fill="#FABB05" color="#FABB05" className="w-2.5 h-2.5 md:w-3 md:h-3" />)}
-              </div>
-              {/* Text */}
-              <p className="text-[11px] md:text-sm text-[var(--color-fg-muted)] leading-relaxed font-medium">
-                "{review.text}"
-              </p>
             </div>
           ))}
         </div>
-      </div>
 
+      </div>
     </section>
   );
 }

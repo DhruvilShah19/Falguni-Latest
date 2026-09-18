@@ -2,326 +2,584 @@
 
 import { useRouter } from 'next/navigation';
 import { useEffect, useState, useRef } from 'react';
-import { collection, addDoc, updateDoc, doc } from 'firebase/firestore';
+import { collection, addDoc, setDoc, doc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAuthStore } from '@/store/authStore';
 import PageShell from '@/components/layout/PageShell';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
-import { Navigation, Search, Check, ArrowLeft, MapPin, LocateFixed, AlertCircle } from 'lucide-react';
+import { 
+  Search, Check, ArrowLeft, MapPin, LocateFixed, 
+  AlertCircle, ShieldCheck, Truck, Home, Navigation,
+  Sparkles, CheckCircle2, X
+} from 'lucide-react';
 import Link from 'next/link';
-import { useJsApiLoader } from '@react-google-maps/api';
 
-// Single source of truth in .env.local (NEXT_PUBLIC_GOOGLE_MAPS_API_KEY).
-const GOOGLE_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY ?? '';
-const libraries: ('places')[] = ['places'];
+interface PlaceSuggestion {
+  id: string;
+  title: string;
+  fullAddress: string;
+  landmark: string;
+  pincode: string;
+}
 
 export default function AddAddressPage() {
   const router = useRouter();
   const { firebaseUser, userDoc, loading } = useAuthStore();
 
-  const [address, setAddress]             = useState('');
-  const [houseNumber, setHouseNumber]     = useState('');
+  const [address, setAddress] = useState('');
+  const [houseNumber, setHouseNumber] = useState('');
   const [closestBusStop, setClosestBusStop] = useState('');
-  const [isSubmitting, setIsSubmitting]   = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoadingAddress, setIsLoadingAddress] = useState(false);
-  const [error, setError]                 = useState('');
+  const [error, setError] = useState('');
+  const [successInfo, setSuccessInfo] = useState('');
 
-  const { isLoaded } = useJsApiLoader({ googleMapsApiKey: GOOGLE_API_KEY, libraries });
-
-  // ── New Places API (AutocompleteSuggestion) with session tokens ──
-  // Bundles a whole typing session into ONE cheap "Place Details" charge
-  // when it ends in a selection, instead of billing every keystroke's
-  // Autocomplete request separately like the old AutocompleteService did.
-  // The terminating call also returns lat/lng directly, so no separate
-  // Geocoding API call is needed for a selected suggestion.
   const [value, setValue] = useState('');
-  const [suggestions, setSuggestions] = useState<google.maps.places.AutocompleteSuggestion[]>([]);
-  const sessionTokenRef = useRef<google.maps.places.AutocompleteSessionToken | null>(null);
+  const [suggestions, setSuggestions] = useState<PlaceSuggestion[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [focusedSuggestionIndex, setFocusedSuggestionIndex] = useState<number>(-1);
   const searchDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
-  const getSessionToken = () => {
-    if (!sessionTokenRef.current) {
-      sessionTokenRef.current = new google.maps.places.AutocompleteSessionToken();
+  useEffect(() => { 
+    if (!loading && !firebaseUser) {
+      router.push('/login?redirect=/profile/addresses/add'); 
     }
-    return sessionTokenRef.current;
-  };
-
-  useEffect(() => { if (!loading && !firebaseUser) router.push('/login'); }, [firebaseUser, loading, router]);
+  }, [firebaseUser, loading, router]);
 
   const handleInputChange = (val: string) => {
     setValue(val);
+    setFocusedSuggestionIndex(-1);
+    setError('');
+
+    // If user types, also allow it as the address directly
+    if (!address || address !== val) {
+      setAddress(val);
+    }
+
     if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
+    if (!val.trim() || val.trim().length < 2) {
+      setSuggestions([]);
+      setIsSearching(false);
+      return;
+    }
+
+    setIsSearching(true);
     searchDebounceRef.current = setTimeout(async () => {
-      if (!isLoaded || !val) { setSuggestions([]); return; }
       try {
-        const { suggestions: results } = await google.maps.places.AutocompleteSuggestion.fetchAutocompleteSuggestions({
-          input: val,
-          sessionToken: getSessionToken(),
-          includedRegionCodes: ['in'],
-        });
-        setSuggestions(results.filter(s => s.placePrediction));
-      } catch (e) {
+        const res = await fetch(`/api/places-autocomplete?q=${encodeURIComponent(val.trim())}`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data.success && Array.isArray(data.suggestions)) {
+            setSuggestions(data.suggestions);
+          } else {
+            setSuggestions([]);
+          }
+        }
+      } catch (err) {
+        console.warn('Autocomplete fetch failed:', err);
         setSuggestions([]);
+      } finally {
+        setIsSearching(false);
       }
     }, 300);
   };
 
-  const handleSelect = async (suggestion: google.maps.places.AutocompleteSuggestion) => {
-    const prediction = suggestion.placePrediction;
-    if (!prediction) return;
-    setValue(prediction.text.text);
+  const handleSelectSuggestion = (s: PlaceSuggestion) => {
+    setValue(s.fullAddress);
+    setAddress(s.fullAddress);
     setSuggestions([]);
-    try {
-      const place = prediction.toPlace();
-      await place.fetchFields({ fields: ['formattedAddress'], sessionToken: sessionTokenRef.current ?? undefined });
-      // Session complete -- start a fresh one for the next search.
-      sessionTokenRef.current = new google.maps.places.AutocompleteSessionToken();
-      setAddress(place.formattedAddress ?? prediction.text.text);
-    } catch (e) {
-      // Ignore errors silently instead of breaking UI
+    setFocusedSuggestionIndex(-1);
+    setError('');
+    setSuccessInfo('Location selected from suggestions.');
+    
+    // Auto-fill landmark if available and empty
+    if (s.landmark && !closestBusStop) {
+      setClosestBusStop(s.landmark);
     }
   };
 
-  // "Locate Me" -- a single one-shot reverse-geocode of the device's current
-  // position, rather than a live draggable map. No map means no per-pixel
-  // idle events and no continuous Geocoding cost; this is one bounded call
-  // per explicit button press.
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (suggestions.length === 0) return;
+
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      setFocusedSuggestionIndex(prev => (prev < suggestions.length - 1 ? prev + 1 : 0));
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      setFocusedSuggestionIndex(prev => (prev > 0 ? prev - 1 : suggestions.length - 1));
+    } else if (e.key === 'Enter') {
+      if (focusedSuggestionIndex >= 0 && suggestions[focusedSuggestionIndex]) {
+        e.preventDefault();
+        handleSelectSuggestion(suggestions[focusedSuggestionIndex]);
+      }
+    } else if (e.key === 'Escape') {
+      setSuggestions([]);
+      setFocusedSuggestionIndex(-1);
+    }
+  };
+
   const handleLocateMe = () => {
-    if (!navigator.geolocation || !isLoaded) {
-      alert('Geolocation is not supported by your browser.');
+    if (!navigator.geolocation) {
+      setError('Geolocation is not supported by your browser.');
       return;
     }
+
     setIsLoadingAddress(true);
+    setError('');
+    setSuccessInfo('');
+
     navigator.geolocation.getCurrentPosition(
-      pos => {
-        const loc = { lat: pos.coords.latitude, lng: pos.coords.longitude };
-        new google.maps.Geocoder().geocode({ location: loc }, (results, status) => {
-          setIsLoadingAddress(false);
-          if (status === 'OK' && results?.[0]) {
-            setAddress(results[0].formatted_address);
-            setValue(results[0].formatted_address);
+      async (pos) => {
+        try {
+          const lat = pos.coords.latitude;
+          const lon = pos.coords.longitude;
+
+          const res = await fetch(`/api/reverse-geocode?lat=${lat}&lon=${lon}`);
+          const data = await res.json();
+
+          if (data.success && data.address) {
+            setAddress(data.address);
+            setValue(data.address);
+            setSuggestions([]);
+            setSuccessInfo('Location detected from GPS!');
+
+            if (data.landmark && !closestBusStop) {
+              setClosestBusStop(data.landmark);
+            }
           } else {
-            setError('Could not resolve your current location to an address.');
+            setError('Could not detect your exact street address. Please type it in the search box.');
           }
-        });
+        } catch (err) {
+          console.error('Reverse geocode error:', err);
+          setError('Failed to reach location service. Please type your address manually.');
+        } finally {
+          setIsLoadingAddress(false);
+        }
       },
-      () => {
+      (geoError) => {
         setIsLoadingAddress(false);
-        alert('Unable to retrieve your location. Please check browser permissions.');
-      }
+        if (geoError.code === geoError.PERMISSION_DENIED) {
+          setError('Location access was denied. Please allow location permissions in your browser or type your address manually.');
+        } else if (geoError.code === geoError.POSITION_UNAVAILABLE) {
+          setError('Location information is unavailable. Please type your address manually.');
+        } else if (geoError.code === geoError.TIMEOUT) {
+          setError('Location request timed out. Please try again or type your address.');
+        } else {
+          setError('Could not retrieve your location. Please type your address manually.');
+        }
+      },
+      { enableHighAccuracy: true, timeout: 12000, maximumAge: 30000 }
     );
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!userDoc?.uid) return;
-    if (!address) { setError('Please search for and select your delivery address first.'); return; }
+    const uid = firebaseUser?.uid || userDoc?.uid;
+    if (!uid) {
+      setError('Please log in to save your address.');
+      return;
+    }
+
+    const finalAddress = (address || value).trim();
+    if (!finalAddress) { 
+      setError('Please provide your street or area address.'); 
+      inputRef.current?.focus();
+      return; 
+    }
+
+    if (!houseNumber.trim()) {
+      setError('Please enter your Flat / House number / Society name.');
+      return;
+    }
+
     setIsSubmitting(true);
     setError('');
     try {
-      const generatedId = address + houseNumber + closestBusStop;
-      const newAddress = { Addresses: address, houseNumber, closestbusStop: closestBusStop, id: generatedId };
-      await addDoc(collection(db, 'users', userDoc.uid, 'DeliveryAddress'), newAddress);
-      await updateDoc(doc(db, 'users', userDoc.uid), {
-        DeliveryAddress: address, HouseNumber: houseNumber,
-        ClosestBustStop: closestBusStop, DeliveryAddressID: generatedId,
-      });
+      const generatedId = finalAddress + houseNumber.trim() + closestBusStop.trim();
+      const newAddress = { 
+        Addresses: finalAddress, 
+        address: finalAddress,
+        houseNumber: houseNumber.trim(), 
+        HouseNumber: houseNumber.trim(),
+        closestbusStop: closestBusStop.trim(), 
+        ClosestBustStop: closestBusStop.trim(),
+        id: generatedId 
+      };
+      
+      await addDoc(collection(db, 'users', uid, 'DeliveryAddress'), newAddress);
+      
+      // Update user profile default delivery address safely (creates user doc if missing)
+      await setDoc(doc(db, 'users', uid), {
+        DeliveryAddress: finalAddress, 
+        HouseNumber: houseNumber.trim(),
+        ClosestBustStop: closestBusStop.trim(), 
+        DeliveryAddressID: generatedId,
+        uid,
+      }, { merge: true });
+
       router.push('/profile/addresses');
-    } catch (err: any) {
-      setError('Failed to save address. Please try again.');
+    } catch (err) {
+      console.error('Error saving address:', err);
+      setError('Failed to save address. Please check your connection and try again.');
       setIsSubmitting(false);
     }
   };
 
-  if (loading || !firebaseUser || !isLoaded) {
+  if (loading || !firebaseUser) {
     return (
       <PageShell>
-        <div className="min-h-screen flex items-center justify-center" style={{ background: '#2B1B17' }}>
+        <div className="min-h-screen bg-[#FAF7F2] flex items-center justify-center" aria-live="polite" aria-busy="true">
           <LoadingSpinner />
         </div>
       </PageShell>
     );
   }
 
+  const effectiveAddress = (address || value).trim();
+
   return (
     <PageShell>
-      <div className="min-h-screen bg-[#2B1B17] flex flex-col pb-20 relative overflow-hidden">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(212,175,55,0.05),transparent_80%)] pointer-events-none" />
-
-        {/* ── Header ── */}
-        <div className="px-5 pt-28 md:pt-36 pb-6 relative z-10 max-w-4xl mx-auto w-full">
-          <Link href="/profile/addresses"
-            className="inline-flex items-center gap-2 mb-6 group transition-colors"
-            style={{ color: 'rgba(212,175,55,0.7)' }}
-            onMouseEnter={e => (e.currentTarget as HTMLAnchorElement).style.color = '#D4AF37'}
-            onMouseLeave={e => (e.currentTarget as HTMLAnchorElement).style.color = 'rgba(212,175,55,0.7)'}
-          >
-            <ArrowLeft size={15} />
-            <span className="text-[10px] font-bold tracking-[0.3em] uppercase">Back</span>
-          </Link>
-
-          <h1 className="font-serif text-3xl leading-tight mb-1 text-white">Add Address</h1>
-          <p className="text-sm" style={{ color: '#9A8878' }}>Search for your delivery address</p>
-        </div>
-
-        <div className="px-5 flex flex-col gap-6 relative z-10 max-w-4xl mx-auto w-full">
-
-          {/* Error */}
-          {error && (
-            <div className="flex items-start gap-3 px-4 py-3 rounded-xl"
-              style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.25)' }}
+      <div className="min-h-screen bg-[#FAF7F2] text-[#2D1508] flex flex-col pt-4 sm:pt-6 pb-20 sm:pb-28">
+        <div className="max-w-[1360px] mx-auto w-full px-4 sm:px-6 lg:px-8 flex flex-col gap-6 sm:gap-8">
+          
+          {/* ── 1. Breadcrumbs ── */}
+          <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-xs text-[#8A796F] font-medium">
+            <Link 
+              href="/" 
+              className="hover:text-[#733617] focus-visible:ring-2 focus-visible:ring-[#733617] focus-visible:outline-hidden rounded-xs transition-colors"
             >
-              <AlertCircle size={14} className="text-red-400 flex-shrink-0 mt-0.5" />
-              <p className="text-sm text-red-400 leading-snug">{error}</p>
+              Home
+            </Link>
+            <span className="text-[#B5A599]" aria-hidden="true">&gt;</span>
+            <Link 
+              href="/profile" 
+              className="hover:text-[#733617] focus-visible:ring-2 focus-visible:ring-[#733617] focus-visible:outline-hidden rounded-xs transition-colors"
+            >
+              My Account
+            </Link>
+            <span className="text-[#B5A599]" aria-hidden="true">&gt;</span>
+            <Link 
+              href="/profile/addresses" 
+              className="hover:text-[#733617] focus-visible:ring-2 focus-visible:ring-[#733617] focus-visible:outline-hidden rounded-xs transition-colors"
+            >
+              Saved Addresses
+            </Link>
+            <span className="text-[#B5A599]" aria-hidden="true">&gt;</span>
+            <span className="text-[#733617] font-semibold" aria-current="page">Add Address</span>
+          </nav>
+
+          {/* ── 2. Top Header Banner Card ── */}
+          <header className="relative w-full overflow-hidden bg-white border border-[#EFE6DC] rounded-2xl p-5 sm:p-7 shadow-xs">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 relative z-10">
+              <div className="flex items-center gap-4">
+                <Link
+                  href="/profile/addresses"
+                  aria-label="Back to Saved Addresses"
+                  className="w-10 h-10 rounded-full bg-[#FAF7F2] border border-[#EFE6DC] flex items-center justify-center hover:bg-white text-[#733617] transition-all shadow-xs shrink-0 focus-visible:ring-2 focus-visible:ring-[#733617] focus-visible:outline-hidden"
+                >
+                  <ArrowLeft size={18} aria-hidden="true" />
+                </Link>
+                <div>
+                  <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#FAF7F2] border border-[#EFE6DC] text-[10px] font-bold uppercase tracking-[0.15em] text-[#733617] mb-1.5">
+                    <Sparkles size={11} className="text-[#C88A2C]" aria-hidden="true" />
+                    <span>Falguni Parivar • નવું સરનામું</span>
+                  </div>
+                  <h1 className="font-serif text-2xl sm:text-3xl font-bold text-[#2D1508] tracking-tight">
+                    Add New Delivery Address
+                  </h1>
+                  <p className="text-xs sm:text-sm text-[#65544A] mt-1 leading-relaxed">
+                    Enter your doorstep address details for prompt sweets &amp; snacks deliveries.
+                  </p>
+                </div>
+              </div>
+
+              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#FAF7F2] border border-[#EFE6DC] text-xs text-[#65544A] self-start sm:self-auto">
+                <ShieldCheck size={14} className="text-[#733617]" aria-hidden="true" />
+                <span>Encrypted &amp; Secure Delivery Info</span>
+              </div>
+            </div>
+          </header>
+
+          {/* ── Alerts ── */}
+          {error && (
+            <div 
+              role="alert" 
+              className="flex items-start gap-2.5 p-4 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-medium"
+            >
+              <AlertCircle size={16} className="text-red-600 shrink-0 mt-0.5" aria-hidden="true" />
+              <span>{error}</span>
             </div>
           )}
 
-          {/* ── Search ── */}
-          <div className="relative z-50">
-            <div className="relative flex items-center gap-2">
-              <div className="relative flex-1">
-                <input
-                  value={value}
-                  onChange={e => handleInputChange(e.target.value)}
-                  disabled={!isLoaded}
-                  placeholder="Search area, street or landmark…"
-                  className="w-full text-sm text-white outline-none transition-all placeholder:text-white/30 shadow-lg"
-                  style={{
-                    background: 'rgba(255,255,255,0.07)',
-                    border: '1px solid rgba(212,175,55,0.3)',
-                    borderRadius: 16,
-                    padding: '14px 14px 14px 42px',
-                  }}
-                  onFocus={e => (e.target as HTMLInputElement).style.borderColor = 'rgba(212,175,55,0.7)'}
-                  onBlur={e => (e.target as HTMLInputElement).style.borderColor = 'rgba(212,175,55,0.3)'}
-                />
-                <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none text-[#D4AF37]" />
+          {successInfo && (
+            <div 
+              role="status" 
+              className="flex items-center justify-between p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-medium"
+            >
+              <div className="flex items-center gap-2">
+                <CheckCircle2 size={16} className="text-emerald-600 shrink-0" aria-hidden="true" />
+                <span>{successInfo}</span>
               </div>
-
-              {/* Locate Me -- one-shot reverse geocode, no live map needed */}
-              <button
-                type="button"
-                onClick={handleLocateMe}
-                disabled={!isLoaded || isLoadingAddress}
-                className="w-12 h-12 flex-shrink-0 flex items-center justify-center rounded-xl text-black shadow-lg disabled:opacity-50"
-                style={{ background: 'linear-gradient(135deg, #D4AF37 0%, #F0CF6B 50%, #B8952A 100%)' }}
-                title="Use my current location"
+              <button 
+                type="button" 
+                onClick={() => setSuccessInfo('')}
+                aria-label="Dismiss message"
+                className="p-1 text-emerald-700 hover:bg-emerald-100 rounded-md"
               >
-                <LocateFixed size={18} />
+                <X size={14} />
               </button>
             </div>
+          )}
 
-            {suggestions.length > 0 && (
-              <ul className="absolute top-full left-0 right-0 mt-2 overflow-hidden rounded-2xl"
-                style={{
-                  background: 'rgba(50,30,18,0.98)',
-                  border: '1px solid rgba(255,255,255,0.08)',
-                  boxShadow: '0 16px 40px rgba(0,0,0,0.5)',
-                  maxHeight: 220,
-                  overflowY: 'auto',
-                }}
-              >
-                {suggestions.map(suggestion => (
-                  <li key={suggestion.placePrediction!.placeId} onClick={() => handleSelect(suggestion)}
-                    className="flex items-start gap-3 cursor-pointer transition-all px-4 py-3.5"
-                    style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}
-                    onMouseEnter={e => (e.currentTarget as HTMLLIElement).style.background = 'rgba(212,175,55,0.07)'}
-                    onMouseLeave={e => (e.currentTarget as HTMLLIElement).style.background = 'transparent'}
+          {/* ── 3. Main Form Grid ── */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+            
+            {/* ── LEFT 2 COLUMNS: Form ── */}
+            <main className="lg:col-span-2 flex flex-col gap-6">
+              
+              {/* Step 1: Area Search & GPS */}
+              <section className="bg-white border border-[#EFE6DC] rounded-2xl p-6 shadow-xs relative">
+                <div className="flex items-center justify-between mb-4 pb-3 border-b border-[#FAF7F2]">
+                  <div className="flex items-center gap-2">
+                    <div className="w-6 h-6 rounded-full bg-[#FAF7F2] border border-[#EFE6DC] text-[#733617] flex items-center justify-center text-[11px] font-bold">
+                      1
+                    </div>
+                    <h2 className="font-serif font-bold text-base text-[#2D1508]">
+                      Search Area, Society or Street
+                    </h2>
+                  </div>
+                  <span className="text-[11px] text-[#733617] font-semibold">Step 1 of 2</span>
+                </div>
+
+                <div className="flex flex-col gap-3 relative">
+                  <label htmlFor="address-search-input" className="text-xs font-bold uppercase tracking-wider text-[#2D1508] flex items-center gap-1.5">
+                    <Search size={13} className="text-[#733617]" aria-hidden="true" />
+                    Area / Street / Society / City
+                  </label>
+
+                  <div className="relative flex items-center gap-2">
+                    <div className="relative flex-1">
+                      <input
+                        id="address-search-input"
+                        ref={inputRef}
+                        type="text"
+                        role="combobox"
+                        aria-autocomplete="list"
+                        aria-expanded={suggestions.length > 0}
+                        aria-controls="address-suggestions-list"
+                        value={value}
+                        onChange={e => handleInputChange(e.target.value)}
+                        onKeyDown={handleKeyDown}
+                        placeholder="Type area name (e.g. Navrangpura, Prahlad Nagar, Ambawadi...)"
+                        className="w-full text-xs sm:text-sm text-[#2D1508] bg-[#FAF7F2] border border-[#EFE6DC] focus:border-[#733617] focus:bg-white rounded-xl py-3 pl-10 pr-4 outline-hidden transition-all placeholder:text-[#2D1508]/40 focus-visible:ring-2 focus-visible:ring-[#733617]"
+                      />
+                      <Search 
+                        size={16} 
+                        className="absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none text-[#733617]" 
+                        aria-hidden="true" 
+                      />
+                      {isSearching && (
+                        <div className="absolute right-3.5 top-1/2 -translate-y-1/2">
+                          <div className="w-4 h-4 border-2 border-[#733617]/30 border-t-[#733617] rounded-full animate-spin" />
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Locate Me Button */}
+                    <button
+                      type="button"
+                      onClick={handleLocateMe}
+                      disabled={isLoadingAddress}
+                      aria-label="Detect my current location with GPS"
+                      title="Detect my current location with GPS"
+                      className="h-11 px-3 sm:px-4 rounded-xl bg-[#FAF7F2] hover:bg-white border border-[#EFE6DC] text-[#733617] flex items-center gap-2 text-xs font-bold transition-all shrink-0 focus-visible:ring-2 focus-visible:ring-[#733617] focus-visible:outline-hidden disabled:opacity-50 cursor-pointer shadow-xs"
+                    >
+                      {isLoadingAddress ? (
+                        <div className="w-4 h-4 border-2 border-[#733617]/30 border-t-[#733617] rounded-full animate-spin" aria-hidden="true" />
+                      ) : (
+                        <LocateFixed size={16} aria-hidden="true" />
+                      )}
+                      <span className="hidden sm:inline">Use My Location</span>
+                    </button>
+                  </div>
+
+                  {/* Suggestions List */}
+                  {suggestions.length > 0 && (
+                    <ul 
+                      id="address-suggestions-list"
+                      role="listbox"
+                      aria-label="Address suggestions"
+                      className="absolute top-full left-0 right-0 mt-1 overflow-hidden rounded-xl bg-white border border-[#EFE6DC] shadow-xl max-h-60 overflow-y-auto z-50 divide-y divide-[#FAF7F2]"
+                    >
+                      {suggestions.map((s, index) => {
+                        const isFocused = index === focusedSuggestionIndex;
+                        return (
+                          <li
+                            id={`suggestion-${index}`}
+                            key={s.id || index}
+                            role="option"
+                            aria-selected={isFocused}
+                            onClick={() => handleSelectSuggestion(s)}
+                            className={`flex items-start gap-3 px-4 py-3 cursor-pointer text-left transition-colors ${
+                              isFocused ? 'bg-[#FAF7F2] text-[#733617]' : 'hover:bg-[#FAF7F2] text-[#2D1508]'
+                            }`}
+                          >
+                            <MapPin size={15} className="text-[#733617] shrink-0 mt-0.5" aria-hidden="true" />
+                            <div className="min-w-0">
+                              <p className="text-xs sm:text-sm font-semibold text-[#2D1508]">
+                                {s.title}
+                              </p>
+                              <p className="text-[11px] text-[#65544A] truncate">
+                                {s.fullAddress}
+                              </p>
+                            </div>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  )}
+
+                  {/* Selected Address Preview Card */}
+                  <div 
+                    aria-live="polite" 
+                    className={`mt-2 p-4 rounded-xl border transition-all ${
+                      effectiveAddress 
+                        ? 'bg-[#FAF7F2] border-[#EFE6DC]' 
+                        : 'bg-neutral-50/70 border-dashed border-[#EFE6DC]'
+                    }`}
                   >
-                    <MapPin size={14} className="flex-shrink-0 mt-0.5" style={{ color: 'rgba(212,175,55,0.5)' }} />
-                    <span className="text-sm leading-snug" style={{ color: '#F0EDE8' }}>
-                      {suggestion.placePrediction!.text.text}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
+                    <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-[#733617] mb-1">
+                      <MapPin size={12} aria-hidden="true" />
+                      <span>{effectiveAddress ? 'Selected Street / Area' : 'No Location Selected'}</span>
+                    </div>
+                    {effectiveAddress ? (
+                      <p className="text-xs sm:text-sm font-medium text-[#2D1508] leading-relaxed break-words">
+                        {effectiveAddress}
+                      </p>
+                    ) : (
+                      <p className="text-xs text-[#8A796F] italic">
+                        Type your area name above or tap "Use My Location" to detect it automatically.
+                      </p>
+                    )}
+                  </div>
 
-          {/* ── Pinned Address Display ── */}
-          <div className="rounded-2xl overflow-hidden p-4"
-            style={{
-              border: address ? '1px solid rgba(212,175,55,0.4)' : '1px solid rgba(255,255,255,0.1)',
-              background: address ? 'rgba(212,175,55,0.08)' : 'rgba(255,255,255,0.03)',
-            }}
-          >
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center gap-2">
-                <MapPin size={14} style={{ color: address ? '#D4AF37' : '#9A8878' }} />
-                <span className="text-[10px] font-bold tracking-[0.2em] uppercase" style={{ color: address ? '#D4AF37' : '#9A8878' }}>
-                  {address ? 'Delivery Location' : 'No address selected'}
-                </span>
+                </div>
+              </section>
+
+              {/* Step 2: House No & Landmark Details */}
+              <section className="bg-white border border-[#EFE6DC] rounded-2xl p-6 shadow-xs">
+                <div className="flex items-center justify-between mb-4 pb-3 border-b border-[#FAF7F2]">
+                  <div className="flex items-center gap-2">
+                    <div className="w-6 h-6 rounded-full bg-[#FAF7F2] border border-[#EFE6DC] text-[#733617] flex items-center justify-center text-[11px] font-bold">
+                      2
+                    </div>
+                    <h2 className="font-serif font-bold text-base text-[#2D1508]">
+                      House / Flat &amp; Landmark Details
+                    </h2>
+                  </div>
+                  <span className="text-[11px] text-[#733617] font-semibold">Step 2 of 2</span>
+                </div>
+
+                <form id="address-form" onSubmit={handleSubmit} className="flex flex-col gap-4">
+                  
+                  {/* House / Flat Number */}
+                  <div className="flex flex-col gap-1.5">
+                    <label htmlFor="house-number" className="text-xs font-bold uppercase tracking-wider text-[#2D1508] flex items-center gap-1.5">
+                      <Home size={13} className="text-[#733617]" aria-hidden="true" />
+                      <span>Flat / House No. / Floor / Society Name *</span>
+                    </label>
+                    <input
+                      id="house-number"
+                      type="text"
+                      required
+                      aria-required="true"
+                      value={houseNumber}
+                      onChange={e => setHouseNumber(e.target.value)}
+                      placeholder="e.g. B-402 Shivalik Residency, 4th Floor"
+                      className="w-full text-xs sm:text-sm text-[#2D1508] bg-[#FAF7F2] border border-[#EFE6DC] focus:border-[#733617] focus:bg-white rounded-xl py-3 px-4 outline-hidden transition-all placeholder:text-[#2D1508]/40 focus-visible:ring-2 focus-visible:ring-[#733617]"
+                    />
+                  </div>
+
+                  {/* Landmark / Closest Stop */}
+                  <div className="flex flex-col gap-1.5">
+                    <label htmlFor="landmark-input" className="text-xs font-bold uppercase tracking-wider text-[#2D1508] flex items-center gap-1.5">
+                      <Navigation size={13} className="text-[#733617]" aria-hidden="true" />
+                      <span>Landmark / Nearby Stop / Pincode</span>
+                    </label>
+                    <input
+                      id="landmark-input"
+                      type="text"
+                      value={closestBusStop}
+                      onChange={e => setClosestBusStop(e.target.value)}
+                      placeholder="e.g. Near Iscon Temple, Opp. BRTS Stop"
+                      className="w-full text-xs sm:text-sm text-[#2D1508] bg-[#FAF7F2] border border-[#EFE6DC] focus:border-[#733617] focus:bg-white rounded-xl py-3 px-4 outline-hidden transition-all placeholder:text-[#2D1508]/40 focus-visible:ring-2 focus-visible:ring-[#733617]"
+                    />
+                  </div>
+
+                  {/* Submit Button */}
+                  <button
+                    type="submit"
+                    disabled={isSubmitting || !effectiveAddress}
+                    aria-busy={isSubmitting}
+                    className="mt-2 w-full py-3.5 px-6 rounded-xl bg-[#733617] hover:bg-[#5A290F] text-white text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 shadow-xs transition-all disabled:opacity-50 cursor-pointer focus-visible:ring-2 focus-visible:ring-[#733617] focus-visible:ring-offset-2 focus-visible:outline-hidden"
+                  >
+                    {isSubmitting ? (
+                      <>
+                        <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" aria-hidden="true" />
+                        <span>Saving Delivery Address...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Check size={16} strokeWidth={2.5} aria-hidden="true" />
+                        <span>Save &amp; Set as Delivery Address</span>
+                      </>
+                    )}
+                  </button>
+
+                </form>
+              </section>
+
+            </main>
+
+            {/* ── RIGHT COLUMN: Assurance & Tips ── */}
+            <aside aria-label="Address tips" className="w-full lg:w-80 shrink-0 flex flex-col gap-4">
+              
+              <div className="bg-white border border-[#EFE6DC] rounded-2xl p-5 shadow-xs flex flex-col gap-3">
+                <div className="flex items-center gap-2.5 text-[#2D1508]">
+                  <div className="w-8 h-8 rounded-lg bg-[#FAF7F2] border border-[#EFE6DC] flex items-center justify-center text-[#733617]">
+                    <Home size={15} aria-hidden="true" />
+                  </div>
+                  <h3 className="font-serif font-bold text-sm">Accurate Address Tip</h3>
+                </div>
+                <p className="text-xs text-[#65544A] leading-relaxed">
+                  Adding your apartment or flat number along with a recognizable nearby landmark helps our delivery rider arrive swiftly without calling you for directions.
+                </p>
               </div>
-              {isLoadingAddress && <div className="w-3.5 h-3.5 rounded-full border-2 animate-spin border-[#D4AF37]/30 border-t-[#D4AF37]" />}
-            </div>
-            {address ? (
-              <p className="text-[15px] font-medium leading-relaxed text-[#F0EDE8]">{address}</p>
-            ) : (
-              <p className="text-sm italic text-[#9A8878]">Search above or tap the locate button to set your delivery address.</p>
-            )}
+
+              <div className="bg-[#F5EBE1]/60 border border-[#EFE6DC] rounded-2xl p-5 flex flex-col gap-3">
+                <div className="flex items-center gap-2 text-xs font-bold text-[#2D1508]">
+                  <Truck size={15} className="text-[#733617] shrink-0" aria-hidden="true" />
+                  <span>Doorstep Delivery Guaranteed</span>
+                </div>
+                <p className="text-[11px] text-[#65544A] leading-relaxed">
+                  We deliver fresh sweets &amp; snacks across Ahmedabad, Gujarat, and nationwide in tamper-evident sealed packaging.
+                </p>
+              </div>
+
+              <Link
+                href="/profile/addresses"
+                className="w-full py-3 px-4 rounded-xl bg-white border border-[#EFE6DC] hover:border-[#733617]/40 text-[#733617] text-xs font-bold uppercase tracking-wider text-center transition-all shadow-xs focus-visible:ring-2 focus-visible:ring-[#733617] focus-visible:outline-hidden"
+              >
+                Cancel &amp; Return
+              </Link>
+
+            </aside>
+
           </div>
-
-          {/* ── Form Fields ── */}
-          <form id="address-form" onSubmit={handleSubmit} className="flex flex-col gap-4">
-            <FormField label="House / Flat No." value={houseNumber} onChange={setHouseNumber} placeholder="e.g. Apt 4B, House 23" required />
-            <FormField label="Zip Code / Landmark" value={closestBusStop} onChange={setClosestBusStop} placeholder="e.g. Near Bus Stand" required />
-          </form>
-
-          {/* ── Save Button ── */}
-          <button
-            form="address-form"
-            type="submit"
-            disabled={isSubmitting || !address}
-            className="w-full flex items-center justify-center gap-2.5 rounded-2xl font-bold tracking-[0.2em] uppercase text-sm transition-all disabled:opacity-40 mt-4"
-            style={{
-              padding: '16px 0',
-              background: 'linear-gradient(135deg, #D4AF37 0%, #F0CF6B 50%, #B8952A 100%)',
-              color: '#2B1B17',
-              boxShadow: (!isSubmitting && address) ? '0 8px 24px rgba(212,175,55,0.35)' : 'none',
-            }}
-          >
-            {isSubmitting ? (
-              <div className="w-5 h-5 rounded-full border-2 animate-spin border-black/20 border-t-black" />
-            ) : (
-              <><Check size={16} strokeWidth={2.5} /> Save Address</>
-            )}
-          </button>
 
         </div>
       </div>
     </PageShell>
-  );
-}
-
-/* ── Shared small components ── */
-
-function FieldLabel({ label }: { label: string }) {
-  return <p className="text-xs text-white/40 mb-1.5">{label}</p>;
-}
-
-function FormField({ label, value, onChange, placeholder, required }: {
-  label: string; value: string;
-  onChange: (v: string) => void; placeholder: string; required?: boolean;
-}) {
-  return (
-    <div>
-      <FieldLabel label={label} />
-      <input
-        type="text"
-        required={required}
-        value={value}
-        onChange={e => onChange(e.target.value)}
-        placeholder={placeholder}
-        className="w-full text-sm text-white outline-none transition-all placeholder:text-white/30"
-        style={{
-          background: 'rgba(255,255,255,0.07)',
-          border: '1px solid rgba(212,175,55,0.2)',
-          borderRadius: 14,
-          padding: '12px 14px',
-        }}
-        onFocus={e => (e.target as HTMLInputElement).style.borderColor = 'rgba(212,175,55,0.55)'}
-        onBlur={e => (e.target as HTMLInputElement).style.borderColor = 'rgba(212,175,55,0.2)'}
-      />
-    </div>
   );
 }

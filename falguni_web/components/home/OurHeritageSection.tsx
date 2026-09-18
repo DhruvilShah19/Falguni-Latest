@@ -1,111 +1,72 @@
 'use client';
-import React, { useState } from 'react';
-import SectionHeader from '@/components/ui/SectionHeader';
-
-// ─── Legacy Badge SVG ─────────────────────────────────────────────────────────
-const LegacyBadge = () => (
-  <svg viewBox="0 0 120 120" className="w-16 h-16 md:w-24 md:h-24 drop-shadow-[0_0_10px_rgba(212,175,55,0.4)]" fill="none">
-    <circle cx="60" cy="60" r="55" stroke="#D4AF37" strokeWidth="2" strokeDasharray="4 4" />
-    <circle cx="60" cy="60" r="48" stroke="#D4AF37" strokeWidth="1" opacity="0.5" />
-    <path d="M 60 20 L 70 45 L 95 45 L 75 60 L 85 85 L 60 70 L 35 85 L 45 60 L 25 45 L 50 45 Z" fill="#D4AF37" opacity="0.9" />
-    <text x="60" y="105" fill="#D4AF37" fontSize="10" fontWeight="bold" textAnchor="middle" letterSpacing="2">SINCE 1990</text>
-  </svg>
-);
-
-// ─── Uncle Vector SVG ─────────────────────────────────────────────────────────
-const UncleVector = () => (
-  <svg viewBox="0 0 200 200" className="w-16 h-16 md:w-24 md:h-24 drop-shadow-[0_0_10px_rgba(212,175,55,0.6)]" fill="none">
-    <circle cx="100" cy="100" r="95" stroke="#D4AF37" strokeWidth="2" strokeDasharray="6 4" opacity="0.6"/>
-    <path d="M70 110 C 70 145, 130 145, 130 110 C 130 80, 70 80, 70 110" stroke="#D4AF37" strokeWidth="3" strokeLinecap="round"/>
-    <path d="M55 85 C 50 60, 100 30, 120 40 C 140 50, 145 75, 135 90 C 120 70, 70 60, 55 85 Z" fill="#D4AF37" opacity="0.9"/>
-    <path d="M75 125 C 80 120, 95 120, 100 125 C 105 120, 120 120, 125 125 C 135 130, 140 115, 130 115 C 115 115, 105 110, 100 120 C 95 110, 85 115, 70 115 Z" fill="#D4AF37"/>
-    <path d="M80 105 Q 85 100 90 105" stroke="#D4AF37" strokeWidth="3" strokeLinecap="round"/>
-    <path d="M110 105 Q 115 100 120 105" stroke="#D4AF37" strokeWidth="3" strokeLinecap="round"/>
-  </svg>
-);
+import React from 'react';
+import Image from 'next/image';
+import Link from 'next/link';
 
 export default function OurHeritageSection() {
-  const [currentSlide, setCurrentSlide] = useState(0);
-
-  React.useEffect(() => {
-    const timer = setInterval(() => {
-      setCurrentSlide(prev => (prev === 0 ? 1 : 0));
-    }, 5000); // Auto slide every 5 seconds
-    return () => clearInterval(timer);
-  }, []);
-
   return (
-    <section className="mb-12 md:mb-24">
-      {/* 1. Same Heading Style */}
-      <SectionHeader title="Our Heritage" subtitle="Generations of Taste" />
+    <section id="our-story" className="py-12 md:py-20 bg-[#FAF7F2] relative overflow-hidden">
+      <div className="max-w-[1360px] mx-auto px-4 md:px-8">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
 
-      {/* 2. Side by Side View */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-0 max-w-[1400px] mx-auto px-4 md:px-8 lg:px-12">
-        
-        {/* LEFT COLUMN: Beautiful Parallax Image */}
-        <div 
-          className="relative rounded-t-2xl lg:rounded-l-3xl lg:rounded-tr-none overflow-hidden min-h-[160px] md:min-h-[250px] lg:min-h-[500px]"
-        >
-          <div 
-            className="absolute inset-0 bg-cover bg-center"
-            style={{ backgroundImage: 'url("https://images.unsplash.com/photo-1596040033229-a9821ebd058d?q=80&w=1000&auto=format&fit=crop")' }}
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent" />
-          <div className="absolute bottom-4 left-5 md:bottom-8 md:left-8">
-             <h3 className="text-white text-xl md:text-3xl font-serif drop-shadow-md">Falguni Gruh Udhyog</h3>
-             <p className="text-[#D4AF37] font-bold tracking-widest text-[9px] md:text-sm uppercase mt-1 md:mt-2">Ahmedabad, Gujarat</p>
-          </div>
-        </div>
+          {/* ── Left Column: Vintage Framed Portrait & Brass Snacks Bowls ── */}
+          <div className="lg:col-span-6 relative flex items-center justify-center">
+            <div className="relative w-full aspect-[4/3] rounded-3xl overflow-hidden shadow-xl border-4 border-white bg-[#F5EBE1] group">
+              {/* Authentic Heritage Photo */}
+              <Image
+                src="/onboarding/snacks.png"
+                alt="Falguni Gruh Udhyog Heritage"
+                fill
+                sizes="(max-width: 1024px) 100vw, 50vw"
+                className="object-cover sepia-[0.35] brightness-95 contrast-110 group-hover:scale-105 transition-transform duration-1000"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-[#2D1508]/60 via-transparent to-transparent pointer-events-none" />
 
-        {/* RIGHT COLUMN: The Story Slider */}
-        <div className="relative bg-[var(--color-surface)] border border-[var(--color-border)] rounded-b-2xl lg:rounded-r-3xl lg:rounded-bl-none p-5 md:p-12 flex flex-col justify-center min-h-[260px] md:min-h-[320px] lg:min-h-[500px] overflow-hidden">
-          
-          <div className="relative w-full h-full">
-            {/* SLIDE 1: Legacy Badge + Story Part 1 */}
-            <div 
-              className={`absolute inset-0 flex flex-col justify-center pr-2 md:pr-4 transition-all duration-700 ease-in-out ${
-                currentSlide === 0 ? 'opacity-100 z-10 translate-x-0' : 'opacity-0 z-0 -translate-x-8 pointer-events-none'
-              }`}
-            >
-               <div className="mb-3 md:mb-6"><LegacyBadge /></div>
-               <h4 className="text-lg md:text-2xl font-serif text-white mb-2 md:mb-4">A Legacy of Purity</h4>
-               <p className="text-[var(--color-fg-muted)] leading-snug md:leading-relaxed font-light text-xs md:text-lg">
-                 Since our humble beginnings in Ahmedabad, Falguni Gruh Udhyog has been a beloved name dedicated to bringing the authentic taste of tradition to every home. We craft our snacks with the finest handpicked ingredients and age-old family recipes.
-               </p>
-            </div>
-
-            {/* SLIDE 2: Uncle Vector + Story Part 2 (Owner's Touch) */}
-            <div 
-              className={`absolute inset-0 flex flex-col justify-center pr-2 md:pr-4 transition-all duration-700 ease-in-out ${
-                currentSlide === 1 ? 'opacity-100 z-10 translate-x-0' : 'opacity-0 z-0 translate-x-8 pointer-events-none'
-              }`}
-            >
-               <div className="mb-3 md:mb-6"><UncleVector /></div>
-               <h4 className="text-lg md:text-2xl font-serif text-white mb-2 md:mb-4">The Owner's Touch</h4>
-               <p className="text-[var(--color-fg-muted)] leading-snug md:leading-relaxed font-light text-xs md:text-lg">
-                 It takes more than just spices to create magic—it takes an uncompromising commitment to quality and a personal touch. Every batch is overseen to ensure it carries the true essence of our heritage.
-                 <br/><br className="hidden md:block" />
-                 <strong className="text-[#D4AF37] font-serif font-medium text-sm md:text-xl mt-1 md:mt-0 block">Experience the pure joy of 'Ghar ka Swad' in every bite.</strong>
-               </p>
+              {/* Framed Founders Inset Tag */}
+              <div className="absolute bottom-5 left-5 right-5 bg-white/95 backdrop-blur-md p-4 rounded-2xl border border-[#EFE6DC] shadow-md flex items-center justify-between">
+                <div>
+                  <p className="font-serif font-bold text-sm text-[#2D1508]">
+                    Falguni Gruh Udhyog
+                  </p>
+                  <p className="text-[11px] text-[#65544A]">
+                    Ahmedabad, Gujarat • Since Inception
+                  </p>
+                </div>
+                <span className="text-xs font-bold uppercase tracking-widest text-[#733617] px-3 py-1 bg-[#FAF7F2] rounded-full border border-[#EFE6DC]">
+                  Pure Tradition
+                </span>
+              </div>
             </div>
           </div>
 
-          {/* Slider Controls - Expanded click area and z-10 */}
-          <div className="absolute bottom-4 left-5 md:bottom-6 md:left-12 flex gap-2 md:gap-3 z-10">
-             <button 
-               onClick={() => setCurrentSlide(0)}
-               className="py-1 md:py-2 cursor-pointer"
-               aria-label="Go to slide 1"
-             >
-               <div className={`w-8 md:w-12 h-1 md:h-1.5 rounded-full transition-colors ${currentSlide === 0 ? 'bg-[#D4AF37]' : 'bg-[#D4AF37]/20'}`} />
-             </button>
-             <button 
-               onClick={() => setCurrentSlide(1)}
-               className="py-1 md:py-2 cursor-pointer"
-               aria-label="Go to slide 2"
-             >
-               <div className={`w-8 md:w-12 h-1 md:h-1.5 rounded-full transition-colors ${currentSlide === 1 ? 'bg-[#D4AF37]' : 'bg-[#D4AF37]/20'}`} />
-             </button>
+          {/* ── Right Column: The Story & CTA ── */}
+          <div className="lg:col-span-6 flex flex-col items-start justify-center relative">
+
+            {/* Traditional Grinder Watermark Icon */}
+            <div className="absolute -top-10 right-0 opacity-5 pointer-events-none text-9xl">
+              ⚙️
+            </div>
+
+            <h2 className="font-serif text-3xl sm:text-4xl lg:text-[40px] font-bold text-[#2D1508] leading-tight mb-6">
+              A Legacy of Purity
+            </h2>
+
+            <p className="text-[#5C4D44] text-sm md:text-base leading-relaxed mb-4">
+              Since our humble beginnings in Ahmedabad, Falguni Gruh Udhyog has been a beloved name dedicated to bringing the authentic taste of tradition to every home.
+            </p>
+
+            <p className="text-[#5C4D44] text-sm md:text-base leading-relaxed mb-8">
+              We use handpicked ingredients, age-old family recipes and personally oversee every batch to ensure the quality and purity you trust.
+            </p>
+
+            <Link
+              href="/our-story"
+              className="inline-flex items-center gap-2 px-7 py-3.5 rounded-lg bg-[#733617] text-white text-xs font-bold uppercase tracking-wider hover:bg-[#5A290F] shadow-sm hover:shadow-md transition-all group"
+            >
+              <span>DISCOVER OUR STORY</span>
+              <span className="group-hover:translate-x-1 transition-transform">→</span>
+            </Link>
+
           </div>
 
         </div>

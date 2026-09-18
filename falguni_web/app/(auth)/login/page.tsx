@@ -6,11 +6,6 @@ import { signInWithEmailAndPassword, GoogleAuthProvider, OAuthProvider, signInWi
 import { auth } from '@/lib/firebase';
 import { Mail, Lock, Eye, EyeOff, Apple } from 'lucide-react';
 import BackButton from '@/components/ui/BackButton';
-
-const kGold = 'var(--color-gold)';
-const kBgTop = 'var(--color-bg)';
-const kBgMid = 'var(--color-bg)';
-
 export default function LoginPage() {
   const router = useRouter();
   const [email, setEmail]       = useState('');
@@ -51,37 +46,33 @@ export default function LoginPage() {
   };
 
   return (
-    <div
-      className="min-h-dvh w-full flex items-center justify-center px-6 py-10"
-      style={{ background: `linear-gradient(180deg, ${kBgTop} 0%, ${kBgMid} 50%, ${kBgTop} 100%)` }}
-    >
+    <div className="min-h-dvh w-full flex items-center justify-center px-4 py-12 bg-[var(--color-bg)]">
       <div className="absolute top-6 left-4 md:left-6 z-10">
         <BackButton />
       </div>
-      <div className="w-full max-w-sm">
+      <div className="w-full max-w-md bg-white border border-[var(--color-border)] rounded-3xl p-8 md:p-10 shadow-sm">
 
         {/* Heading */}
-        <h1 className="text-3xl font-bold text-[var(--color-fg)] mb-2">Welcome Back</h1>
-        <p className="text-base mb-10" style={{ color: 'var(--color-fg-muted)' }}>
-          Sign in to continue
+        <h1 className="text-3xl font-serif font-bold text-[#2D1508] mb-1">Welcome Back</h1>
+        <p className="text-sm text-[var(--color-fg-muted)] mb-8">
+          Sign in to your Falguni account
         </p>
 
         {/* Error */}
         {error && (
-          <div className="mb-5 px-4 py-3 rounded-xl text-sm text-red-600 border border-red-500/30"
-            style={{ background: 'rgba(255,80,80,0.08)' }}>
+          <div className="mb-5 px-4 py-3 rounded-xl text-sm text-red-700 bg-red-50 border border-red-200">
             {error}
           </div>
         )}
 
-        <form onSubmit={handleLogin} className="flex flex-col gap-5">
+        <form onSubmit={handleLogin} className="flex flex-col gap-4">
           {/* Email */}
           <AppField
             type="email"
-            placeholder="Email"
+            placeholder="Email Address"
             value={email}
             onChange={setEmail}
-            icon={<Mail size={20} color={kGold} />}
+            icon={<Mail size={18} className="text-[#733617]" />}
           />
 
           {/* Password */}
@@ -91,23 +82,19 @@ export default function LoginPage() {
               placeholder="Password"
               value={password}
               onChange={setPassword}
-              icon={<Lock size={20} color={kGold} />}
+              icon={<Lock size={18} className="text-[#733617]" />}
               suffix={
-                <button type="button" onClick={() => setShowPass(v => !v)} tabIndex={-1}>
-                  {showPass
-                    ? <EyeOff size={18} style={{ color: 'var(--color-fg-muted)' }} />
-                    : <Eye    size={18} style={{ color: 'var(--color-fg-muted)' }} />
-                  }
+                <button type="button" onClick={() => setShowPass(v => !v)} tabIndex={-1} className="text-[var(--color-fg-muted)] hover:text-[#2D1508]">
+                  {showPass ? <EyeOff size={18} /> : <Eye size={18} />}
                 </button>
               }
             />
           </div>
 
           {/* Forgot password */}
-          <div className="flex justify-end -mt-2">
+          <div className="flex justify-end -mt-1">
             <Link href="/forgot-password"
-              className="text-sm font-semibold hover:opacity-80 transition"
-              style={{ color: kGold }}>
+              className="text-xs font-bold text-[#733617] hover:underline">
               Forgot Password?
             </Link>
           </div>
@@ -116,27 +103,25 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full h-[50px] rounded-xl font-bold text-base tracking-widest uppercase transition hover:opacity-90 active:scale-95 disabled:opacity-50"
-            style={{ background: kGold, color: kBgTop, letterSpacing: '0.1em' }}
+            className="w-full h-[48px] rounded-xl font-bold text-sm tracking-wider uppercase transition bg-[#733617] text-white hover:bg-[#5C2B12] active:scale-95 disabled:opacity-50 shadow-sm mt-2"
           >
             {loading ? 'Signing in...' : 'LOGIN'}
           </button>
         </form>
 
         {/* Divider */}
-        <div className="flex items-center gap-4 my-8">
-          <div className="flex-1 h-px" style={{ background: 'var(--color-border)' }} />
-          <span className="text-xs" style={{ color: 'var(--color-fg-muted)' }}>Or continue with</span>
-          <div className="flex-1 h-px" style={{ background: 'var(--color-border)' }} />
+        <div className="flex items-center gap-4 my-7">
+          <div className="flex-1 h-px bg-[var(--color-border)]" />
+          <span className="text-xs text-[var(--color-fg-muted)] font-medium">Or continue with</span>
+          <div className="flex-1 h-px bg-[var(--color-border)]" />
         </div>
 
-        <div className="flex justify-center gap-6">
+        <div className="flex justify-center gap-4">
           {/* Google */}
           <button
             onClick={handleGoogle}
             disabled={loading}
-            className="w-14 h-14 rounded-full flex items-center justify-center border transition hover:opacity-80 disabled:opacity-40"
-            style={{ background: 'var(--color-surface)', borderColor: 'var(--color-border)' }}
+            className="w-12 h-12 rounded-full flex items-center justify-center border border-[var(--color-border)] bg-[#FAF7F2] hover:bg-white hover:border-[#733617]/30 transition shadow-sm disabled:opacity-40"
           >
             <GoogleIcon />
           </button>
@@ -145,22 +130,20 @@ export default function LoginPage() {
           <button
             onClick={handleApple}
             disabled={loading}
-            className="w-14 h-14 rounded-full flex items-center justify-center border transition hover:opacity-80 disabled:opacity-40"
-            style={{ background: 'var(--color-surface)', borderColor: 'var(--color-border)' }}
+            className="w-12 h-12 rounded-full flex items-center justify-center border border-[var(--color-border)] bg-[#FAF7F2] hover:bg-white hover:border-[#733617]/30 transition shadow-sm disabled:opacity-40"
             title="Sign in with Apple"
           >
-            <Apple size={26} color="var(--color-fg)" />
+            <Apple size={22} className="text-[#2D1508]" />
           </button>
         </div>
 
         {/* Sign up */}
-        <div className="flex items-center justify-center gap-1 mt-10">
-          <span className="text-sm" style={{ color: 'var(--color-fg-muted)' }}>
+        <div className="flex items-center justify-center gap-1.5 mt-8">
+          <span className="text-sm text-[var(--color-fg-muted)]">
             Don&apos;t have an account?
           </span>
           <Link href="/signup"
-            className="text-sm font-bold hover:opacity-80 transition"
-            style={{ color: kGold }}>
+            className="text-sm font-bold text-[#733617] hover:underline">
             Sign Up
           </Link>
         </div>
@@ -168,8 +151,7 @@ export default function LoginPage() {
         {/* Guest */}
         <div className="flex justify-center mt-3">
           <Link href="/"
-            className="text-sm hover:opacity-70 transition"
-            style={{ color: 'var(--color-fg-muted)' }}>
+            className="text-xs text-[var(--color-fg-muted)] hover:text-[#2D1508] transition">
             Continue as Guest
           </Link>
         </div>
@@ -199,15 +181,7 @@ function AppField({
         onChange={e => onChange(e.target.value)}
         placeholder={placeholder}
         required
-        className="w-full h-[54px] pl-12 pr-12 rounded-xl text-[var(--color-fg)] text-sm outline-none transition-all placeholder:text-white/30"
-        style={{
-          background: 'rgba(255,255,255,0.07)',
-          border: '1px solid rgba(255,255,255,0.12)',
-          color: 'var(--color-fg)',
-        }}
-        onFocus={e => { e.currentTarget.style.borderColor = 'var(--color-gold)'; }}
-        onBlur={e  => { e.currentTarget.style.borderColor = 'var(--color-border)'; }}
-        // Placeholder color via inline CSS var trick not possible — handled globally below
+        className="w-full h-[50px] pl-11 pr-11 rounded-xl text-[#2D1508] text-sm outline-none transition-all placeholder:[var(--color-fg-muted)]/50 bg-[#FAF7F2] border border-[var(--color-border)] focus:border-[#733617] focus:bg-white"
       />
       {suffix && (
         <span className="absolute right-4 flex items-center">{suffix}</span>

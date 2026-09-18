@@ -19,6 +19,10 @@ service cloud.firestore {
       return isSignedIn() && request.auth.uid == uid;
     }
 
+    function isAdmin() {
+      return isSignedIn() && request.auth.token.email == 'falgunigruhudhyog.sales@gmail.com';
+    }
+
     // For Orders: the userId can be stored under three different field names
     // (web vs Flutter app variations). Ownership is satisfied if ANY matches.
     function isOrderOwner() {
@@ -31,6 +35,8 @@ service cloud.firestore {
 
     // ── Orders ──────────────────────────────────────────────────────────────
     match /Orders/{orderId} {
+      // Store admin has full control over orders.
+      allow read, write: if isAdmin();
 
       // Anyone authenticated can read their own orders.
       allow read: if isSignedIn() && (
@@ -68,41 +74,97 @@ service cloud.firestore {
 
     // ── Users ───────────────────────────────────────────────────────────────
     match /users/{userId} {
-      // Users can only read/write their own document.
-      allow read, write: if isOwner(userId);
+      // Users can only read/write their own document; Store admin has full management access.
+      allow read, write: if isOwner(userId) || isAdmin();
 
-      // Subcollections (Cart, DeliveryAddress, Recent Purchased Products, etc.)
+      // Subcollections (Cart, DeliveryAddress, Notifications, etc.)
       match /{subcollection}/{docId} {
-        allow read, write: if isOwner(userId);
+        allow read, write: if isOwner(userId) || isAdmin();
       }
     }
 
-    // ── Public catalogue — read-only for all, no writes from clients ────────
+    // ── Admin-Only Collections ─────────────────────────────────────────────
+    match /{adminCollection}/{docId} {
+      allow read, write: if isAdmin() && adminCollection in [
+        'Bulk Email',
+        'Push Broadcasts',
+        'Email Settings'
+      ];
+    }
+
+    // ── Public catalogue — read-only for all, writes from admin only ────────
     match /Products/{docId} {
       allow read: if true;
-      allow write: if false;
+      allow write: if isAdmin();
+
+      match /Ratings/{ratingId} {
+        allow read: if true;
+        allow write: if isSignedIn();
+      }
     }
 
     match /Categories/{docId} {
       allow read: if true;
-      allow write: if false;
+      allow write: if isAdmin();
+    }
+
+    // ── Courier Consignments ────────────────────────────────────────────────
+    match /Courier/{courierId} {
+      allow read, write: if isAdmin();
+      allow read: if isSignedIn() && (
+        resource.data.userUID == request.auth.uid ||
+        resource.data.userId  == request.auth.uid
+      );
+      allow create: if isSignedIn() && (
+        request.resource.data.userUID == request.auth.uid ||
+        request.resource.data.userId  == request.auth.uid
+      );
+      allow update, delete: if false;
     }
 
     match /{flashCollection}/{docId} {
       // Allow Flash Sales Products and similar read-only catalogue collections.
-      allow read: if flashCollection in ['Flash Sales Products', 'Banners', 'Notifications Settings', 'Push notification Settings', 'Delivery Fee'];
-      allow write: if false;
+      allow read: if flashCollection in [
+        'Flash Sales Products',
+        'Banners',
+        'Notifications Settings',
+        'Push notification Settings',
+        'Delivery Fee',
+        'Store Settings',
+        'Coupon System',
+        'Referral System',
+        'Courier System',
+        'Pickup Addresses',
+        'Currency Settings',
+        'Sub Categories',
+        'Sub categories collections',
+        'Sub Categories Collections',
+        'Markets'
+      ];
+      allow write: if isAdmin();
+    }
+
+    match /Feeds/{docId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+
+    match /Coupons/{docId} {
+      // Coupons: can read to view offers and validate promo codes, write by admin.
+      allow read: if true;
+      allow write: if isAdmin();
     }
 
     match /Coupon/{docId} {
-      // Coupons: authenticated users can read (to validate), not write.
-      allow read: if isSignedIn();
-      allow write: if false;
+      // Legacy coupons collection compatibility
+      allow read: if true;
+      allow write: if isAdmin();
     }
 
-    // ── Deny everything else by default ────────────────────────────────────
+    // ── Fallback: Store admin has access to all collections; deny unauthenticated/non-admin access ──
     match /{document=**} {
-      allow read, write: if false;
+      allow read, write: if isAdmin();
     }
   }
 }

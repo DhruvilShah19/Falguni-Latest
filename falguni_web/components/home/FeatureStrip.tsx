@@ -1,32 +1,54 @@
 'use client';
+import { ChefHat, Zap, ShieldCheck, Truck } from 'lucide-react';
+
 const FEATURES = [
-  { icon: '🚚', title: 'Free Delivery',    desc: 'On qualifying orders' },
-  { icon: '🏡', title: 'Homemade Quality', desc: 'Crafted fresh daily'  },
-  { icon: '⚡', title: 'Quick Dispatch',   desc: 'Same-day delivery'    },
-  { icon: '🔒', title: 'Secure Payments',  desc: 'UPI, cards & COD'     },
+  {
+    icon: ChefHat,
+    title: 'Homemade Quality',
+    desc: 'Crafted fresh daily with traditional recipes',
+  },
+  {
+    icon: Zap,
+    title: 'Quick Dispatch',
+    desc: 'Orders dispatched the same day',
+  },
+  {
+    icon: ShieldCheck,
+    title: 'Secure Payments',
+    desc: 'UPI, Cards, Netbanking & COD available',
+  },
+  {
+    icon: Truck,
+    title: 'Free Delivery',
+    desc: 'On qualifying orders across India',
+  },
 ];
 
 export default function FeatureStrip() {
   return (
-    <div
-      className="grid grid-cols-2 md:grid-cols-4 gap-px mx-4 md:mx-8 lg:mx-12 mb-10 md:mb-14 mt-6 md:mt-8 rounded-xl md:rounded-2xl overflow-hidden"
-      style={{ background: 'rgba(212,175,55,0.08)', border: '1px solid rgba(212,175,55,0.12)' }}
-    >
-      {FEATURES.map(({ icon, title, desc }) => (
-        <div
-          key={title}
-          className="flex flex-col md:flex-row items-center md:items-start text-center md:text-left gap-2 md:gap-3 px-3 py-4 md:px-5 md:py-4 transition-colors"
-          style={{ background: 'var(--color-surface)' }}
-          onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.background = 'rgba(212,175,55,0.08)'; }}
-          onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.background = 'var(--color-surface)'; }}
-        >
-          <span className="text-xl md:text-2xl animate-float flex-shrink-0">{icon}</span>
-          <div>
-            <p className="text-[11px] md:text-sm font-bold leading-tight" style={{ color: 'var(--color-fg)' }}>{title}</p>
-            <p className="text-[9px] md:text-xs mt-0.5" style={{ color: 'var(--color-fg-muted)' }}>{desc}</p>
-          </div>
+    <section className="py-8 md:py-10 bg-[#FAF7F2]">
+      <div className="max-w-[1360px] mx-auto px-4 md:px-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8">
+          {FEATURES.map(({ icon: Icon, title, desc }) => (
+            <div
+              key={title}
+              className="flex items-center gap-4 p-4 rounded-2xl bg-white/60 border border-[#EFE6DC]/80 shadow-2xs hover:bg-white hover:shadow-sm transition-all"
+            >
+              <div className="w-12 h-12 rounded-full bg-[#733617] text-white flex items-center justify-center shrink-0 shadow-sm">
+                <Icon size={22} className="stroke-[1.8]" />
+              </div>
+              <div>
+                <h4 className="text-sm font-bold text-[#2D1508] leading-snug">
+                  {title}
+                </h4>
+                <p className="text-xs text-[#65544A] mt-0.5 leading-snug">
+                  {desc}
+                </p>
+              </div>
+            </div>
+          ))}
         </div>
-      ))}
-    </div>
+      </div>
+    </section>
   );
 }

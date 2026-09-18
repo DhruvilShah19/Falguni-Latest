@@ -22,10 +22,11 @@ export async function getCachedAllProducts(): Promise<ProductsModel[]> {
   
   // Fetch from Firestore
   const data = await getProducts(10000);
+  const plainData = JSON.parse(JSON.stringify(data));
   
   // Update Cache
-  globalAny.productCache = { data, timestamp: now };
-  return data;
+  globalAny.productCache = { data: plainData, timestamp: now };
+  return plainData;
 }
 
 export async function getCachedFlashSales(): Promise<ProductsModel[]> {
@@ -35,6 +36,7 @@ export async function getCachedFlashSales(): Promise<ProductsModel[]> {
   }
   
   const data = await getFlashSaleProducts();
-  globalAny.flashCache = { data, timestamp: now };
-  return data;
+  const plainData = JSON.parse(JSON.stringify(data));
+  globalAny.flashCache = { data: plainData, timestamp: now };
+  return plainData;
 }

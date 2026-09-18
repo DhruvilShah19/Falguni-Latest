@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import PageShell from '@/components/layout/PageShell';
-import { ArrowLeft } from 'lucide-react';
+import { Scale, ShieldCheck } from 'lucide-react';
 import type { Metadata } from 'next';
 import { DISTANCE_TIERS, OUTSTATION_TIERS } from '@/lib/deliveryPricing';
 
@@ -98,137 +98,135 @@ const SECTIONS: Section[] = [
       ul([`Delivery Charge: ${inr(intercity.fee)}`, `Free Delivery on orders above ${inr(intercity.freeAbove)}`]),
       p(`Interstate Delivery (${intercity.maxDistanceKm}–${interstate.maxDistanceKm} km)`),
       ul([`Delivery Charge: ${inr(interstate.fee)}`, `Free Delivery on orders above ${inr(interstate.freeAbove)}`]),
-      p(`Gujarat Outstation (More than ${interstate.maxDistanceKm} km within Gujarat)`),
-      ul([`Delivery Charge: ${inr(gujarat.feePerKg)} per kg`, `Free Delivery on orders above ${inr(gujarat.freeAbove)}`]),
-      p('PAN India Delivery'),
-      ul([`Delivery Charge: ${inr(panIndia.feePerKg)} per kg`, `Free Delivery on orders above ${inr(panIndia.freeAbove)}`]),
-      p('Delivery charges, distance calculations and eligibility for free delivery are determined solely by Falguni Gruh Udhyog. See our Delivery Charges page for the full breakdown and worked examples.'),
+      p('Regional Delivery (Across Gujarat)'),
+      ul([
+        `Delivery Charge: ${inr(gujarat.feePerKg)} per kg`,
+        `Free Delivery on orders above ${inr(gujarat.freeAbove)}`,
+      ]),
+      p('Pan-India Interstate Delivery (Rest of India)'),
+      ul([
+        `Delivery Charge: ${inr(panIndia.feePerKg)} per kg`,
+        `Free Delivery on orders above ${inr(panIndia.freeAbove)}`,
+      ]),
+      p('Estimated Delivery Times'),
+      ul(['Ahmedabad: Same day or next day', 'Gujarat: 1 to 3 business days', 'Other States: 3 to 7 business days']),
+      p('Delivery timelines are estimates and may vary due to weather, traffic, courier delays, festivals or unforeseen events.'),
     ],
   },
   {
-    title: '9. Delivery Timeline',
+    title: '9. Delivery Address Accuracy',
     blocks: [
-      p('Estimated delivery times are indicative only.'),
-      p('Delays may occur due to:'),
-      ul(['Weather conditions', 'Traffic', 'Festivals', 'Government restrictions', 'Courier delays', 'Natural disasters', 'Operational constraints']),
-      p('Such delays shall not constitute grounds for cancellation, compensation or damages.'),
+      p('Customers must ensure the delivery address, PIN code and contact number provided are accurate and complete.'),
+      p('We are not liable for delayed or failed delivery caused by incorrect or incomplete customer information.'),
+      p('Additional re-delivery charges may apply if an order is returned due to customer unavailability or incorrect address details.'),
     ],
   },
   {
-    title: '10. Delivery Address',
+    title: '10. Perishable Products Notice',
     blocks: [
-      p('Customers are responsible for providing a complete and accurate delivery address.'),
-      p('If an incorrect or incomplete address results in delivery failure, additional delivery charges may apply for re-delivery.'),
+      p('Certain fresh foods, sweets and dairy items have limited shelf life.'),
+      p('Customers are advised to consume or store perishable products appropriately upon delivery.'),
+      p('We are not liable for product deterioration caused by delayed collection, inappropriate storage or failure to follow storage instructions after delivery.'),
     ],
   },
   {
-    title: '11. Customer Availability',
+    title: '11. Cancellation Policy',
     blocks: [
-      p('Customers or an authorised recipient must be available to receive the order.'),
-      p('If delivery cannot be completed because the recipient is unavailable, we reserve the right to:'),
-      ul(['Attempt re-delivery (subject to availability)', 'Charge additional delivery fees', 'Cancel the order if the product is perishable']),
+      p('Orders may be cancelled only before preparation or dispatch has begun.'),
+      p('Once an order is prepared, packed or dispatched, cancellation requests cannot be accepted.'),
+      p('Customised or festive special orders cannot be cancelled once production has commenced.'),
     ],
   },
   {
-    title: '12. Risk & Ownership',
+    title: '12. Return & Refund Policy',
     blocks: [
-      p('Ownership and risk in the products pass to the customer upon successful delivery.'),
-      p('Customers should inspect the order immediately upon receipt.'),
+      p('Due to the perishable and consumable nature of food products, returns are generally not accepted.'),
+      p('A return or refund request may be considered solely in the following cases:'),
+      ul(['Damaged packaging upon delivery', 'Spoiled or contaminated food delivered', 'Incorrect item delivered', 'Missing items from an order']),
+      p('Reporting Requirements'),
+      ul([
+        'Customers must report issues within 24 hours of delivery.',
+        'Clear photographs or video evidence of the outer package, shipping label and damaged or incorrect product must be provided.',
+      ]),
+      p('Refund Resolution'),
+      p('Upon successful verification, Falguni Gruh Udhyog may, at its discretion:'),
+      ul(['Issue a replacement', 'Provide store credit', 'Process a refund to the original payment method within 5 to 7 business days']),
     ],
   },
   {
-    title: '13. Order Cancellation',
+    title: '13. Intellectual Property',
     blocks: [
-      p('Orders may be cancelled only before dispatch.'),
-      p('Once dispatched, orders cannot be cancelled.'),
-      p('Freshly prepared, customised or perishable food products are generally not eligible for cancellation after processing has commenced.'),
+      p('All content on this website, including logos, trademarks, text, product descriptions, images, graphics and website design, is the exclusive intellectual property of Falguni Gruh Udhyog.'),
+      p('No part of this website may be copied, reproduced, distributed or used without prior written permission.'),
     ],
   },
   {
-    title: '14. Refunds & Replacements',
+    title: '14. User Conduct',
     blocks: [
-      p('Refunds or replacements may be considered only in cases such as:'),
-      ul(['Wrong product delivered', 'Damaged package received', 'Manufacturing defect', 'Missing items', 'Products damaged during transit']),
-      p('Requests must be reported within 24 hours of delivery and supported with photographs or videos where requested.'),
-      p('Refunds will not be provided merely because a customer dislikes the taste, texture, flavour or personal preference of a product.'),
+      p('Users agree not to:'),
+      ul([
+        'Use the website for unlawful purposes',
+        'Attempt unauthorised access to our systems',
+        'Transmit viruses, malware or harmful code',
+        'Place fraudulent or speculative orders',
+        'Interfere with website operations or other users’ access',
+      ]),
+      p('Violation of these terms may result in account termination and legal action.'),
     ],
   },
   {
-    title: '15. Shelf Life & Storage',
+    title: '15. Limitation of Liability',
     blocks: [
-      p('Customers must follow the storage instructions printed on the packaging.'),
-      p('Falguni Gruh Udhyog shall not be responsible for product deterioration due to improper storage after delivery.'),
+      p('To the maximum extent permitted by law, Falguni Gruh Udhyog shall not be liable for:'),
+      ul([
+        'Indirect, incidental or consequential damages',
+        'Courier delays beyond our reasonable control',
+        'Allergic reactions where ingredients were properly listed or standard',
+        'Loss of profits, business interruptions or data loss',
+      ]),
+      p('In all cases, our total liability shall not exceed the value of the order placed by the customer.'),
     ],
   },
   {
-    title: '16. Allergens',
+    title: '16. Force Majeure',
     blocks: [
-      p('Our products may contain or be processed in facilities handling:'),
-      ul(['Wheat', 'Gluten', 'Milk', 'Peanuts', 'Tree Nuts', 'Sesame', 'Soy', 'Mustard', 'Spices']),
-      p('Customers with allergies should review ingredient information carefully before purchase.'),
+      p('We shall not be liable for failure or delay in performing our obligations resulting from events beyond our control, including:'),
+      ul([
+        'Natural disasters',
+        'Floods, earthquakes or extreme weather',
+        'Strikes, lockouts or civil unrest',
+        'Government restrictions or regulations',
+        'Transport or courier disruptions',
+        'Telecommunication or internet outages',
+      ]),
     ],
   },
   {
-    title: '17. Customer Responsibilities',
+    title: '17. Modification of Terms',
     blocks: [
-      p('Customers agree not to:'),
-      ul(['Provide false information', 'Place fraudulent orders', 'Misuse promotional offers', 'Attempt unauthorised access to our systems', 'Copy website content without permission', 'Disrupt website operations']),
-      p('Violation of these terms may result in suspension of services or legal action.'),
+      p('Falguni Gruh Udhyog reserves the right to amend these Terms & Conditions at any time.'),
+      p('Updated terms will be posted on this page with a revised effective date.'),
+      p('Continued use of our website or services following any changes constitutes acceptance of the modified terms.'),
     ],
   },
   {
-    title: '18. Intellectual Property',
+    title: '18. Governing Law and Jurisdiction',
     blocks: [
-      p('All trademarks, logos, product names, packaging designs, website content, photographs, graphics and text are the exclusive property of Falguni Gruh Udhyog unless otherwise stated.'),
-      p('No content may be copied, reproduced, modified or distributed without prior written permission.'),
+      p('These Terms & Conditions shall be governed by and interpreted in accordance with the laws of India.'),
+      p('Any dispute arising out of or in connection with these terms shall be subject to the exclusive jurisdiction of the courts in Ahmedabad, Gujarat, India.'),
     ],
   },
   {
-    title: '19. Promotional Offers',
+    title: '19. Customer Support',
     blocks: [
-      p('Promotional offers are subject to specific terms and may be modified or withdrawn without prior notice.'),
-      p('Only one promotional offer may be applied per order unless otherwise specified.'),
-    ],
-  },
-  {
-    title: '20. Limitation of Liability',
-    blocks: [
-      p('To the maximum extent permitted by law, Falguni Gruh Udhyog shall not be liable for any indirect, incidental, consequential or special damages arising from the use of our website, products or services.'),
-      p('Our total liability, if any, shall not exceed the value of the product purchased.'),
-    ],
-  },
-  {
-    title: '21. Force Majeure',
-    blocks: [
-      p('We shall not be liable for delays or failure to perform due to circumstances beyond our reasonable control, including but not limited to:'),
-      ul(['Natural disasters', 'Floods', 'Fires', 'Pandemic', 'Government restrictions', 'Strikes', 'Power failures', 'Internet outages', 'Transportation disruptions']),
-    ],
-  },
-  {
-    title: '22. Governing Law',
-    blocks: [
-      p('These Terms & Conditions shall be governed by and construed in accordance with the laws of India.'),
-    ],
-  },
-  {
-    title: '23. Jurisdiction',
-    blocks: [
-      p('Any dispute arising out of or relating to these Terms & Conditions shall be subject to the exclusive jurisdiction of the competent courts located in Ahmedabad, Gujarat.'),
-    ],
-  },
-  {
-    title: '24. Amendments',
-    blocks: [
-      p('Falguni Gruh Udhyog reserves the right to modify these Terms & Conditions at any time.'),
-      p('Revised Terms shall become effective immediately upon publication on our website.'),
-      p('Continued use of our services constitutes acceptance of the revised Terms.'),
-    ],
-  },
-  {
-    title: '25. Contact Us',
-    blocks: [
-      p('For any questions regarding these Terms & Conditions, please contact:'),
-      ul(['Falguni Gruh Udhyog', 'Website: https://falgunigruhudhyog.in', 'Email: sales@falgunigruhudhyog.in', 'Phone: 9825382002']),
+      p('For any inquiries, feedback, or complaints regarding orders or services:'),
+      ul([
+        'Business Name: Falguni Gruh Udhyog',
+        'Address: Gf 1 to 4, Hirak avenue, opp. shakti enclave, vastrapur, Ahmedabad 380015',
+        'Phone: 9825382002',
+        'Email: sales@falgunigruhudhyog.in',
+        'Website: https://falgunigruhudhyog.in',
+      ]),
     ],
   },
 ];
@@ -236,10 +234,10 @@ const SECTIONS: Section[] = [
 function BlockRenderer({ block }: { block: Block }) {
   if (block.type === 'ul') {
     return (
-      <ul className="flex flex-col gap-1.5 my-3 pl-1">
+      <ul className="flex flex-col gap-2 my-3 pl-1">
         {block.items.map((item, i) => (
-          <li key={i} className="flex items-start gap-2 text-white/60 text-sm md:text-base leading-relaxed">
-            <span className="mt-2.5 w-1 h-1 rounded-full bg-[#D4AF37]/60 flex-shrink-0" />
+          <li key={i} className="flex items-start gap-2.5 text-[#2D1508] text-xs sm:text-sm leading-relaxed">
+            <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-[#733617] shrink-0" />
             <span>{item}</span>
           </li>
         ))}
@@ -247,7 +245,7 @@ function BlockRenderer({ block }: { block: Block }) {
     );
   }
   return (
-    <p className="text-white/60 text-sm md:text-base leading-relaxed my-2">
+    <p className="text-[#65544A] text-xs sm:text-sm leading-relaxed my-2">
       {block.text}
     </p>
   );
@@ -256,64 +254,118 @@ function BlockRenderer({ block }: { block: Block }) {
 export default function TermsAndConditionsPage() {
   return (
     <PageShell>
-      <div className="min-h-screen bg-[#2B1B17] flex flex-col pb-20 relative overflow-hidden">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(212,175,55,0.05),transparent_80%)] pointer-events-none" />
-
-        {/* Header Banner */}
-        <div className="relative w-full overflow-hidden bg-[#2B1B17] border-b border-[#D4AF37]/10 pt-28 pb-12 md:pt-36 md:pb-16 flex flex-col items-center justify-center mb-6 md:mb-12">
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(212,175,55,0.15),transparent_70%)] pointer-events-none" />
-
-          <div className="absolute top-28 md:top-36 left-4 md:left-8 z-50">
-            <Link
-              href="/"
-              className="inline-flex items-center gap-2 text-white/50 hover:text-[#D4AF37] transition-colors text-[9px] md:text-xs font-bold uppercase tracking-widest"
+      <div className="min-h-screen bg-[#FAF7F2] text-[#2D1508] flex flex-col pt-4 sm:pt-6 pb-20 sm:pb-28">
+        <div className="max-w-[1360px] mx-auto w-full px-4 sm:px-6 lg:px-8 flex flex-col gap-6 sm:gap-8">
+          
+          {/* ── 1. Left-aligned Breadcrumbs ── */}
+          <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-xs text-[#8A796F] font-medium">
+            <Link 
+              href="/" 
+              className="hover:text-[#733617] focus-visible:ring-2 focus-visible:ring-[#733617] focus-visible:outline-hidden rounded-xs transition-colors"
             >
-              <ArrowLeft size={14} /> Back
+              Home
+            </Link>
+            <span className="text-[#B5A599]" aria-hidden="true">&gt;</span>
+            <span className="text-[#8A796F]">Legal &amp; Compliance</span>
+            <span className="text-[#B5A599]" aria-hidden="true">&gt;</span>
+            <span className="text-[#733617] font-semibold" aria-current="page">Terms &amp; Conditions</span>
+          </nav>
+
+          {/* ── 2. Signature Header Banner Card ── */}
+          <header className="relative w-full overflow-hidden bg-white border border-[#EFE6DC] rounded-2xl p-6 sm:p-8 shadow-xs">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-10">
+              <div>
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#FAF7F2] border border-[#EFE6DC] mb-2.5 text-[#733617]">
+                  <Scale size={12} className="text-[#733617]" aria-hidden="true" />
+                  <span className="text-[10px] sm:text-xs font-bold uppercase tracking-[0.2em]">
+                    Falguni Legal &amp; Compliance • નિયમો અને શરતો
+                  </span>
+                </div>
+
+                <h1 className="font-serif text-2xl sm:text-3xl md:text-4xl font-bold text-[#2D1508] tracking-tight leading-tight mb-2">
+                  Terms &amp; Conditions
+                </h1>
+
+                <p className="text-xs sm:text-sm text-[#65544A] max-w-2xl leading-relaxed">
+                  The terms and conditions governing your orders, deliveries, payments, and use of Falguni Gruh Udhyog services.
+                </p>
+              </div>
+
+              {/* Version & Date Chip */}
+              <div className="flex items-center gap-3 bg-[#FAF7F2] border border-[#EFE6DC] rounded-2xl p-4 self-start md:self-auto shrink-0">
+                <ShieldCheck size={22} className="text-[#733617]" />
+                <div>
+                  <span className="block text-[10px] uppercase tracking-wider font-bold text-[#733617]">
+                    Official Terms Version 3.1
+                  </span>
+                  <span className="block text-xs font-semibold text-[#2D1508]">
+                    Updated: August 01, 2026
+                  </span>
+                </div>
+              </div>
+            </div>
+          </header>
+
+          {/* ── 3. Legal Quick-Switch Tabs ── */}
+          <div className="flex items-center gap-2 border-b border-[#EFE6DC] pb-3 overflow-x-auto scrollbar-hide">
+            <Link
+              href="/privacy-policy"
+              className="px-4 py-2 rounded-xl text-xs font-bold tracking-wider uppercase transition-all bg-white text-[#65544A] hover:bg-[#FAF7F2] border border-[#EFE6DC]"
+            >
+              Privacy Policy
+            </Link>
+            <Link
+              href="/terms-and-conditions"
+              className="px-4 py-2 rounded-xl text-xs font-bold tracking-wider uppercase transition-all bg-[#733617] text-white shadow-xs"
+            >
+              Terms &amp; Conditions
+            </Link>
+            <Link
+              href="/website-disclaimer"
+              className="px-4 py-2 rounded-xl text-xs font-bold tracking-wider uppercase transition-all bg-white text-[#65544A] hover:bg-[#FAF7F2] border border-[#EFE6DC]"
+            >
+              Website Disclaimer
+            </Link>
+            <Link
+              href="/account-deletion"
+              className="px-4 py-2 rounded-xl text-xs font-bold tracking-wider uppercase transition-all bg-white text-[#65544A] hover:bg-[#FAF7F2] border border-[#EFE6DC]"
+            >
+              Account Deletion
             </Link>
           </div>
 
-          <div className="relative z-10 text-center px-4 w-full mt-4 md:mt-0">
-            <div className="animate-fade-up text-[9px] md:text-xs tracking-[0.25em] md:tracking-[0.3em] font-bold text-[#D4AF37] mb-3 md:mb-4 flex items-center justify-center gap-2 md:gap-3">
-              <span className="w-6 md:w-8 h-px bg-[#D4AF37]/50" />
-              LEGAL
-              <span className="w-6 md:w-8 h-px bg-[#D4AF37]/50" />
+          {/* ── 4. Legal Document Content ── */}
+          <div className="max-w-4xl mx-auto w-full flex flex-col gap-6">
+            
+            {/* Preamble Card */}
+            <div className="bg-white border border-[#EFE6DC] rounded-2xl p-6 sm:p-8 shadow-xs">
+              <p className="text-[#2D1508] text-xs sm:text-sm leading-relaxed">
+                Welcome to Falguni Gruh Udhyog (&ldquo;Company&rdquo;, &ldquo;we&rdquo;, &ldquo;our&rdquo;, &ldquo;us&rdquo;). These Terms &amp; Conditions
+                govern your access to and use of our website, mobile application, WhatsApp ordering service, telephone
+                ordering service, retail stores and all related services.
+              </p>
+              <p className="text-[#2D1508] text-xs sm:text-sm leading-relaxed mt-3">
+                By accessing our website or placing an order with Falguni Gruh Udhyog, you agree to be legally bound by
+                these Terms &amp; Conditions.
+              </p>
             </div>
 
-            <h1 className="animate-fade-up font-serif text-2xl md:text-5xl lg:text-6xl text-white drop-shadow-[0_0_15px_rgba(212,175,55,0.2)] mb-2 md:mb-4" style={{ animationDelay: '100ms' }}>
-              Terms &amp; Conditions
-            </h1>
+            {/* Sections Accordion / Cards */}
+            <div className="bg-white border border-[#EFE6DC] rounded-2xl p-6 sm:p-8 shadow-xs flex flex-col gap-6">
+              {SECTIONS.map((section) => (
+                <section key={section.title} className="border-t border-[#EFE6DC] pt-5 first:border-t-0 first:pt-0">
+                  <h2 className="text-[#733617] font-serif font-bold text-sm sm:text-base tracking-wide mb-2.5 flex items-baseline gap-2">
+                    <span>{section.title}</span>
+                  </h2>
+                  {section.blocks.map((block, i) => (
+                    <BlockRenderer key={i} block={block} />
+                  ))}
+                </section>
+              ))}
+            </div>
 
-            <p className="animate-fade-up text-white/40 text-[11px] md:text-sm" style={{ animationDelay: '200ms' }}>
-              Effective Date: 01-04-2026 &nbsp;•&nbsp; Last Updated: 01-08-2026
-            </p>
-          </div>
-        </div>
-
-        <div className="max-w-3xl mx-auto w-full px-5 md:px-8 relative z-10">
-          <div className="bg-white/[0.02] border border-white/5 rounded-2xl p-5 md:p-8 mb-8">
-            <p className="text-white/70 text-sm md:text-base leading-relaxed">
-              Welcome to Falguni Gruh Udhyog (&ldquo;Company&rdquo;, &ldquo;we&rdquo;, &ldquo;our&rdquo;, &ldquo;us&rdquo;). These Terms &amp; Conditions
-              govern your access to and use of our website, mobile application, WhatsApp ordering service, telephone
-              ordering service, retail stores and all related services.
-            </p>
-            <p className="text-white/70 text-sm md:text-base leading-relaxed mt-3">
-              By accessing our website or placing an order with Falguni Gruh Udhyog, you agree to be legally bound by
-              these Terms &amp; Conditions.
-            </p>
           </div>
 
-          <div className="flex flex-col gap-8">
-            {SECTIONS.map((section) => (
-              <section key={section.title} className="border-t border-white/5 pt-6 first:border-t-0 first:pt-0">
-                <h2 className="text-[#D4AF37] font-bold text-base md:text-lg tracking-wide mb-2">
-                  {section.title}
-                </h2>
-                {section.blocks.map((block, i) => (
-                  <BlockRenderer key={i} block={block} />
-                ))}
-              </section>
-            ))}
-          </div>
         </div>
       </div>
     </PageShell>

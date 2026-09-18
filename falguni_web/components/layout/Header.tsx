@@ -2,196 +2,309 @@
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
 import { useState, useEffect } from 'react';
-import { Search, ShoppingCart, User, Menu, X, Heart, Package, LogOut, ChevronDown, MapPin, Home, LayoutGrid, ShoppingBag } from 'lucide-react';
+import { Search, ShoppingBag, User, Menu, X, Heart, Package, LogOut, ChevronDown, ChevronRight, Bell } from 'lucide-react';
 import { useCartStore } from '@/store/cartStore';
 import { useAuthStore } from '@/store/authStore';
+import { useStoreStatusStore } from '@/store/storeStatusStore';
 import { signOut } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import Image from 'next/image';
-import { getCoupons } from '@/lib/firestore';
-import type { CouponModel } from '@/types';
 
 export default function Header() {
-  const router   = useRouter();
+  const router = useRouter();
   const pathname = usePathname();
   const { totalQuantity } = useCartStore();
   const { firebaseUser, userDoc } = useAuthStore();
-  const [menuOpen, setMenuOpen]   = useState(false);
-  const [scrolled, setScrolled]   = useState(false);
-  const [userMenu, setUserMenu]   = useState(false);
-  const [promoCoupon, setPromoCoupon] = useState<CouponModel | null>(null);
+  const { isOpen, closedMessage, openTime, loading: storeStatusLoading } = useStoreStatusStore();
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+  const [userMenu, setUserMenu] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [shopDropdown, setShopDropdown] = useState(false);
 
   const cartCount = totalQuantity();
 
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 20);
+    const onScroll = () => setScrolled(window.scrollY > 15);
     window.addEventListener('scroll', onScroll, { passive: true });
-    
-    getCoupons(1).then(c => {
-      if (c && c.length > 0) setPromoCoupon(c[0]);
-    }).catch(e => console.error(e));
-
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
   // Close menus on route change
-  useEffect(() => { setMenuOpen(false); setUserMenu(false); }, [pathname]);
+  useEffect(() => {
+    setMenuOpen(false);
+    setUserMenu(false);
+    setShopDropdown(false);
+  }, [pathname]);
+
+  // Sync search input with URL on route change or when on search page
+  useEffect(() => {
+    if (pathname === '/search' && typeof window !== 'undefined') {
+      const q = new URLSearchParams(window.location.search).get('q') || '';
+      setSearchQuery(q);
+    }
+  }, [pathname]);
 
   const handleSignOut = async () => {
     await signOut(auth);
     router.push('/');
   };
 
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      router.push(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
+      setMenuOpen(false);
+    }
+  };
+
   const navLinks = [
-    { href: '/',            label: 'Home',       icon: Home },
-    { href: '/categories',  label: 'Categories', icon: LayoutGrid },
-    { href: '/products',    label: 'Products',   icon: ShoppingBag },
-    ...(firebaseUser ? [{ href: '/orders', label: 'Orders', icon: Package }] : []),
+    { href: '/products', label: 'Shop All', hasDropdown: true },
+    { href: '/categories', label: 'Categories' },
+    { href: '/collections', label: 'Collections' },
+    { href: '/products?sort=bestseller', label: 'Bestsellers' },
+    { href: '/categories/COMBOS%20%26%20GIFT%20PACKS', label: 'Combos' },
+    { href: '/coupon', label: 'Offers' },
+    { href: '/our-story', label: 'Our Story' },
+    { href: '/contact', label: 'Store & Contact' },
   ];
 
   return (
     <>
-      {/* ── Premium Announcement bar ── */}
-      <div
-        className="hidden md:flex items-center justify-center gap-6 py-2.5 text-[10px] md:text-xs font-bold tracking-[0.2em] text-[#D4AF37] uppercase bg-[#1a100e]"
-      >
-        <span className="flex items-center gap-2"><span className="text-white opacity-50">✨</span> Welcome to our brand new Web App!</span>
-        {promoCoupon && (
-          <>
-            <span className="opacity-20 text-white">|</span>
-            <span className="flex items-center gap-2"><span className="text-white opacity-50">🎉</span> Use code <span className="text-white bg-[#D4AF37]/20 px-2.5 py-0.5 rounded-md border border-[#D4AF37]/30 shadow-[0_0_10px_rgba(212,175,55,0.2)]">{promoCoupon.coupon}</span> {promoCoupon.percentage > 0 ? `for ${promoCoupon.percentage}% OFF` : ''}</span>
-          </>
-        )}
-      </div>
-
-      {/* ── Main header ── */}
-      <header
-        className={`sticky top-0 z-50 transition-all duration-300 border-b ${
-          scrolled 
-            ? 'bg-[#2B1B17]/95 backdrop-blur-xl border-[#D4AF37]/20 shadow-xl' 
-            : 'bg-[#2B1B17]/80 backdrop-blur-lg border-white/5'
-        }`}
-      >
-        <div className="max-w-[1400px] mx-auto px-4 md:px-5 lg:px-8 h-[72px] md:h-[100px] flex items-center justify-between gap-3 md:gap-8">
-
-          {/* ── Left Section: Logo & Global Address ── */}
-          <div className="flex items-center gap-4 md:gap-6 lg:gap-8 flex-shrink-0">
-            {/* Logo */}
-            {/* Logo */}
-            <Link href="/" className="flex-shrink-0 flex items-center group transition-transform hover:scale-105">
-              <div className="relative h-14 w-[92px] md:h-[80px] md:w-[130px] drop-shadow-[0_0_12px_rgba(212,175,55,0.5)]">
-                <Image 
-                  src="/falguni-logo-transparent.png" 
-                  alt="Falguni Gruh Udhyog" 
-                  fill 
-                  className="object-contain object-left filter brightness-125 contrast-110" 
-                />
-              </div>
+      {/* ── Top Announcement Bar ── */}
+      {!isOpen && !storeStatusLoading ? (
+        <div className="bg-[#78281F] text-amber-50 border-b border-[#5E1E17] py-2.5 px-4 text-xs font-medium tracking-wide transition-colors shadow-xs">
+          <div className="max-w-[1360px] mx-auto flex items-center justify-between gap-4 flex-wrap">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <span className="relative flex h-2.5 w-2.5 shrink-0">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-300 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-amber-400"></span>
+              </span>
+              <span className="font-bold text-amber-200 uppercase tracking-wider text-[11px] shrink-0">
+                Store Orders Paused
+              </span>
+              <span className="hidden sm:inline text-amber-100/60">•</span>
+              <span className="truncate text-amber-100 text-xs">
+                {closedMessage}
+              </span>
+            </div>
+            <div className="flex items-center gap-3 shrink-0 text-[11px] font-semibold">
+              <span className="text-amber-200 bg-black/25 px-2.5 py-0.5 rounded-full border border-amber-300/30">
+                Reopens at {openTime}
+              </span>
+              <span className="hidden md:inline text-amber-200/80">
+                Catalog &amp; Cart Active
+              </span>
+            </div>
+          </div>
+        </div>
+      ) : (
+        <div className="bg-[#F5EBE1] border-b border-[#EADDCF] text-[#653819] py-2 px-4 text-xs font-medium tracking-wide">
+          <div className="max-w-[1360px] mx-auto flex items-center justify-center md:justify-between gap-6 flex-wrap">
+            <Link href="/delivery-charges" className="hidden md:flex items-center gap-1.5 hover:underline">
+              <span>🚚</span>
+              <span>Free Delivery on qualifying orders</span>
             </Link>
-
-            {/* Global Delivery Address Indicator (Ultra-Minimalist PIN View) */}
-            <div className="flex items-center gap-3 md:gap-5">
-              <div className="h-6 w-px bg-white/10 hidden md:block" />
-              <Link
-                href={firebaseUser ? (userDoc?.DeliveryAddress ? "/profile/addresses" : "/profile/addresses/add") : "/login"}
-                className="flex flex-col justify-center group py-1"
-              >
-                <div className="flex items-center gap-1.5 md:gap-2">
-                  <MapPin size={16} className="w-3.5 h-3.5 md:w-4 md:h-4 text-[#D4AF37] shrink-0 group-hover:-translate-y-0.5 transition-transform" />
-                  <span className="text-xs md:text-base font-serif italic tracking-[0.1em] md:tracking-[0.15em] text-white group-hover:text-[#D4AF37] transition-colors drop-shadow-md">
-                    {(() => {
-                      if (!userDoc?.DeliveryAddress) return 'Set Location';
-                      const match = userDoc.DeliveryAddress.match(/\b\d{6}\b/);
-                      if (match) return match[0];
-                      const parts = userDoc.DeliveryAddress.split(',');
-                      return parts.length > 1 ? parts[parts.length - 2].trim() : 'Location Set';
-                    })()}
-                  </span>
-                  <ChevronDown size={14} className="w-3 h-3 md:w-3.5 md:h-3.5 text-[#D4AF37]/50 shrink-0 group-hover:translate-y-0.5 transition-transform ml-0.5 md:ml-1" />
-                </div>
-                {userDoc?.DeliveryAddress && (
-                  <span className="text-[6px] md:text-[8px] font-bold text-white/40 tracking-[0.2em] md:tracking-[0.25em] uppercase mt-0.5 ml-5 md:ml-6 group-hover:text-[#D4AF37]/80 transition-colors">
-                    Click to view full address
-                  </span>
-                )}
+            <Link href="/faq" className="hidden md:flex items-center gap-1.5 hover:underline">
+              <span>⚡</span>
+              <span>Quick Dispatch within 24h</span>
+            </Link>
+            <Link href="/faq" className="hidden md:flex items-center gap-1.5 hover:underline">
+              <span>🔒</span>
+              <span>100% Secure Payments</span>
+            </Link>
+            <div className="flex items-center gap-2">
+              <Link href="/our-story" className="flex items-center gap-1.5 hover:underline">
+                <span>🏠</span>
+                <span className="font-semibold">Homemade Quality</span>
+              </Link>
+              <span className="md:hidden opacity-40">|</span>
+              <Link href="/delivery-charges" className="md:hidden flex items-center gap-1 hover:underline">
+                <span>🚚</span>
+                <span>Fast Delivery</span>
               </Link>
             </div>
           </div>
+        </div>
+      )}
 
-          {/* ── Desktop nav links ── */}
-          <nav className="hidden lg:flex items-center gap-2">
-            {navLinks.map(({ href, label }) => {
-              const active = pathname === href;
+      {/* ── Main Header Navbar ── */}
+      <header
+        className={`sticky top-0 z-50 transition-all duration-300 ${
+          scrolled
+            ? 'bg-white/95 backdrop-blur-md shadow-[0_4px_20px_rgba(45,21,8,0.06)] border-b border-[#EFE6DC]'
+            : 'bg-white border-b border-[#EFE6DC]'
+        }`}
+      >
+        <div className="max-w-[1360px] mx-auto px-4 md:px-6 lg:px-8 h-[74px] md:h-[84px] flex items-center justify-between gap-4 md:gap-8">
+
+          {/* ── Left: Falguni Logo ── */}
+          <div className="flex items-center gap-3">
+            <Link href="/" className="flex items-center gap-2 group transition-transform hover:scale-[1.02]">
+              <div className="relative h-12 w-28 md:h-14 md:w-36">
+                <Image
+                  src="/falguni-logo-transparent.png"
+                  alt="Falguni Gruh Udhyog"
+                  fill
+                  priority
+                  sizes="(max-width: 768px) 112px, 144px"
+                  unoptimized
+                  className="object-contain object-left"
+                />
+              </div>
+            </Link>
+          </div>
+
+          {/* ── Center: Desktop Navigation Links ── */}
+          <nav className="hidden lg:flex items-center gap-6 xl:gap-8">
+            {navLinks.map((link) => {
+              if (link.hasDropdown) {
+                return (
+                  <div
+                    key={link.label}
+                    className="relative"
+                    onMouseEnter={() => setShopDropdown(true)}
+                    onMouseLeave={() => setShopDropdown(false)}
+                  >
+                    <Link
+                      href={link.href}
+                      className="flex items-center gap-1 text-[15px] font-semibold text-[#2D1508] hover:text-[#733617] transition-colors py-2"
+                    >
+                      {link.label}
+                      <ChevronDown size={14} className="text-[#65544A] group-hover:text-[#733617]" />
+                    </Link>
+
+                    {shopDropdown && (
+                      <div className="absolute top-full left-0 w-60 bg-white rounded-2xl shadow-xl border border-[#EFE6DC] py-2.5 z-50 animate-fade-up">
+                        <Link href="/products" className="flex items-center justify-between px-4 py-2 text-xs font-bold text-[#2D1508] hover:bg-[#FAF7F2] hover:text-[#733617] rounded-lg mx-1">
+                          <span>Browse All Products</span>
+                          <ChevronRight size={13} className="text-[#733617]" />
+                        </Link>
+                        <Link href="/categories" className="flex items-center justify-between px-4 py-2 text-xs font-bold text-[#2D1508] hover:bg-[#FAF7F2] hover:text-[#733617] rounded-lg mx-1">
+                          <span>All 20+ Categories</span>
+                          <ChevronRight size={13} className="text-[#733617]" />
+                        </Link>
+                        <div className="h-px bg-[#EFE6DC] my-1.5" />
+                        <div className="px-4 py-1 text-[10px] font-bold uppercase tracking-wider text-[#733617]/70">
+                          Popular Specialties
+                        </div>
+                        {[
+                          { label: 'Khakhra', href: '/categories/KHAKHRA' },
+                          { label: 'Namkeen', href: '/categories/NAMKEEN' },
+                          { label: 'Bhakhri', href: '/categories/BHAKHRI' },
+                          { label: 'Mukhwas', href: '/categories/MUKHWAS' },
+                          { label: 'Traditional Sweets', href: '/categories/SWEETS' },
+                          { label: 'Combos & Gift Packs', href: '/categories/COMBOS%20%26%20GIFT%20PACKS' },
+                          { label: 'Groundnut Oil Snacks', href: '/categories/GROUNDNUT%20OIL%20PRODUCTS' },
+                          { label: 'Pickles & Achar', href: '/categories/PICKLES%20%26%20ACHAR' },
+                        ].map(cat => (
+                          <Link
+                            key={cat.label}
+                            href={cat.href}
+                            className="block px-4 py-1.5 text-xs text-[#65544A] hover:bg-[#FAF7F2] hover:text-[#733617] rounded-lg mx-1 font-medium transition-colors"
+                          >
+                            {cat.label}
+                          </Link>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                );
+              }
+
               return (
                 <Link
-                  key={href}
-                  href={href}
-                  className={`px-4 py-2 rounded-xl text-sm font-bold tracking-wide transition-all ${
-                    active
-                      ? 'text-[#2B1B17] bg-[#D4AF37]'
-                      : 'text-white/70 hover:text-[#D4AF37] hover:bg-white/5'
-                  }`}
+                  key={link.label}
+                  href={link.href}
+                  className="text-[15px] font-semibold text-[#2D1508] hover:text-[#733617] transition-colors"
                 >
-                  {label}
+                  {link.label}
                 </Link>
               );
             })}
           </nav>
 
-          <div className="flex-1 hidden lg:flex" />
+          {/* ── Right: Search Pill & Action Icons ── */}
+          <div className="flex items-center gap-3 md:gap-5">
 
-          {/* ── Right icons ── */}
-          <div className="flex items-center gap-2">
+            {/* Luxury Expanding Search Input Pill */}
+            <form onSubmit={handleSearch} className="relative hidden md:flex items-center transition-all duration-300">
+              <div className="relative flex items-center w-[190px] xl:w-[240px] focus-within:w-[260px] xl:focus-within:w-[320px] transition-all duration-300">
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Search delicacies..."
+                  className="w-full bg-[#FAF7F2] border border-[#E5DCD3] rounded-full py-2 pl-4 pr-12 text-xs text-[#2D1508] placeholder-[#9E8E84] focus:outline-none focus:border-[#733617] focus:ring-2 focus:ring-[#733617]/10 focus:bg-white transition-all shadow-inner"
+                />
+                <div className="absolute right-2.5 flex items-center gap-1">
+                  {searchQuery && (
+                    <button
+                      type="button"
+                      onClick={() => setSearchQuery('')}
+                      aria-label="Clear search"
+                      className="p-0.5 text-[#9E8E84] hover:text-[#2D1508] transition-colors"
+                    >
+                      <X size={12} />
+                    </button>
+                  )}
+                  <button
+                    type="submit"
+                    aria-label="Search"
+                    className="p-0.5 text-[#733617] hover:scale-110 transition-transform"
+                  >
+                    <Search size={14} />
+                  </button>
+                </div>
+              </div>
+            </form>
 
-            {/* Search */}
+            {/* Mobile Search Icon Button */}
             <Link
               href="/search"
-              className="p-1.5 md:p-3 rounded-xl md:rounded-2xl text-white/70 hover:text-[#D4AF37] hover:bg-white/5 transition-all"
+              aria-label="Search"
+              className="md:hidden p-2 text-[#2D1508] hover:text-[#733617] transition-colors"
             >
-              <Search size={22} className="w-[18px] h-[18px] md:w-[22px] md:h-[22px]" />
+              <Search size={20} />
             </Link>
 
-            {/* Cart */}
-            <Link
-              href="/cart"
-              className="relative p-1.5 md:p-3 rounded-xl md:rounded-2xl text-white/70 hover:text-[#D4AF37] hover:bg-white/5 transition-all"
-            >
-              <ShoppingCart size={22} className="w-[18px] h-[18px] md:w-[22px] md:h-[22px]" />
-              {cartCount > 0 && (
-                <span
-                  className="absolute top-1 right-1 md:top-1.5 md:right-1.5 w-4 h-4 md:w-4.5 md:h-4.5 rounded-full text-[9px] md:text-[10px] font-black flex items-center justify-center animate-pulse-gold shadow-lg"
-                  style={{ background: '#D4AF37', color: '#1a100e' }}
-                >
-                  {cartCount > 9 ? '9+' : cartCount}
-                </span>
-              )}
-            </Link>
-
-            {/* User (desktop) */}
+            {/* Account Icon + Label */}
             {firebaseUser ? (
-              <div className="hidden md:block relative">
+              <div className="relative">
                 <button
                   onClick={() => setUserMenu(v => !v)}
-                  className="flex items-center gap-3 pl-2 pr-3 py-1.5 rounded-2xl text-white/80 hover:text-white hover:bg-white/5 transition-all border border-transparent hover:border-white/10"
+                  className="flex flex-col items-center justify-center group p-1 text-[#2D1508] hover:text-[#733617] transition-colors"
                 >
-                  <div className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-black bg-gradient-to-br from-[#D4AF37] to-[#B8952A] text-[#1a100e] shadow-md">
-                    {(userDoc?.fullname || firebaseUser.displayName || 'U').charAt(0).toUpperCase()}
-                  </div>
-                  <ChevronDown size={14} className={`transition-transform duration-300 ${userMenu ? 'rotate-180 text-[#D4AF37]' : 'text-white/40'}`} />
+                  <User size={20} className="stroke-[1.8] group-hover:scale-105 transition-transform" />
+                  <span className="text-[10px] font-medium mt-0.5 hidden sm:block">Account</span>
                 </button>
 
-                {/* Dropdown */}
                 {userMenu && (
-                  <div className="absolute right-0 top-full mt-3 w-56 rounded-2xl overflow-hidden shadow-2xl z-50 py-2 bg-[#1a100e] border border-[#D4AF37]/20 backdrop-blur-xl animate-fade-up">
-                    <DropItem href="/profile"   icon={<User    size={16} />} label="My Profile" />
-                    <DropItem href="/orders"    icon={<Package size={16} />} label="My Orders" />
-                    <DropItem href="/favorites" icon={<Heart   size={16} />} label="Favourites" />
-                    <div className="h-px mx-4 my-2 bg-white/10" />
+                  <div className="absolute right-0 top-full mt-2 w-52 rounded-2xl bg-white shadow-2xl border border-[#EFE6DC] py-2 z-50 animate-fade-up">
+                    <div className="px-4 py-2 border-b border-[#EFE6DC]">
+                      <p className="text-xs font-bold text-[#2D1508] truncate">
+                        {userDoc?.fullname || firebaseUser.displayName || 'Customer'}
+                      </p>
+                      <p className="text-[10px] text-[#65544A] truncate">{firebaseUser.email || firebaseUser.phoneNumber}</p>
+                    </div>
+                    <Link href="/profile" className="flex items-center gap-2.5 px-4 py-2 text-xs text-[#2D1508] hover:bg-[#FAF7F2] hover:text-[#733617]">
+                      <User size={14} /> My Profile
+                    </Link>
+                    <Link href="/orders" className="flex items-center gap-2.5 px-4 py-2 text-xs text-[#2D1508] hover:bg-[#FAF7F2] hover:text-[#733617]">
+                      <Package size={14} /> My Orders
+                    </Link>
+                    <Link href="/notifications" className="flex items-center gap-2.5 px-4 py-2 text-xs text-[#2D1508] hover:bg-[#FAF7F2] hover:text-[#733617]">
+                      <Bell size={14} /> Notifications
+                    </Link>
+                    <Link href="/favorites" className="flex items-center gap-2.5 px-4 py-2 text-xs text-[#2D1508] hover:bg-[#FAF7F2] hover:text-[#733617]">
+                      <Heart size={14} /> Wishlist
+                    </Link>
+                    <div className="h-px bg-[#EFE6DC] my-1" />
                     <button
                       onClick={handleSignOut}
-                      className="flex items-center gap-3 w-full px-5 py-3 text-sm font-bold text-red-400 hover:bg-red-500/10 hover:text-red-300 transition-colors"
+                      className="flex items-center gap-2.5 w-full px-4 py-2 text-xs font-semibold text-red-600 hover:bg-red-50 text-left"
                     >
-                      <LogOut size={16} /> Sign Out
+                      <LogOut size={14} /> Sign Out
                     </button>
                   </div>
                 )}
@@ -199,86 +312,249 @@ export default function Header() {
             ) : (
               <Link
                 href="/login"
-                className="hidden md:flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold tracking-wide transition-all btn-gold ml-2"
+                className="flex flex-col items-center justify-center group p-1 text-[#2D1508] hover:text-[#733617] transition-colors"
               >
-                Sign In
+                <User size={20} className="stroke-[1.8] group-hover:scale-105 transition-transform" />
+                <span className="text-[10px] font-medium mt-0.5 hidden sm:block">Account</span>
               </Link>
             )}
 
-            {/* Mobile hamburger */}
-            <button
-              onClick={() => setMenuOpen(v => !v)}
-              className="md:hidden p-1.5 rounded-lg text-white/70 hover:text-[#D4AF37] hover:bg-white/5 transition-all ml-0.5"
+            {/* Notifications Icon (When logged in) */}
+            {firebaseUser && (
+              <Link
+                href="/notifications"
+                className="flex flex-col items-center justify-center group p-1 text-[#2D1508] hover:text-[#733617] transition-colors"
+                title="Notifications"
+              >
+                <Bell size={20} className="stroke-[1.8] group-hover:scale-105 transition-transform" />
+                <span className="text-[10px] font-medium mt-0.5 hidden sm:block">Alerts</span>
+              </Link>
+            )}
+
+            {/* Wishlist Icon + Label */}
+            <Link
+              href="/favorites"
+              className="flex flex-col items-center justify-center group p-1 text-[#2D1508] hover:text-[#733617] transition-colors"
             >
-              {menuOpen ? <X size={20} /> : <Menu size={20} />}
-            </button>
-          </div>
-        </div>
+              <Heart size={20} className="stroke-[1.8] group-hover:scale-105 transition-transform" />
+              <span className="text-[10px] font-medium mt-0.5 hidden sm:block">Wishlist</span>
+            </Link>
 
-      </header>
-
-      {/* ── Full Screen Mobile Menu ── */}
-      {menuOpen && (
-        <div className="md:hidden fixed inset-0 top-[72px] z-40 bg-[#2B1B17] flex flex-col animate-fade-in overflow-hidden">
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(212,175,55,0.05),transparent_80%)] pointer-events-none" />
-
-          <div className="flex-1 px-6 py-8 flex flex-col gap-2 overflow-y-auto relative z-10 pb-8">
-              <Link href="/categories" className="py-4 border-b border-[#D4AF37]/10 text-base font-serif tracking-wide text-white hover:text-[#D4AF37] transition-all flex items-center justify-between group">
-                <span>Categories</span>
-                <LayoutGrid size={20} className="text-[#D4AF37]/40 group-hover:text-[#D4AF37] transition-colors" />
-              </Link>
-              <Link href="/products" className="py-4 border-b border-[#D4AF37]/10 text-base font-serif tracking-wide text-white hover:text-[#D4AF37] transition-all flex items-center justify-between group">
-                <span>Products</span>
-                <ShoppingBag size={20} className="text-[#D4AF37]/40 group-hover:text-[#D4AF37] transition-colors" />
-              </Link>
-
-              <div className="my-2" />
-
-              <Link href="/favorites" className="py-4 border-b border-[#D4AF37]/10 text-base font-serif tracking-wide text-white hover:text-[#D4AF37] transition-all flex items-center justify-between group">
-                <span>Favorites</span>
-                <Heart size={20} className="text-[#D4AF37]/40 group-hover:text-[#D4AF37] transition-colors" />
-              </Link>
-              <Link href="/orders" className="py-4 border-b border-[#D4AF37]/10 text-base font-serif tracking-wide text-white hover:text-[#D4AF37] transition-all flex items-center justify-between group">
-                <span>My Orders</span>
-                <Package size={20} className="text-[#D4AF37]/40 group-hover:text-[#D4AF37] transition-colors" />
-              </Link>
-              <Link href="/profile" className="py-4 border-b border-[#D4AF37]/10 text-base font-serif tracking-wide text-white hover:text-[#D4AF37] transition-all flex items-center justify-between group">
-                <span>My Profile</span>
-                <User size={20} className="text-[#D4AF37]/40 group-hover:text-[#D4AF37] transition-colors" />
-              </Link>
-
-              <div className="mt-6 mb-4">
-                {!firebaseUser ? (
-                  <Link href="/login" className="block text-center py-4 rounded-xl text-base font-bold bg-[#D4AF37] text-[#1A110D] shadow-[0_0_20px_rgba(212,175,55,0.2)] hover:bg-white transition-all">
-                    Sign In
-                  </Link>
-                ) : (
-                  <button onClick={handleSignOut} className="w-full py-4 rounded-xl text-base font-bold text-red-400 hover:bg-red-500/10 transition-all text-center border border-red-500/20">
-                    Sign Out
-                  </button>
+            {/* Cart Icon + Badge + Label */}
+            <Link
+              href="/cart"
+              className="relative flex flex-col items-center justify-center group p-1 text-[#2D1508] hover:text-[#733617] transition-colors"
+            >
+              <div className="relative">
+                <ShoppingBag size={20} className="stroke-[1.8] group-hover:scale-105 transition-transform" />
+                {cartCount > 0 && (
+                  <span className="absolute -top-1.5 -right-2 min-w-[18px] h-[18px] px-1 rounded-full text-[10px] font-bold flex items-center justify-center bg-[#733617] text-white shadow-sm">
+                    {cartCount > 99 ? '99+' : cartCount}
+                  </span>
                 )}
               </div>
+              <span className="text-[10px] font-medium mt-0.5 hidden sm:block">Cart</span>
+            </Link>
 
-              {/* Falguni Logo / Icon at the bottom */}
-              <div className="mt-auto pt-12 pb-4 flex items-center justify-start opacity-80 pointer-events-none">
-                <div className="w-12 h-12 rounded-full overflow-hidden flex items-center justify-center border border-[#D4AF37]/20 shadow-[0_0_15px_rgba(212,175,55,0.1)] bg-[#1A110D]">
-                  <Image src="/falguni-logo.png" alt="Falguni Watermark" width={48} height={48} className="object-cover w-full h-full scale-[1.15]" />
+            {/* Mobile Hamburger Toggle */}
+            <button
+              onClick={() => setMenuOpen(v => !v)}
+              className="lg:hidden p-2 text-[#2D1508] hover:text-[#733617] transition-colors"
+              aria-label="Toggle Navigation Menu"
+            >
+              {menuOpen ? <X size={24} /> : <Menu size={24} />}
+            </button>
+
+          </div>
+        </div>
+      </header>
+
+      {/* ── Mobile Navigation Drawer ── */}
+      {menuOpen && (
+        <div className="lg:hidden fixed inset-0 top-[110px] z-40 bg-[#FAF7F2] flex flex-col animate-fade-in overflow-y-auto pb-12">
+          <div className="p-5 flex flex-col gap-3">
+
+            {/* Mobile Search input */}
+            <form onSubmit={handleSearch} className="relative mb-3">
+              <div className="relative flex items-center">
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Search sweets, namkeen, khakhra..."
+                  className="w-full bg-white border border-[#E5DCD3] rounded-full py-2.5 pl-4 pr-16 text-sm text-[#2D1508] placeholder-[#9E8E84] focus:outline-none focus:border-[#733617] focus:ring-2 focus:ring-[#733617]/10 shadow-sm"
+                />
+                <div className="absolute right-3 flex items-center gap-1.5">
+                  {searchQuery && (
+                    <button
+                      type="button"
+                      onClick={() => setSearchQuery('')}
+                      aria-label="Clear search"
+                      className="p-1 text-[#9E8E84] hover:text-[#2D1508]"
+                    >
+                      <X size={16} />
+                    </button>
+                  )}
+                  <button
+                    type="submit"
+                    aria-label="Search"
+                    className="p-1 text-[#733617] hover:scale-105 transition-transform"
+                  >
+                    <Search size={18} />
+                  </button>
                 </div>
               </div>
+              <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-hide mt-2.5 px-1 pb-1">
+                {['Khakhra', 'Bhakhri', 'Mathiya', 'Namkeen'].map((term) => (
+                  <button
+                    key={term}
+                    type="button"
+                    onClick={() => {
+                      setSearchQuery(term);
+                      router.push(`/search?q=${encodeURIComponent(term)}`);
+                      setMenuOpen(false);
+                    }}
+                    className="shrink-0 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-white border border-[#E5DCD3] text-[#65544A] hover:text-[#733617] hover:border-[#733617]"
+                  >
+                    {term}
+                  </button>
+                ))}
+              </div>
+            </form>
 
+            <div className="bg-white rounded-2xl border border-[#EFE6DC] p-3 divide-y divide-[#EFE6DC]">
+              <Link 
+                href="/products" 
+                onClick={() => setMenuOpen(false)}
+                className="block py-3 px-3 text-base font-semibold text-[#2D1508] hover:text-[#733617]"
+              >
+                Shop All Products
+              </Link>
+              <Link 
+                href="/categories" 
+                onClick={() => setMenuOpen(false)}
+                className="block py-3 px-3 text-base font-semibold text-[#2D1508] hover:text-[#733617]"
+              >
+                Browse Categories
+              </Link>
+              <Link 
+                href="/products?sort=bestseller" 
+                onClick={() => setMenuOpen(false)}
+                className="block py-3 px-3 text-base font-semibold text-[#2D1508] hover:text-[#733617]"
+              >
+                Bestsellers
+              </Link>
+              <Link 
+                href="/categories/COMBOS%20%26%20GIFT%20PACKS" 
+                onClick={() => setMenuOpen(false)}
+                className="block py-3 px-3 text-base font-semibold text-[#2D1508] hover:text-[#733617]"
+              >
+                Combos & Gift Packs
+              </Link>
+              <Link 
+                href="/coupon" 
+                onClick={() => setMenuOpen(false)}
+                className="block py-3 px-3 text-base font-semibold text-[#733617] hover:text-[#5c2b12]"
+              >
+                Exclusive Offers & Coupons
+              </Link>
+              <Link 
+                href="/referral-page" 
+                onClick={() => setMenuOpen(false)}
+                className="block py-3 px-3 text-base font-semibold text-[#2D1508] hover:text-[#733617]"
+              >
+                Refer Friends & Earn ₹50
+              </Link>
+              <Link 
+                href="/our-story" 
+                onClick={() => setMenuOpen(false)}
+                className="block py-3 px-3 text-base font-semibold text-[#2D1508] hover:text-[#733617]"
+              >
+                Our Story & Heritage
+              </Link>
+              <Link 
+                href="/contact" 
+                onClick={() => setMenuOpen(false)}
+                className="block py-3 px-3 text-base font-semibold text-[#2D1508] hover:text-[#733617]"
+              >
+                Store Location & Contact
+              </Link>
+              <Link 
+                href="/faq" 
+                onClick={() => setMenuOpen(false)}
+                className="block py-3 px-3 text-base font-semibold text-[#2D1508] hover:text-[#733617]"
+              >
+                Help & FAQs
+              </Link>
+              <Link 
+                href="/delivery-charges" 
+                onClick={() => setMenuOpen(false)}
+                className="block py-3 px-3 text-base font-semibold text-[#2D1508] hover:text-[#733617]"
+              >
+                Delivery Charges &amp; Zones
+              </Link>
             </div>
-          </div>
-        )}
-    </>
-  );
-}
 
-function DropItem({ href, icon, label }: { href: string; icon: React.ReactNode; label: string }) {
-  return (
-    <Link href={href}
-      className="flex items-center gap-3 px-5 py-3 text-sm font-medium text-white/70 hover:text-[#D4AF37] hover:bg-white/5 transition-all">
-      <span className="text-white/40 group-hover:text-[#D4AF37] transition-colors">{icon}</span>
-      {label}
-    </Link>
+            <div className="bg-white rounded-2xl border border-[#EFE6DC] p-3 divide-y divide-[#EFE6DC]">
+              <Link 
+                href="/orders" 
+                onClick={() => setMenuOpen(false)}
+                className="flex items-center justify-between py-3 px-3 text-sm font-medium text-[#2D1508]"
+              >
+                <span>My Orders</span>
+                <Package size={18} className="text-[#733617]" />
+              </Link>
+              <Link 
+                href="/notifications" 
+                onClick={() => setMenuOpen(false)}
+                className="flex items-center justify-between py-3 px-3 text-sm font-medium text-[#2D1508]"
+              >
+                <span>Notifications</span>
+                <Bell size={18} className="text-[#733617]" />
+              </Link>
+              <Link 
+                href="/favorites" 
+                onClick={() => setMenuOpen(false)}
+                className="flex items-center justify-between py-3 px-3 text-sm font-medium text-[#2D1508]"
+              >
+                <span>Wishlist</span>
+                <Heart size={18} className="text-[#733617]" />
+              </Link>
+              <Link 
+                href="/profile" 
+                onClick={() => setMenuOpen(false)}
+                className="flex items-center justify-between py-3 px-3 text-sm font-medium text-[#2D1508]"
+              >
+                <span>Account Profile</span>
+                <User size={18} className="text-[#733617]" />
+              </Link>
+            </div>
+
+            <div className="mt-4">
+              {firebaseUser ? (
+                <button
+                  onClick={() => {
+                    setMenuOpen(false);
+                    handleSignOut();
+                  }}
+                  className="w-full py-3 text-center text-sm font-bold text-red-600 bg-white rounded-xl border border-red-200 hover:bg-red-50 transition-colors"
+                >
+                  Sign Out
+                </button>
+              ) : (
+                <Link
+                  href="/login"
+                  onClick={() => setMenuOpen(false)}
+                  className="block w-full py-3.5 text-center text-sm font-bold text-white bg-[#733617] rounded-xl shadow-md hover:bg-[#5A290F] transition-colors"
+                >
+                  Sign In / Register
+                </Link>
+              )}
+            </div>
+
+          </div>
+        </div>
+      )}
+    </>
   );
 }

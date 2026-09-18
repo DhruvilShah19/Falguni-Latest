@@ -83,6 +83,7 @@ export async function GET(request: Request) {
     if (isPaid) {
       try {
         const cashFreeDetails = {
+          order_id: orderId,
           cf_order_id: orderId,
           order_status: 'PAID',
           order_amount: amount,

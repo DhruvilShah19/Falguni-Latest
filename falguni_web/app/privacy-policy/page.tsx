@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import PageShell from '@/components/layout/PageShell';
-import { ArrowLeft } from 'lucide-react';
+import { ShieldCheck, Lock } from 'lucide-react';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
@@ -210,10 +210,10 @@ const SECTIONS: Section[] = [
 function BlockRenderer({ block }: { block: Block }) {
   if (block.type === 'ul') {
     return (
-      <ul className="flex flex-col gap-1.5 my-3 pl-1">
+      <ul className="flex flex-col gap-2 my-3 pl-1">
         {block.items.map((item, i) => (
-          <li key={i} className="flex items-start gap-2 text-white/60 text-sm md:text-base leading-relaxed">
-            <span className="mt-2.5 w-1 h-1 rounded-full bg-[#D4AF37]/60 flex-shrink-0" />
+          <li key={i} className="flex items-start gap-2.5 text-[#2D1508] text-xs sm:text-sm leading-relaxed">
+            <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-[#733617] shrink-0" />
             <span>{item}</span>
           </li>
         ))}
@@ -221,7 +221,7 @@ function BlockRenderer({ block }: { block: Block }) {
     );
   }
   return (
-    <p className="text-white/60 text-sm md:text-base leading-relaxed my-2">
+    <p className="text-[#65544A] text-xs sm:text-sm leading-relaxed my-2">
       {block.text}
     </p>
   );
@@ -230,65 +230,119 @@ function BlockRenderer({ block }: { block: Block }) {
 export default function PrivacyPolicyPage() {
   return (
     <PageShell>
-      <div className="min-h-screen bg-[#2B1B17] flex flex-col pb-20 relative overflow-hidden">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(212,175,55,0.05),transparent_80%)] pointer-events-none" />
-
-        {/* Header Banner */}
-        <div className="relative w-full overflow-hidden bg-[#2B1B17] border-b border-[#D4AF37]/10 pt-28 pb-12 md:pt-36 md:pb-16 flex flex-col items-center justify-center mb-6 md:mb-12">
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(212,175,55,0.15),transparent_70%)] pointer-events-none" />
-
-          <div className="absolute top-28 md:top-36 left-4 md:left-8 z-50">
-            <Link
-              href="/"
-              className="inline-flex items-center gap-2 text-white/50 hover:text-[#D4AF37] transition-colors text-[9px] md:text-xs font-bold uppercase tracking-widest"
+      <div className="min-h-screen bg-[#FAF7F2] text-[#2D1508] flex flex-col pt-4 sm:pt-6 pb-20 sm:pb-28">
+        <div className="max-w-[1360px] mx-auto w-full px-4 sm:px-6 lg:px-8 flex flex-col gap-6 sm:gap-8">
+          
+          {/* ── 1. Left-aligned Breadcrumbs ── */}
+          <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-xs text-[#8A796F] font-medium">
+            <Link 
+              href="/" 
+              className="hover:text-[#733617] focus-visible:ring-2 focus-visible:ring-[#733617] focus-visible:outline-hidden rounded-xs transition-colors"
             >
-              <ArrowLeft size={14} /> Back
+              Home
+            </Link>
+            <span className="text-[#B5A599]" aria-hidden="true">&gt;</span>
+            <span className="text-[#8A796F]">Legal &amp; Compliance</span>
+            <span className="text-[#B5A599]" aria-hidden="true">&gt;</span>
+            <span className="text-[#733617] font-semibold" aria-current="page">Privacy Policy</span>
+          </nav>
+
+          {/* ── 2. Signature Header Banner Card ── */}
+          <header className="relative w-full overflow-hidden bg-white border border-[#EFE6DC] rounded-2xl p-6 sm:p-8 shadow-xs">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-10">
+              <div>
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#FAF7F2] border border-[#EFE6DC] mb-2.5 text-[#733617]">
+                  <Lock size={12} className="text-[#733617]" aria-hidden="true" />
+                  <span className="text-[10px] sm:text-xs font-bold uppercase tracking-[0.2em]">
+                    Falguni Legal &amp; Compliance • કાનૂની દસ્તાવેજ
+                  </span>
+                </div>
+
+                <h1 className="font-serif text-2xl sm:text-3xl md:text-4xl font-bold text-[#2D1508] tracking-tight leading-tight mb-2">
+                  Privacy Policy
+                </h1>
+
+                <p className="text-xs sm:text-sm text-[#65544A] max-w-2xl leading-relaxed">
+                  How Falguni Gruh Udhyog collects, uses, protects, and handles your personal information across all platforms.
+                </p>
+              </div>
+
+              {/* Version & Date Chip */}
+              <div className="flex items-center gap-3 bg-[#FAF7F2] border border-[#EFE6DC] rounded-2xl p-4 self-start md:self-auto shrink-0">
+                <ShieldCheck size={22} className="text-[#733617]" />
+                <div>
+                  <span className="block text-[10px] uppercase tracking-wider font-bold text-[#733617]">
+                    Official Policy Version 2.4
+                  </span>
+                  <span className="block text-xs font-semibold text-[#2D1508]">
+                    Updated: August 01, 2026
+                  </span>
+                </div>
+              </div>
+            </div>
+          </header>
+
+          {/* ── 3. Legal Quick-Switch Tabs ── */}
+          <div className="flex items-center gap-2 border-b border-[#EFE6DC] pb-3 overflow-x-auto scrollbar-hide">
+            <Link
+              href="/privacy-policy"
+              className="px-4 py-2 rounded-xl text-xs font-bold tracking-wider uppercase transition-all bg-[#733617] text-white shadow-xs"
+            >
+              Privacy Policy
+            </Link>
+            <Link
+              href="/terms-and-conditions"
+              className="px-4 py-2 rounded-xl text-xs font-bold tracking-wider uppercase transition-all bg-white text-[#65544A] hover:bg-[#FAF7F2] border border-[#EFE6DC]"
+            >
+              Terms &amp; Conditions
+            </Link>
+            <Link
+              href="/website-disclaimer"
+              className="px-4 py-2 rounded-xl text-xs font-bold tracking-wider uppercase transition-all bg-white text-[#65544A] hover:bg-[#FAF7F2] border border-[#EFE6DC]"
+            >
+              Website Disclaimer
+            </Link>
+            <Link
+              href="/account-deletion"
+              className="px-4 py-2 rounded-xl text-xs font-bold tracking-wider uppercase transition-all bg-white text-[#65544A] hover:bg-[#FAF7F2] border border-[#EFE6DC]"
+            >
+              Account Deletion
             </Link>
           </div>
 
-          <div className="relative z-10 text-center px-4 w-full mt-4 md:mt-0">
-            <div className="animate-fade-up text-[9px] md:text-xs tracking-[0.25em] md:tracking-[0.3em] font-bold text-[#D4AF37] mb-3 md:mb-4 flex items-center justify-center gap-2 md:gap-3">
-              <span className="w-6 md:w-8 h-px bg-[#D4AF37]/50" />
-              LEGAL
-              <span className="w-6 md:w-8 h-px bg-[#D4AF37]/50" />
+          {/* ── 4. Legal Document Content ── */}
+          <div className="max-w-4xl mx-auto w-full flex flex-col gap-6">
+            
+            {/* Preamble Card */}
+            <div className="bg-white border border-[#EFE6DC] rounded-2xl p-6 sm:p-8 shadow-xs">
+              <p className="text-[#2D1508] text-xs sm:text-sm leading-relaxed">
+                Welcome to Falguni Gruh Udhyog (&ldquo;we&rdquo;, &ldquo;our&rdquo;, &ldquo;us&rdquo;). We value your privacy and are committed to
+                protecting your personal information. This Privacy Policy explains how we collect, use, store, disclose
+                and protect your information when you visit our website, mobile application, place an order through
+                WhatsApp, telephone, social media, or purchase from any of our sales channels.
+              </p>
+              <p className="text-[#2D1508] text-xs sm:text-sm leading-relaxed mt-3">
+                By using our website or services, you acknowledge that you have read and understood this Privacy Policy
+                and consent to the collection and processing of your information as described herein.
+              </p>
             </div>
 
-            <h1 className="animate-fade-up font-serif text-2xl md:text-5xl lg:text-6xl text-white drop-shadow-[0_0_15px_rgba(212,175,55,0.2)] mb-2 md:mb-4" style={{ animationDelay: '100ms' }}>
-              Privacy Policy
-            </h1>
+            {/* Sections Accordion / Cards */}
+            <div className="bg-white border border-[#EFE6DC] rounded-2xl p-6 sm:p-8 shadow-xs flex flex-col gap-6">
+              {SECTIONS.map((section) => (
+                <section key={section.title} className="border-t border-[#EFE6DC] pt-5 first:border-t-0 first:pt-0">
+                  <h2 className="text-[#733617] font-serif font-bold text-sm sm:text-base tracking-wide mb-2.5 flex items-baseline gap-2">
+                    <span>{section.title}</span>
+                  </h2>
+                  {section.blocks.map((block, i) => (
+                    <BlockRenderer key={i} block={block} />
+                  ))}
+                </section>
+              ))}
+            </div>
 
-            <p className="animate-fade-up text-white/40 text-[11px] md:text-sm" style={{ animationDelay: '200ms' }}>
-              Effective Date: 01-04-2026 &nbsp;•&nbsp; Last Updated: 01-08-2026
-            </p>
-          </div>
-        </div>
-
-        <div className="max-w-3xl mx-auto w-full px-5 md:px-8 relative z-10">
-          <div className="bg-white/[0.02] border border-white/5 rounded-2xl p-5 md:p-8 mb-8">
-            <p className="text-white/70 text-sm md:text-base leading-relaxed">
-              Welcome to Falguni Gruh Udhyog (&ldquo;we&rdquo;, &ldquo;our&rdquo;, &ldquo;us&rdquo;). We value your privacy and are committed to
-              protecting your personal information. This Privacy Policy explains how we collect, use, store, disclose
-              and protect your information when you visit our website, mobile application, place an order through
-              WhatsApp, telephone, social media, or purchase from any of our sales channels.
-            </p>
-            <p className="text-white/70 text-sm md:text-base leading-relaxed mt-3">
-              By using our website or services, you acknowledge that you have read and understood this Privacy Policy
-              and consent to the collection and processing of your information as described herein.
-            </p>
           </div>
 
-          <div className="flex flex-col gap-8">
-            {SECTIONS.map((section) => (
-              <section key={section.title} className="border-t border-white/5 pt-6 first:border-t-0 first:pt-0">
-                <h2 className="text-[#D4AF37] font-bold text-base md:text-lg tracking-wide mb-2">
-                  {section.title}
-                </h2>
-                {section.blocks.map((block, i) => (
-                  <BlockRenderer key={i} block={block} />
-                ))}
-              </section>
-            ))}
-          </div>
         </div>
       </div>
     </PageShell>

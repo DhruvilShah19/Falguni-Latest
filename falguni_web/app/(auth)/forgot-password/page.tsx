@@ -4,11 +4,7 @@ import { useRouter } from 'next/navigation';
 import BackButton from '@/components/ui/BackButton';
 import { sendPasswordResetEmail } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
-import { Mail, ChevronLeft } from 'lucide-react';
-
-const kGold  = 'var(--color-gold)';
-const kBgTop = 'var(--color-bg)';
-const kBgMid = 'var(--color-bg)';
+import { Mail } from 'lucide-react';
 
 export default function ForgotPasswordPage() {
   const router = useRouter();
@@ -31,28 +27,24 @@ export default function ForgotPasswordPage() {
   };
 
   return (
-    <div
-      className="min-h-dvh w-full flex items-center justify-center px-6"
-      style={{ background: `linear-gradient(180deg, ${kBgTop} 0%, ${kBgMid} 50%, ${kBgTop} 100%)` }}
-    >
+    <div className="min-h-dvh w-full flex items-center justify-center px-4 py-12 bg-[var(--color-bg)]">
       <div className="absolute top-6 left-4 md:left-6 z-10">
         <BackButton />
       </div>
-      <div className="w-full max-w-sm">
+      <div className="w-full max-w-md bg-white border border-[var(--color-border)] rounded-3xl p-8 md:p-10 shadow-sm">
 
         {sent ? (
           /* ── Success state ── */
           <div className="text-center">
-            <div className="text-6xl mb-5">📧</div>
-            <h1 className="text-2xl font-bold text-[var(--color-fg)] mb-3">Check your email</h1>
-            <p className="text-sm leading-relaxed" style={{ color: 'var(--color-fg-muted)' }}>
+            <div className="text-5xl mb-4">📧</div>
+            <h1 className="text-2xl font-serif font-bold text-[#2D1508] mb-2">Check your email</h1>
+            <p className="text-sm leading-relaxed text-[var(--color-fg-muted)]">
               We sent a password reset link to
             </p>
-            <p className="text-sm font-semibold mt-1" style={{ color: kGold }}>{email}</p>
+            <p className="text-sm font-bold mt-1 text-[#733617]">{email}</p>
             <button
               onClick={() => router.push('/login')}
-              className="mt-10 w-full h-[50px] rounded-xl font-bold text-base uppercase tracking-wider transition hover:opacity-90"
-              style={{ background: kGold, color: kBgTop }}
+              className="mt-8 w-full h-[48px] rounded-xl font-bold text-sm uppercase tracking-wider transition bg-[#733617] text-white hover:bg-[#5C2B12] shadow-sm"
             >
               Back to Login
             </button>
@@ -60,42 +52,37 @@ export default function ForgotPasswordPage() {
         ) : (
           /* ── Form state ── */
           <>
-            <h1 className="text-3xl font-bold text-[var(--color-fg)] mb-2">Forgot Password?</h1>
-            <p className="text-base mb-10" style={{ color: 'var(--color-fg-muted)' }}>
+            <h1 className="text-3xl font-serif font-bold text-[#2D1508] mb-1">Forgot Password?</h1>
+            <p className="text-sm text-[var(--color-fg-muted)] mb-8">
               Enter your email and we&apos;ll send you a reset link.
             </p>
 
             {error && (
-              <div className="mb-5 px-4 py-3 rounded-xl text-sm text-red-600 border border-red-500/30"
-                style={{ background: 'rgba(255,80,80,0.08)' }}>
+              <div className="mb-5 px-4 py-3 rounded-xl text-sm text-red-700 bg-red-50 border border-red-200">
                 {error}
               </div>
             )}
 
-            <form onSubmit={handleReset} className="flex flex-col gap-5">
+            <form onSubmit={handleReset} className="flex flex-col gap-4">
               {/* Email field */}
               <div className="relative flex items-center">
                 <span className="absolute left-4 pointer-events-none">
-                  <Mail size={20} color={kGold} />
+                  <Mail size={18} className="text-[#733617]" />
                 </span>
                 <input
                   type="email"
                   value={email}
                   onChange={e => setEmail(e.target.value)}
-                  placeholder="Email"
+                  placeholder="Email Address"
                   required
-                  className="w-full h-[54px] pl-12 pr-4 rounded-xl text-[var(--color-fg)] text-sm outline-none transition-all placeholder:text-white/30"
-                  style={{ background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.12)' }}
-                  onFocus={e => { e.currentTarget.style.borderColor = kGold; }}
-                  onBlur={e  => { e.currentTarget.style.borderColor = 'var(--color-border)'; }}
+                  className="w-full h-[50px] pl-11 pr-4 rounded-xl text-[#2D1508] text-sm outline-none transition-all placeholder:[var(--color-fg-muted)]/50 bg-[#FAF7F2] border border-[var(--color-border)] focus:border-[#733617] focus:bg-white"
                 />
               </div>
 
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full h-[50px] rounded-xl font-bold text-base uppercase tracking-wider transition hover:opacity-90 active:scale-95 disabled:opacity-50"
-                style={{ background: kGold, color: kBgTop, letterSpacing: '0.08em' }}
+                className="w-full h-[48px] rounded-xl font-bold text-sm uppercase tracking-wider transition bg-[#733617] text-white hover:bg-[#5C2B12] active:scale-95 disabled:opacity-50 shadow-sm mt-2"
               >
                 {loading ? 'Sending...' : 'SEND RESET LINK'}
               </button>

@@ -1,5 +1,6 @@
 import type { MetadataRoute } from 'next';
-import { adminDb } from '@/lib/firebase-admin';
+import { db } from '@/lib/firebase';
+import { collection, getDocs } from 'firebase/firestore';
 
 // Canonical host -- the site redirects the bare apex and non-www to this,
 // so every sitemap entry should use it directly rather than relying on the
@@ -39,8 +40,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // back to just the static pages rather than failing the whole sitemap.
   try {
     const [productsSnap, categoriesSnap] = await Promise.all([
-      adminDb.collection('Products').get(),
-      adminDb.collection('Categories').get(),
+      getDocs(collection(db, 'Products')),
+      getDocs(collection(db, 'Categories')),
     ]);
 
     const productEntries: MetadataRoute.Sitemap = productsSnap.docs.map((doc) => ({

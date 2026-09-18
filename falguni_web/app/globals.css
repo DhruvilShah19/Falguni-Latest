@@ -2,31 +2,34 @@
 
 /* ══════════════════════════════════════════
    BRAND DESIGN TOKENS
-   Falguni App Dark Theme
-   kGold=#D4AF37
+   Falguni Artisanal Boutique Theme (Warm Ivory & Terracotta)
+   kGold=#D49B4B, kBrown=#733617, kEspresso=#2D1508
 ══════════════════════════════════════════ */
 @theme inline {
-  --color-gold:        #D4AF37;
-  --color-gold-light:  #E5D1B2;
-  --color-gold-pale:   #F9EED2;
-  --color-brown-dark:  #2B1B17;
-  --color-brown-mid:   #5C4033;
-  --color-brown-light: #9A8878;
-  --color-primary:     #FFFFFF;
+  --color-gold:        #D49B4B;
+  --color-gold-light:  #F4D69B;
+  --color-gold-pale:   #FDF6E9;
+  --color-brown-dark:  #2D1508;
+  --color-brown-mid:   #733617;
+  --color-brown-light: #A07255;
+  --color-primary:     #733617;
 
-  /* Page bg — Dark theme (matches AppColors) */
-  --color-bg:          #2B1B17;   /* Dark background */
-  --color-surface:     #5C4033;   /* Brown surface for cards */
-  --color-fg:          #F0EDE8;   /* Light text */
-  --color-fg-muted:    #9A8878;   /* Muted text */
-  --color-border:      rgba(255, 255, 255, 0.1); /* Subtle border */
-  --color-card:        #5C4033;   /* Card surface */
+  /* Page bg — Artisanal Light Theme (matches user reference mockup) */
+  --color-bg:          #FAF7F2;   /* Soft warm ivory / cream background */
+  --color-surface:     #FFFFFF;   /* Crisp white card & surface */
+  --color-fg:          #2D1508;   /* Deep espresso chocolate headings & text */
+  --color-fg-muted:    #65544A;   /* Warm terracotta grey-brown muted body text */
+  --color-border:      #EFE6DC;   /* Soft warm beige border */
+  --color-card:        #FFFFFF;   /* Card surface */
+  --color-sand:        #F5EBE1;   /* Warm sand for announcement & badges */
 
   --font-sans: 'Chivo', sans-serif;
+  --font-serif: var(--font-playfair), 'Playfair Display', Georgia, serif;
 
-  --shadow-card:  0 2px 12px rgba(0,0,0,0.06),  0 1px 3px rgba(0,0,0,0.04);
-  --shadow-hover: 0 16px 48px rgba(0,0,0,0.12);
-  --shadow-gold:  0 4px 24px rgba(212,175,55,0.35);
+  --shadow-card:  0 2px 14px rgba(45,21,8,0.04), 0 1px 3px rgba(45,21,8,0.02);
+  --shadow-hover: 0 16px 40px rgba(45,21,8,0.08);
+  --shadow-gold:  0 4px 20px rgba(212,155,75,0.25);
+  --shadow-primary: 0 4px 20px rgba(115,54,23,0.25);
 }
 
 /* ── Base ── */
@@ -37,10 +40,10 @@ body { background: var(--color-bg); color: var(--color-fg); font-family: var(--f
 /* ── Scrollbar ── */
 ::-webkit-scrollbar { width: 5px; height: 5px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: var(--color-gold); border-radius: 99px; opacity: 0.5; }
+::-webkit-scrollbar-thumb { background: #733617; border-radius: 99px; opacity: 0.3; }
 
 /* ── Placeholder ── */
-input::placeholder, textarea::placeholder { color: rgba(255,255,255,0.3); }
+input::placeholder, textarea::placeholder { color: #A09085; }
 
 /* ════════════════════════════════
    UTILITIES
@@ -138,16 +141,16 @@ input::placeholder, textarea::placeholder { color: rgba(255,255,255,0.3); }
    GLASS
 ════════════════════════════════ */
 .glass {
-  backdrop-filter: blur(16px) saturate(200%);
-  -webkit-backdrop-filter: blur(16px) saturate(200%);
-  background: rgba(43,27,23,0.7);
-  border: 1px solid rgba(255,255,255,0.05);
+  backdrop-filter: blur(16px) saturate(180%);
+  -webkit-backdrop-filter: blur(16px) saturate(180%);
+  background: rgba(255, 255, 255, 0.88);
+  border: 1px solid var(--color-border);
 }
 .glass-dark {
-  backdrop-filter: blur(24px) saturate(200%);
-  -webkit-backdrop-filter: blur(24px) saturate(200%);
-  background: rgba(43,27,23,0.9);
-  border-bottom: 1px solid rgba(255,255,255,0.05);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  background: rgba(36, 18, 8, 0.95);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 /* ════════════════════════════════
@@ -157,37 +160,66 @@ input::placeholder, textarea::placeholder { color: rgba(255,255,255,0.3); }
   transition: transform 0.25s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.25s ease;
 }
 .card-hover:hover {
-  transform: translateY(-5px) scale(1.01);
+  transform: translateY(-4px);
   box-shadow: var(--shadow-hover);
 }
 
-.btn-gold {
-  background: linear-gradient(135deg, #D4AF37 0%, #C9A227 100%);
-  color: #2B1B17;
+.btn-primary {
+  background: #733617;
+  color: #FFFFFF;
   font-weight: 700;
   transition: all 0.2s ease;
-  position: relative;
-  overflow: hidden;
+  border-radius: 8px;
 }
-.btn-gold::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(135deg, rgba(255,255,255,0.15), transparent);
-  opacity: 0;
-  transition: opacity 0.2s;
+.btn-primary:hover {
+  background: #5A290F;
+  box-shadow: var(--shadow-primary);
+  transform: translateY(-1px);
 }
-.btn-gold:hover::after { opacity: 1; }
-.btn-gold:hover  { transform: translateY(-2px); box-shadow: var(--shadow-gold); }
-.btn-gold:active { transform: scale(0.97); }
+.btn-primary:active {
+  transform: scale(0.98);
+}
 
-/* Section title gold underline */
-.section-title { position:relative; display:inline-block; }
+.btn-outline {
+  border: 1.5px solid #733617;
+  color: #733617;
+  background: transparent;
+  font-weight: 700;
+  transition: all 0.2s ease;
+  border-radius: 8px;
+}
+.btn-outline:hover {
+  background: #F5EBE1;
+  transform: translateY(-1px);
+}
+.btn-outline:active {
+  transform: scale(0.98);
+}
+
+.btn-gold {
+  background: #733617;
+  color: #FFFFFF;
+  font-weight: 700;
+  transition: all 0.2s ease;
+  border-radius: 8px;
+}
+.btn-gold:hover {
+  background: #5A290F;
+  box-shadow: var(--shadow-primary);
+  transform: translateY(-1px);
+}
+.btn-gold:active {
+  transform: scale(0.98);
+}
+
+/* Section title underline */
+.section-title { position:relative; display:inline-block; font-family: var(--font-serif); }
 .section-title::after {
   content:'';
   position:absolute;
-  bottom:-7px; left:0;
-  width:32px; height:3px;
+  bottom:-7px; left:50%;
+  transform: translateX(-50%);
+  width:36px; height:2.5px;
   border-radius:99px;
-  background: linear-gradient(90deg, #D4AF37, #F0CF6B);
+  background: #733617;
 }
