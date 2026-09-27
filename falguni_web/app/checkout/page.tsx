@@ -118,6 +118,15 @@ export default function CheckoutPage() {
       return;
     }
 
+    const finalPhone = isPickup 
+      ? pickupContact.phone 
+      : (selectedAddress?.phone || userDoc?.phone || (userDoc as any)?.Phone || '');
+    
+    if (!finalPhone || !finalPhone.trim() || finalPhone.length < 7) {
+      alert('A valid phone number is mandatory for all orders. Please update your profile or address with a phone number to continue.');
+      return;
+    }
+
     if (isPickup) {
       if (!pickupContact.phone || !pickupContact.phone.trim()) {
         alert('Please provide a mobile phone number for store pickup verification.');

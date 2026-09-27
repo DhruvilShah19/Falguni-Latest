@@ -104,15 +104,34 @@ export default function SignupPage() {
       setError('Please ensure your password meets all requirements.');
       return;
     }
+    if (!emailPhone || emailPhone.length < 5) {
+      setError('Please enter a valid phone number for 2FA verification.');
+      return;
+    }
     setLoading(true); setError('');
     try {
       const cred = await createUserWithEmailAndPassword(auth, email, password);
       await updateProfile(cred.user, { displayName: fullname });
-      await ensureUserDoc(cred.user, 'email');
-      router.push('/');
+      
+      // Force Phone Verification (2FA) immediately
+      const fullPhone = `${countryCode}${emailPhone}`;
+      if (!window.recaptchaVerifierSignup) {
+        window.recaptchaVerifierSignup = new RecaptchaVerifier(auth, 'recaptcha-container-signup', {
+          size: 'invisible'
+        });
+      }
+      const result = await linkWithPhoneNumber(cred.user, fullPhone, window.recaptchaVerifierSignup);
+      window.confirmationResultSignup = result;
+      setOtpSent(true);
+      
     } catch (err: any) {
       console.error('Email Sign-Up Error:', err);
       setError(friendlyError(err));
+      if (window.recaptchaVerifierSignup) {
+        window.recaptchaVerifierSignup.render().then((widgetId: any) => {
+          window.grecaptcha.reset(widgetId);
+        });
+      }
     } finally { setLoading(false); }
   };
 
@@ -162,7 +181,7 @@ export default function SignupPage() {
       if (fullname && !result.user.displayName) {
         await updateProfile(result.user, { displayName: fullname });
       }
-      await ensureUserDoc(result.user, 'phone');
+      await ensureUserDoc(result.user, signupMethod);
       router.push('/');
     } catch (err: any) {
       console.error('OTP Verify Error:', err);
@@ -291,6 +310,7 @@ export default function SignupPage() {
             </form>
           )
         ) : (
+          !otpSent ? (
           <form onSubmit={handleEmailSignup} className="flex flex-col gap-4">
             <AppField
               type="text" placeholder="Full Name" value={fullname} onChange={setFullName}
@@ -347,9 +367,28 @@ export default function SignupPage() {
               disabled={loading || !pwValid}
               className="w-full h-[48px] rounded-xl font-bold text-sm tracking-wider uppercase transition bg-[#733617] text-white hover:bg-[#5C2B12] active:scale-95 disabled:opacity-50 mt-2 shadow-sm"
             >
-              {loading ? 'Creating account...' : 'SIGN UP'}
+              {loading ? 'Sending OTP for 2FA...' : 'CONTINUE & VERIFY PHONE'}
             </button>
           </form>
+          ) : (
+            <form onSubmit={handleVerifyOTP} className="flex flex-col gap-4 animate-fade-in">
+              <div className="text-center mb-2">
+                <p className="text-xs text-[#8A796F]">2FA OTP sent to <span className="font-bold text-[#2D1508]">{countryCode}{emailPhone}</span></p>
+                <button type="button" onClick={() => setOtpSent(false)} className="text-xs text-[#733617] hover:underline mt-1 font-semibold">Change Number</button>
+              </div>
+              <AppField
+                type="text" placeholder="Enter 6-digit OTP" value={otp} onChange={setOtp}
+                icon={<KeyRound size={18} className="text-[#733617]" />}
+              />
+              <button
+                type="submit"
+                disabled={loading || otp.length < 4}
+                className="w-full h-[48px] rounded-xl font-bold text-sm tracking-wider uppercase transition bg-[#733617] text-white hover:bg-[#5C2B12] active:scale-95 disabled:opacity-50 mt-2 shadow-sm"
+              >
+                {loading ? 'Verifying...' : 'VERIFY & CREATE ACCOUNT'}
+              </button>
+            </form>
+          )
         )}
 
         {/* Divider */}
