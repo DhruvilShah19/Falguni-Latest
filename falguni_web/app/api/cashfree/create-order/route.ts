@@ -150,15 +150,26 @@ export async function POST(req: Request) {
       }
     }
 
-    // Fetch user's CurrentMarketID from their user doc
+    // Fetch user's CurrentMarketID and sync phone to root user doc if missing
     let currentMarketID = '';
     try {
-      const userDocSnap = await adminDb.collection('users').doc(customerId).get();
+      const userDocRef = adminDb.collection('users').doc(customerId);
+      const userDocSnap = await userDocRef.get();
       if (userDocSnap.exists) {
-        currentMarketID = userDocSnap.data()?.['CurrentMarketID'] || '';
+        const userData = userDocSnap.data();
+        currentMarketID = userData?.['CurrentMarketID'] || '';
+        
+        // Sync phone to root user doc if it's missing or empty so Flutter admin doesn't crash
+        const providedPhone = cart_details?.phone || customer_details?.customer_phone || '';
+        if (providedPhone && (!userData?.phone || userData?.phone.trim() === '')) {
+          await userDocRef.update({
+            phone: providedPhone,
+            Phone: providedPhone
+          });
+        }
       }
     } catch (e) {
-      console.error('Error fetching user market ID:', e);
+      console.error('Error fetching/updating user doc:', e);
     }
 
     // Use DateTime.now().toString() format as uid (matches Flutter's checkout)

@@ -46,6 +46,10 @@ export default function AddressModal({
       setError('Please provide a delivery address.');
       return;
     }
+    if (!phone.trim()) {
+      setError('Please provide a phone number for delivery.');
+      return;
+    }
     setSaving(true);
     setError('');
 

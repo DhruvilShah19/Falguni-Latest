@@ -2,8 +2,9 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { signInWithEmailAndPassword, GoogleAuthProvider, OAuthProvider, signInWithPopup } from 'firebase/auth';
-import { auth } from '@/lib/firebase';
+import { signInWithEmailAndPassword, GoogleAuthProvider, OAuthProvider, signInWithPopup, User } from 'firebase/auth';
+import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { auth, db } from '@/lib/firebase';
 import { Mail, Lock, Eye, EyeOff, Apple } from 'lucide-react';
 import BackButton from '@/components/ui/BackButton';
 export default function LoginPage() {
@@ -13,6 +14,22 @@ export default function LoginPage() {
   const [showPass, setShowPass] = useState(false);
   const [loading, setLoading]   = useState(false);
   const [error, setError]       = useState('');
+
+  const ensureUserDoc = async (user: User) => {
+    const userRef = doc(db, 'users', user.uid);
+    const snap = await getDoc(userRef);
+    if (!snap.exists()) {
+      await setDoc(userRef, {
+        fullname: user.displayName || 'Guest User',
+        email: user.email || '',
+        phone: user.phoneNumber || '',
+        wallet: 0,
+        tokenID: '',
+        loyaltyPoints: 0,
+        createdAt: serverTimestamp(),
+      });
+    }
+  };
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -31,7 +48,8 @@ export default function LoginPage() {
     try {
       const provider = new GoogleAuthProvider();
       provider.setCustomParameters({ prompt: 'select_account' });
-      await signInWithPopup(auth, provider);
+      const cred = await signInWithPopup(auth, provider);
+      await ensureUserDoc(cred.user);
       router.push('/');
     } catch (err: any) {
       console.error('Google Sign-In Error:', err);
@@ -45,7 +63,8 @@ export default function LoginPage() {
       const provider = new OAuthProvider('apple.com');
       provider.addScope('email');
       provider.addScope('name');
-      await signInWithPopup(auth, provider);
+      const cred = await signInWithPopup(auth, provider);
+      await ensureUserDoc(cred.user);
       router.push('/');
     } catch (err: any) {
       console.error('Apple Sign-In Error:', err);

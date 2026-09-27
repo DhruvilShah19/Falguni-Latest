@@ -40,6 +40,9 @@ export default function SignupPage() {
       referralCode: '',
       awardReferral: false,
       personalReferralCode: Math.random().toString(36).substring(2, 10).toUpperCase(),
+      wallet: 0,
+      tokenID: '',
+      loyaltyPoints: 0,
       createdAt: serverTimestamp(),
     });
   };
@@ -69,6 +72,8 @@ export default function SignupPage() {
         fullname: user.displayName || 'Guest User',
         email: user.email,
         phone: user.phoneNumber || '',
+        wallet: 0,
+        tokenID: '',
         createdAt: serverTimestamp(),
         loyaltyPoints: 0,
       }, { merge: true });
@@ -91,6 +96,8 @@ export default function SignupPage() {
         fullname: user.displayName || 'Guest User',
         email: user.email || '',
         phone: user.phoneNumber || '',
+        wallet: 0,
+        tokenID: '',
         createdAt: serverTimestamp(),
         loyaltyPoints: 0,
       }, { merge: true });
