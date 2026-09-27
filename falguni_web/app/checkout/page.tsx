@@ -191,7 +191,7 @@ export default function CheckoutPage() {
             fullName: recipientName,
           },
           order_meta: {
-            return_url: `${window.location.origin}/checkout/success?order_id={order_id}`,
+            return_url: `${window.location.origin.replace('http://', 'https://')}/checkout/success?order_id={order_id}`,
           },
           order_note: orderNotes.trim() || (isPickup ? 'Store Pickup Order' : 'Falguni Gourmet Order'),
         }),
@@ -208,21 +208,17 @@ export default function CheckoutPage() {
       const paymentSessionId = data.payment_session_id;
 
       if (cashfree && paymentSessionId) {
-        const isMobile = window.innerWidth < 768;
-        cashfree
-          .checkout({
-            paymentSessionId,
-            redirectTarget: isMobile ? '_self' : '_modal',
-          })
-          .then((result: any) => {
-            if (result.error) {
-              alert(result.error.message || 'Payment was cancelled or failed.');
-              setPlacing(false);
-            }
-            if (result.paymentDetails) {
-              verifyPayment(verifiedOrderId);
-            }
-          });
+        // Always use redirect-based checkout (_self).
+        // This is the safest approach: the user pays on Cashfree's own
+        // secure domain, no iframe/modal is involved, and no domain
+        // whitelisting is required in the Cashfree dashboard.
+        cashfree.checkout({
+          paymentSessionId,
+          redirectTarget: '_self',
+        });
+        // The browser navigates away at this point.
+        // On success Cashfree redirects back to our return_url
+        // (/checkout/success?order_id=...) which handles verification.
       } else {
         alert('Payment Gateway could not initialize. Please check your internet connection.');
         setPlacing(false);
