@@ -21,6 +21,7 @@ declare global {
   interface Window {
     recaptchaVerifier: any;
     confirmationResult: any;
+    grecaptcha: any;
   }
 }
 
@@ -108,7 +109,7 @@ export default function LoginPage() {
       // Reset recaptcha if failed
       if (window.recaptchaVerifier) {
         window.recaptchaVerifier.render().then((widgetId: any) => {
-          grecaptcha.reset(widgetId);
+          window.grecaptcha.reset(widgetId);
         });
       }
     } finally { setLoading(false); }
