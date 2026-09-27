@@ -149,6 +149,14 @@ export default function CheckoutPage() {
       return;
     }
 
+    if (isPickup && !pickupContact.phone.trim()) {
+      alert('Please provide a contact phone number for store pickup.');
+      return;
+    } else if (!isPickup && !selectedAddress) {
+      alert('Please select or add a delivery address to continue.');
+      return;
+    }
+
     setPlacing(true);
 
     try {
@@ -341,7 +349,6 @@ export default function CheckoutPage() {
           <CheckoutBottomBar
             onProceed={handlePlaceOrder}
             loading={placing}
-            disabled={isPickup ? !pickupContact.phone.trim() : !selectedAddress}
             storeOpen={storeOpen}
           />
         </div>

@@ -82,6 +82,20 @@ export default function AddressModal({
         onSaved({ ...payload, uid: docRef.id } as ExtendedAddress);
       }
 
+      // Sync default contact info to root user document so Admin App can read it
+      try {
+        await updateDoc(doc(db, 'users', userId), {
+          phone: phone.trim(),
+          Phone: phone.trim(),
+          fullname: fullName.trim(),
+          DeliveryAddress: streetAddress.trim(),
+          HouseNumber: houseNumber.trim(),
+          ClosestBustStop: closestBusStop.trim(),
+        });
+      } catch (syncErr) {
+        console.warn('Failed to sync to root user document', syncErr);
+      }
+
       onClose();
     } catch (err: any) {
       console.error('Error saving address:', err);

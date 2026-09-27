@@ -199,6 +199,7 @@ export async function POST(req: Request) {
         productID: i.productID || '',
       })),
       subTotal: subTotal,
+      total: finalTotal,
       couponCode: appliedCouponCode || null,
       couponDiscount: discountPercentage,
       discountedSubTotal: discountedTotal,

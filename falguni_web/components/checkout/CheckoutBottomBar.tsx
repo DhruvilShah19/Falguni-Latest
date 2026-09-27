@@ -5,14 +5,12 @@ import { Lock, ArrowRight } from 'lucide-react';
 interface Props {
   onProceed: () => void;
   loading: boolean;
-  disabled: boolean;
   storeOpen?: boolean;
 }
 
 export default function CheckoutBottomBar({
   onProceed,
   loading,
-  disabled,
   storeOpen = true,
 }: Props) {
   return (
@@ -36,7 +34,7 @@ export default function CheckoutBottomBar({
       <div className="w-full sm:w-auto">
         <button
           onClick={onProceed}
-          disabled={disabled || loading || !storeOpen}
+          disabled={loading || !storeOpen}
           className="w-full sm:w-auto min-w-[240px] py-3.5 px-8 rounded-xl bg-[#733617] hover:bg-[#5A290F] disabled:opacity-40 text-white font-bold text-xs sm:text-sm uppercase tracking-wider transition-all flex items-center justify-center gap-2 shadow-xs cursor-pointer disabled:cursor-not-allowed"
         >
           {!storeOpen ? (
