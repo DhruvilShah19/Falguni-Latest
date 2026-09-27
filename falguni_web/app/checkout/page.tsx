@@ -208,17 +208,26 @@ export default function CheckoutPage() {
       const paymentSessionId = data.payment_session_id;
 
       if (cashfree && paymentSessionId) {
-        // Always use redirect-based checkout (_self).
-        // This is the safest approach: the user pays on Cashfree's own
-        // secure domain, no iframe/modal is involved, and no domain
-        // whitelisting is required in the Cashfree dashboard.
-        cashfree.checkout({
-          paymentSessionId,
-          redirectTarget: '_self',
-        });
-        // The browser navigates away at this point.
-        // On success Cashfree redirects back to our return_url
-        // (/checkout/success?order_id=...) which handles verification.
+        // Desktop: open Cashfree's payment form as a modal overlay
+        //          within the website (requires production domain to be
+        //          whitelisted in Cashfree Merchant Dashboard).
+        // Mobile:  redirect to Cashfree's own page for better UX on
+        //          small screens.
+        const isMobile = window.innerWidth < 768;
+        cashfree
+          .checkout({
+            paymentSessionId,
+            redirectTarget: isMobile ? '_self' : '_modal',
+          })
+          .then((result: any) => {
+            if (result.error) {
+              alert(result.error.message || 'Payment was cancelled or failed.');
+              setPlacing(false);
+            }
+            if (result.paymentDetails) {
+              verifyPayment(verifiedOrderId);
+            }
+          });
       } else {
         alert('Payment Gateway could not initialize. Please check your internet connection.');
         setPlacing(false);
