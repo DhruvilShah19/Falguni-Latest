@@ -20,9 +20,11 @@ export default function ForgotPasswordPage() {
       await sendPasswordResetEmail(auth, email);
       setSent(true);
     } catch (err: any) {
-      setError(err.code === 'auth/user-not-found'
-        ? 'No account found with this email.'
-        : 'Something went wrong. Please try again.');
+      setError(
+        err.code === 'auth/user-not-found'
+          ? 'No account found with this email.'
+          : err.message || 'Something went wrong. Please try again.'
+      );
     } finally { setLoading(false); }
   };
 
