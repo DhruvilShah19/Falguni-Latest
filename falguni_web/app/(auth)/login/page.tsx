@@ -285,10 +285,12 @@ export default function LoginPage() {
 
             {/* Forgot password */}
             <div className="flex justify-end mt-1 relative z-10">
-              <Link href="/forgot-password"
+              <button 
+                type="button" 
+                onClick={(e) => { e.preventDefault(); router.push('/forgot-password'); }}
                 className="text-xs font-bold text-[#733617] hover:underline py-1">
                 Forgot Password?
-              </Link>
+              </button>
             </div>
 
             {/* Login button */}
