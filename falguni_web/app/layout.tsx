@@ -4,6 +4,8 @@ import './globals.css';
 import AuthProvider from '@/components/layout/AuthProvider';
 import OnboardingGuard from '@/components/layout/OnboardingGuard';
 import PromotionalPopup from '@/components/common/PromotionalPopup';
+import { Analytics } from '@vercel/analytics/react';
+import { SpeedInsights } from '@vercel/speed-insights/next';
 
 const chivo = Chivo({
   subsets: ['latin'],
@@ -60,6 +62,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <OnboardingGuard>{children}</OnboardingGuard>
           <PromotionalPopup />
         </AuthProvider>
+        <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   );

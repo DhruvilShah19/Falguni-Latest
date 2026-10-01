@@ -21,8 +21,6 @@ const nextConfig: NextConfig = {
         hostname: 'lh3.googleusercontent.com',
       },
     ],
-    loader: 'custom',
-    loaderFile: './lib/imageLoader.ts',
   },
   typescript: {
     ignoreBuildErrors: false,

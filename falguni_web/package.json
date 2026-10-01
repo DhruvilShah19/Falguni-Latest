@@ -12,6 +12,8 @@
     "@cashfreepayments/cashfree-js": "^1.0.7",
     "@opentelemetry/api": "^1.9.1",
     "@react-google-maps/api": "^2.20.8",
+    "@vercel/analytics": "^2.0.1",
+    "@vercel/speed-insights": "^2.0.0",
     "firebase": "^11.0.0",
     "firebase-admin": "^13.10.0",
     "jimp": "^1.6.1",
