@@ -145,29 +145,47 @@ export default function Footer() {
           {/* Col 5: STORE (2 Cols) */}
           <div className="lg:col-span-2 flex flex-col">
             <h4 className="text-xs font-bold uppercase tracking-[0.15em] text-[#F5EBE1] mb-5">
-              STORE
+              OUR STORES
             </h4>
-            <p className="text-sm text-[#F5EBE1] font-semibold mb-1">
-              Falguni Gruh Udhyog
-            </p>
-            <p className="text-xs text-[#BFAEA5] mb-4">
-              Vastrapur, Ahmedabad
-            </p>
-            <a
-              href="tel:+919825382002"
-              className="text-sm text-[#F5EBE1] font-medium hover:text-[#D49B4B] transition-colors mb-4 inline-flex items-center gap-1.5"
-            >
-              <Phone size={14} className="text-[#D49B4B]" />
-              +91 98253 82002
-            </a>
-            <a
-              href="https://www.google.com/maps/place/Falguni+Gruh+Udhyog+(Vastrapur)/@23.035607,72.5251858,17z"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1 text-xs font-bold uppercase tracking-wider text-[#D49B4B] hover:text-[#F5EBE1] transition-colors"
-            >
-              GET DIRECTIONS →
-            </a>
+            
+            <div className="flex flex-col gap-5">
+              {/* Vastrapur */}
+              <div className="flex flex-col">
+                <p className="text-sm text-[#F5EBE1] font-semibold mb-1">Vastrapur Flagship</p>
+                <p className="text-xs text-[#BFAEA5] mb-2">Ahmedabad</p>
+                <a href="https://www.google.com/maps/place/Falguni+Gruh+Udhyog+(Vastrapur)/@23.035607,72.5251858,17z" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-[#D49B4B] hover:text-[#F5EBE1] transition-colors w-max">
+                  GET DIRECTIONS →
+                </a>
+              </div>
+
+              {/* Sargasan */}
+              <div className="flex flex-col">
+                <p className="text-sm text-[#F5EBE1] font-semibold mb-1">Sargasan Branch</p>
+                <p className="text-xs text-[#BFAEA5] mb-2">Gandhinagar</p>
+                <a href="https://maps.google.com/?q=Highstreet,+Nr,+Swagat+Twin+City,+GF-32,+33,+Aashka+Hospital+Rd,+Sargasan,+Gandhinagar,+Gujarat+382421,+India" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-[#D49B4B] hover:text-[#F5EBE1] transition-colors w-max">
+                  GET DIRECTIONS →
+                </a>
+              </div>
+
+              {/* Airport */}
+              <div className="flex flex-col">
+                <p className="text-sm text-[#F5EBE1] font-semibold mb-1">Terminal 2 Kiosk</p>
+                <p className="text-xs text-[#BFAEA5] mb-2">Ahmedabad Airport</p>
+                <a href="https://maps.google.com/?q=Ahmedabad+Airport+Terminal+2" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-[#D49B4B] hover:text-[#F5EBE1] transition-colors w-max">
+                  GET DIRECTIONS →
+                </a>
+              </div>
+            </div>
+
+            <div className="mt-6">
+              <a
+                href="tel:+919825382002"
+                className="text-sm text-[#F5EBE1] font-medium hover:text-[#D49B4B] transition-colors inline-flex items-center gap-1.5"
+              >
+                <Phone size={14} className="text-[#D49B4B]" />
+                +91 98253 82002
+              </a>
+            </div>
           </div>
 
         </div>
