@@ -24,22 +24,28 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ success: true, suggestions: [] });
     }
 
-    const params = new URLSearchParams({
-      input: q.trim(),
-      key: API_KEY,
-      components: 'country:in',
-      location: `${AHMEDABAD_LAT},${AHMEDABAD_LNG}`,
-      radius: '50000',
-      language: 'en',
-      ...(sessionToken ? { sessiontoken: sessionToken } : {}),
-    });
-
     const response = await fetch(
-      `https://maps.googleapis.com/maps/api/place/autocomplete/json?${params}`,
+      `https://places.googleapis.com/v1/places:autocomplete`,
       { 
+        method: 'POST',
         signal: AbortSignal.timeout(8000), 
         cache: 'no-store',
-        headers: { 'Referer': 'https://www.falgunigruhudhyog.in/' }
+        headers: { 
+          'Content-Type': 'application/json',
+          'X-Goog-Api-Key': API_KEY,
+          'Referer': 'https://www.falgunigruhudhyog.in/' 
+        },
+        body: JSON.stringify({
+          input: q.trim(),
+          includedRegionCodes: ['in'],
+          locationBias: {
+            circle: {
+              center: { latitude: parseFloat(AHMEDABAD_LAT), longitude: parseFloat(AHMEDABAD_LNG) },
+              radius: 50000.0
+            }
+          },
+          ...(sessionToken ? { sessionToken } : {})
+        })
       }
     );
 
@@ -49,21 +55,20 @@ export async function GET(request: NextRequest) {
     }
 
     const data = await response.json();
-    if (data.status !== 'OK' || !Array.isArray(data.predictions)) {
-      // ZERO_RESULTS is not an error — it just means nothing matched.
-      if (data.status !== 'ZERO_RESULTS') {
-        console.warn('places-autocomplete: status', data.status, data.error_message);
-      }
+    if (!Array.isArray(data.suggestions)) {
       return NextResponse.json({ success: true, suggestions: [] });
     }
 
-    const suggestions = data.predictions.map((p: any) => ({
-      id: p.place_id,
-      title: p.structured_formatting?.main_text || p.description.split(',')[0],
-      subtitle: p.structured_formatting?.secondary_text || '',
-      fullAddress: p.description,
-      placeId: p.place_id,
-    }));
+    const suggestions = data.suggestions.map((s: any) => {
+      const p = s.placePrediction;
+      return {
+        id: p.placeId,
+        title: p.structuredFormat?.mainText?.text || p.text?.text?.split(',')[0],
+        subtitle: p.structuredFormat?.secondaryText?.text || '',
+        fullAddress: p.text?.text,
+        placeId: p.placeId,
+      };
+    });
 
     return NextResponse.json({ success: true, suggestions });
   } catch (error: any) {
