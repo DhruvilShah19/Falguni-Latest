@@ -10,7 +10,7 @@ import {
   updateProfile,
   User,
   RecaptchaVerifier,
-  signInWithPhoneNumber
+  signInWithPhoneNumber, linkWithPhoneNumber
 } from 'firebase/auth';
 import { doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore';
 import { auth, db } from '@/lib/firebase';

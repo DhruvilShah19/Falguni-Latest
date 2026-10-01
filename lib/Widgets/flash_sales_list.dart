@@ -1,5 +1,6 @@
 // ignore_for_file: use_build_context_synchronously
 
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:animations/animations.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:easy_localization/easy_localization.dart';
@@ -258,8 +259,8 @@ class _FlashSalesState extends State<FlashSales> {
                                       children: [
                                         Flexible(
                                           flex: 6,
-                                          child: Image.network(
-                                            productModel.image1,
+                                          child: CachedNetworkImage(
+                                            imageUrl: productModel.image1,
                                             height: 70,
                                             width: 70,
                                           ),

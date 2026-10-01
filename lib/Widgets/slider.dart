@@ -26,7 +26,10 @@ class _SliderWidgetState extends State<SliderWidget> {
         .where('category', isEqualTo: widget.category)
         .get()
         .then((event) {
-      return event.docs.map((e) => FeedsModel.fromMap(e.data(), e.id)).toList();
+      final list =
+          event.docs.map((e) => FeedsModel.fromMap(e.data(), e.id)).toList();
+      list.sort((a, b) => a.position.compareTo(b.position));
+      return list;
     });
   }
 
@@ -37,7 +40,10 @@ class _SliderWidgetState extends State<SliderWidget> {
         .limit(10)
         .get()
         .then((event) {
-      return event.docs.map((e) => FeedsModel.fromMap(e.data(), e.id)).toList();
+      final list =
+          event.docs.map((e) => FeedsModel.fromMap(e.data(), e.id)).toList();
+      list.sort((a, b) => a.position.compareTo(b.position));
+      return list;
     });
   }
 
@@ -48,35 +54,38 @@ class _SliderWidgetState extends State<SliderWidget> {
     return FutureBuilder<List<FeedsModel>>(
         future: widget.category == '' ? getFeedsAll() : getFeeds(),
         builder: (context, snapshot) {
-          if (snapshot.data?.isEmpty ?? true) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(
               child: SpinKitCircle(
                 color: Colors.blueGrey,
               ),
             );
-          } else if (snapshot.hasData) {
-            return ClipRRect(
-              borderRadius: BorderRadius.circular(12),
-              child: Stack(
-                children: [
-                  CarouselSlider.builder(
-                    carouselController: controller,
-                    itemCount: snapshot.data!.length,
-                    itemBuilder: (BuildContext context, int itemIndex,
-                        int pageViewIndex) {
-                      FeedsModel feedsModel = snapshot.data![itemIndex];
-                      return InkWell(
-                        onTap: () async {
-                          if (widget.category == '') {
-                            // Navigator.of(context).push(MaterialPageRoute(
-                            //     builder: (context) => MarketsByCategoriesPage(
-                            //         selectedCategory: feedsModel.category)));
-                            Navigator.of(context).push(MaterialPageRoute(
-                                builder: (context) => ProductsByCategories(
-                                    collection: feedsModel.category)));
-                          }
-                        },
-                        child: CachedNetworkImage(
+          }
+
+          if (!snapshot.hasData || snapshot.data!.isEmpty) {
+            return const SizedBox.shrink();
+          }
+
+          final data = snapshot.data!;
+          return ClipRRect(
+            borderRadius: BorderRadius.circular(12),
+            child: Stack(
+              children: [
+                CarouselSlider.builder(
+                  carouselController: controller,
+                  itemCount: data.length,
+                  itemBuilder: (BuildContext context, int itemIndex,
+                      int pageViewIndex) {
+                    FeedsModel feedsModel = data[itemIndex];
+                    return InkWell(
+                      onTap: () async {
+                        if (feedsModel.hasCategory) {
+                          Navigator.of(context).push(MaterialPageRoute(
+                              builder: (context) => ProductsByCategories(
+                                  collection: feedsModel.category)));
+                        }
+                      },
+                      child: CachedNetworkImage(
                           imageUrl: feedsModel.image,
                           fit: MediaQuery.of(context).size.width >= 1100
                               ? BoxFit.fill

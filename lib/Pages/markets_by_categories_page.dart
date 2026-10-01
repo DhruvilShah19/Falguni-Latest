@@ -1,4 +1,5 @@
 // ignore_for_file: avoid_print, deprecated_member_use
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:badges/badges.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -516,8 +517,8 @@ class _MarketsByCategoriesPageState extends State<MarketsByCategoriesPage>
                                                         const BorderRadius.all(
                                                             Radius.circular(
                                                                 15)),
-                                                    child: Image.network(
-                                                      marketModel.image1,
+                                                    child: CachedNetworkImage(
+                                                      imageUrl: marketModel.image1,
                                                       fit: BoxFit.cover,
                                                       width: MediaQuery.of(
                                                                       context)

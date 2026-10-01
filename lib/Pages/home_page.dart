@@ -23,8 +23,7 @@ import '../Widgets/slider.dart';
 import 'flash_sales_page.dart';
 
 class HomePage extends StatefulWidget {
-  final Function openDrawer;
-  const HomePage({super.key, required this.openDrawer});
+  const HomePage({super.key});
 
   @override
   State<HomePage> createState() => _HomePageState();

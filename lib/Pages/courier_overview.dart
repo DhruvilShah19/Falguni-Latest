@@ -1,5 +1,6 @@
 // ignore_for_file: deprecated_member_use, use_build_context_synchronously
 
+import 'package:cached_network_image/cached_network_image.dart';
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
@@ -165,8 +166,8 @@ class _CourierOverviewState extends State<CourierOverview> {
                   width: double.infinity,
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(12),
-                    child: Image.network(
-                      widget.courierModel.parcelImage,
+                    child: CachedNetworkImage(
+                      imageUrl: widget.courierModel.parcelImage,
                       fit: BoxFit.cover,
                     ),
                   ),

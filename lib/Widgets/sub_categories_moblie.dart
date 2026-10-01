@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:shimmer/shimmer.dart';
@@ -102,8 +103,8 @@ class _SubCategoriesWidgetMoblieState extends State<SubCategoriesWidgetMoblie> {
                           children: [
                             Center(
                               child: ClipOval(
-                                child: Image.network(
-                                  subCategoriesModel.image,
+                                child: CachedNetworkImage(
+                                  imageUrl: subCategoriesModel.image,
                                   height: 60,
                                   width: 60,
                                   fit: BoxFit.cover,

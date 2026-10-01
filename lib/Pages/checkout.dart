@@ -3,7 +3,6 @@
 import 'dart:async';
 import 'dart:math' as math;
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:falguni_app/Widgets/plural_direct.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
@@ -22,7 +21,6 @@ import 'package:flutter_cashfree_pg_sdk/api/cftheme/cftheme.dart';
 import 'package:flutter_cashfree_pg_sdk/api/cfpaymentgateway/cfpaymentgatewayservice.dart';
 import 'package:flutter_cashfree_pg_sdk/utils/cfenums.dart';
 import 'package:flutter_cashfree_pg_sdk/utils/cfexceptions.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:uuid/uuid.dart';
@@ -36,8 +34,6 @@ import 'checkout_step3_completed.dart';
 import '../Model/address.dart';
 import 'package:geocoding/geocoding.dart';
 import '../Model/formatter.dart';
-import '../Model/history.dart';
-import '../Model/order_model.dart';
 import '../Model/products.dart';
 import '../Providers/analytics.dart';
 import '../Widgets/map_snapshot.dart';
@@ -546,34 +542,28 @@ class _CheckoutPageState extends State<CheckoutPage>
   Future<void> _initiateOnlinePayment() async {
     setState(() => isProcessingPayment = true);
 
-    if (!dotenv.isInitialized) {
-      try {
-        await dotenv.load(fileName: ".env");
-      } catch (e) {
-        debugPrint("Error loading .env: $e");
+    try {
+      final storeStatusSnap = await FirebaseFirestore.instance
+          .collection('Store Settings')
+          .doc('Store Status')
+          .get();
+      if (storeStatusSnap.exists) {
+        final data = storeStatusSnap.data();
+        if (data?['isOpen'] == false) {
+          setState(() => isProcessingPayment = false);
+          _showAlertDialog(
+            title: 'Store Closed',
+            message: (data?['closedMessage'] as String?)?.isNotEmpty == true
+                ? data!['closedMessage']
+                : 'Our store is currently closed for new orders. Operating hours: 9:00 AM – 9:00 PM.',
+            buttonText: 'Understood',
+            accentColor: const Color(0xFFD4AF37),
+            icon: Icons.lock_clock_outlined,
+          );
+          return;
+        }
       }
-    }
-
-    String? apiUrl = dotenv.env['apiUrl'];
-    String? clientId = dotenv.env['client_id'];
-    String? clientSecret = dotenv.env['client_secret'];
-    String? notifyUrl = dotenv.env['notify_url'];
-
-    if (apiUrl == null ||
-        clientId == null ||
-        clientSecret == null ||
-        notifyUrl == null) {
-      setState(() => isProcessingPayment = false);
-      _showAlertDialog(
-        title: 'Configuration Error',
-        message:
-            'Payment configuration is not set up correctly. Please contact support.',
-        buttonText: 'Close',
-        accentColor: const Color(0xFFE74C3C),
-        icon: Icons.error_outline,
-      );
-      return;
-    }
+    } catch (_) {}
 
     num calculatedAmount = subTotal + (deliveryBool == false ? 0 : deliveryFee);
     String cleanPhone = phone.replaceAll(RegExp(r'\D'), '');
@@ -612,7 +602,6 @@ class _CheckoutPageState extends State<CheckoutPage>
         "deliveryLng": deliveryAddressLong,
         "deliveryAddress": deliveryAddress
       },
-      "order_meta": {"notify_url": notifyUrl},
       "order_note": "Falguni Application Order",
     };
 
@@ -709,21 +698,6 @@ class _CheckoutPageState extends State<CheckoutPage>
     });
   }
 
-  addToOrder(OrderModel orderModel, String uid) {
-    FirebaseFirestore.instance
-        .collection('Orders')
-        .doc(uid)
-        .set(orderModel.toMap())
-        .then((value) {
-      Fluttertoast.showToast(
-          msg: "Your new order has been placed",
-          toastLength: Toast.LENGTH_SHORT,
-          gravity: ToastGravity.TOP,
-          timeInSecForIosWeb: 1,
-          fontSize: 14.0);
-    });
-  }
-
   Future deleteCartCollection() async {
     addToRecentlyPurchased();
     userRef!.collection('Cart').get().then((snapshot) {
@@ -731,22 +705,6 @@ class _CheckoutPageState extends State<CheckoutPage>
         ds.reference.delete();
       }
     });
-  }
-
-  deleteVendorsID() {
-    userRef!.update({'deliveryFee': 0, 'Coupon Reward': 0});
-  }
-
-  updateHistory(HistoryModel historyModel) {
-    userRef!.collection('History').add(historyModel.toMap());
-  }
-
-  updateHistoryVendor(HistoryModel historyModel) {
-    FirebaseFirestore.instance
-        .collection('vendors')
-        .doc(vendorID)
-        .collection('Notifications')
-        .add(historyModel.toMap());
   }
 
   double deliveryAddressLat = 0;

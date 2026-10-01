@@ -610,10 +610,10 @@ packages:
     dependency: "direct main"
     description:
       name: flutter_cashfree_pg_sdk
-      sha256: "417409524e2d1456b862b9a1a7f3faf219c281a1e9ce8d04fe8b93a4e408d954"
+      sha256: "94d618057ffa7721b2bdc97dd0d0ad7f22df2a30ac66b3991a7fd65e6f15e64d"
       url: "https://pub.dev"
     source: hosted
-    version: "2.2.9+47"
+    version: "2.4.0+52"
   flutter_close_app:
     dependency: "direct main"
     description:
@@ -646,14 +646,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.1.0"
-  flutter_dotenv:
-    dependency: "direct main"
-    description:
-      name: flutter_dotenv
-      sha256: b7c7be5cd9f6ef7a78429cabd2774d3c4af50e79cb2b7593e3d5d763ef95c61b
-      url: "https://pub.dev"
-    source: hosted
-    version: "5.2.1"
   flutter_easyloading:
     dependency: "direct main"
     description:
@@ -1494,7 +1486,7 @@ packages:
     source: hosted
     version: "2.1.0"
   package_info_plus:
-    dependency: transitive
+    dependency: "direct main"
     description:
       name: package_info_plus
       sha256: "16eee997588c60225bda0488b6dcfac69280a6b7a3cf02c741895dd370a02968"
@@ -1605,13 +1597,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "7.0.2"
-  pinelabs_edge_flutter:
-    dependency: "direct main"
-    description:
-      path: pinelabs
-      relative: true
-    source: path
-    version: "0.0.1"
   platform:
     dependency: transitive
     description:
@@ -2169,38 +2154,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.1.1"
-  webview_flutter:
-    dependency: transitive
-    description:
-      name: webview_flutter
-      sha256: a3da219916aba44947d3a5478b1927876a09781174b5a2b67fa5be0555154bf9
-      url: "https://pub.dev"
-    source: hosted
-    version: "4.13.1"
-  webview_flutter_android:
-    dependency: transitive
-    description:
-      name: webview_flutter_android
-      sha256: eeeb3fcd5f0ff9f8446c9f4bbc18a99b809e40297528a3395597d03aafb9f510
-      url: "https://pub.dev"
-    source: hosted
-    version: "4.10.11"
-  webview_flutter_platform_interface:
-    dependency: transitive
-    description:
-      name: webview_flutter_platform_interface
-      sha256: "63d26ee3aca7256a83ccb576a50272edd7cfc80573a4305caa98985feb493ee0"
-      url: "https://pub.dev"
-    source: hosted
-    version: "2.14.0"
-  webview_flutter_wkwebview:
-    dependency: transitive
-    description:
-      name: webview_flutter_wkwebview
-      sha256: "0412b657a2828fb301e73509909e6ec02b77cd2b441ae9f77125d482b3ddf0e7"
-      url: "https://pub.dev"
-    source: hosted
-    version: "3.23.6"
   win32:
     dependency: transitive
     description:

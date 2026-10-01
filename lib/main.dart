@@ -8,7 +8,6 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:gap/gap.dart';
@@ -26,6 +25,8 @@ import 'package:firebase_analytics/firebase_analytics.dart';
 import 'firebase_options.dart';
 import 'Providers/global_config.dart';
 import 'Providers/delivery_config.dart';
+import 'Providers/force_update_config.dart';
+import 'Widgets/force_update_screen.dart';
 
 int? initScreen;
 @pragma('vm:entry-point')
@@ -125,7 +126,6 @@ void main() async {
     initScreen = prefs.getInt("initScreen");
     prefs.setInt("initScreen", 1);
   });
-  // await dotenv.load(fileName: ".env");
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
@@ -200,6 +200,8 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
+  ForceUpdateInfo? _forceUpdateInfo;
+
   @override
   void initState() {
     super.initState();
@@ -208,6 +210,12 @@ class _MyAppState extends State<MyApp> {
   }
 
   void initialization() async {
+    final info = await ForceUpdateConfig.check();
+    if (mounted) {
+      setState(() {
+        _forceUpdateInfo = info;
+      });
+    }
     FlutterNativeSplash.remove();
   }
 
@@ -233,6 +241,15 @@ class _MyAppState extends State<MyApp> {
     BuildContext context,
   ) {
     final themeNotifier = Provider.of<ThemeNotifier>(context);
+
+    if (_forceUpdateInfo?.isRequired == true) {
+      return MaterialApp(
+        debugShowCheckedModeBanner: false,
+        theme: themeNotifier.getTheme(),
+        home: ForceUpdateScreen(info: _forceUpdateInfo!),
+      );
+    }
+
     return GlobalLoaderOverlay(
       overlayWidgetBuilder: (_) {
         //ignored progress for the moment

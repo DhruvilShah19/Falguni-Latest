@@ -44,17 +44,16 @@ class DefaultFirebaseOptions {
   }
 
   static const FirebaseOptions web = FirebaseOptions(
-    apiKey: 'AIzaSyB_HaVk-0R-2iFcc5O9wFSJvlwXajESIMk',
-    appId: '1:7031551502:web:e7d1b7330c564fd83c6e5f',
-    messagingSenderId: '7031551502',
-    projectId: 'falguni-admin',
-    authDomain: 'falguni-admin.firebaseapp.com',
-    storageBucket: 'falguni-admin.appspot.com',
-    measurementId: 'G-DDSSY84LHT',
+    apiKey: 'AIzaSyAKm3lkXENu0lVNWw5VPAVHAZotDmjEjKU',
+    appId: '1:84686827194:web:68d0693c15f65526e05c83',
+    messagingSenderId: '84686827194',
+    projectId: 'falgunigruhudhyog-cd439',
+    authDomain: 'falgunigruhudhyog-cd439.firebaseapp.com',
+    storageBucket: 'falgunigruhudhyog-cd439.firebasestorage.app',
   );
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyCIG4hrwrTleFvlUvNuf9fD3PEqUH3Q2dI',
+    apiKey: 'AIzaSyD3uST7HDEY7JsDXlcKCiIb7-UoIwB0WT8',
     appId: '1:7031551502:android:9a9ac6901f35a9f23c6e5f',
     messagingSenderId: '7031551502',
     projectId: 'falguni-admin',

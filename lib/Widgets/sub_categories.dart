@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:shimmer/shimmer.dart';
@@ -124,8 +125,8 @@ class _SubCategoriesWidgetState extends State<SubCategoriesWidget> {
                                         collection: subCategoriesModel.name,
                                       ))));
                             },
-                            leading: Image.network(
-                              subCategoriesModel.image,
+                            leading: CachedNetworkImage(
+                              imageUrl: subCategoriesModel.image,
                               height: 40,
                               width: 40,
                               fit: BoxFit.cover,

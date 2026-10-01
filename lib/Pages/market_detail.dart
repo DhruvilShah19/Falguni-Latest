@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:easy_localization/easy_localization.dart';
@@ -222,7 +223,7 @@ class MySliverAppBar extends SliverPersistentHeaderDelegate {
                   return Container(
                       width: MediaQuery.of(context).size.width,
                       margin: const EdgeInsets.symmetric(horizontal: 5.0),
-                      child: Image.network(i));
+                      child: CachedNetworkImage(imageUrl: i));
                 },
               );
             }).toList(),

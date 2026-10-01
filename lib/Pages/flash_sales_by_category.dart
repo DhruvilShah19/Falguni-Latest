@@ -1,5 +1,6 @@
 // ignore_for_file: deprecated_member_use
 
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:badges/badges.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:easy_localization/easy_localization.dart';
@@ -312,8 +313,8 @@ class _FlashSalesByCategoriesState extends State<FlashSalesByCategories> {
                                         crossAxisAlignment:
                                             CrossAxisAlignment.stretch,
                                         children: [
-                                          Image.network(
-                                            productModel.image1,
+                                          CachedNetworkImage(
+                                            imageUrl: productModel.image1,
                                             height: MediaQuery.of(context)
                                                         .size
                                                         .width >=

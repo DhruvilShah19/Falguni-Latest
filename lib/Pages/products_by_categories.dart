@@ -1,5 +1,6 @@
 // ignore_for_file: avoid_print, deprecated_member_use, unnecessary_string_interpolations
 
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:badges/badges.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:easy_localization/easy_localization.dart';
@@ -592,8 +593,8 @@ class _ProductsByCategoriesState extends State<ProductsByCategories> {
                                                         borderRadius:
                                                             BorderRadius
                                                                 .circular(16.0),
-                                                        child: Image.network(
-                                                          productModel.image1,
+                                                        child: CachedNetworkImage(
+                                                          imageUrl: productModel.image1,
                                                           fit: BoxFit.cover,
                                                         ),
                                                       ),

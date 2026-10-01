@@ -1,5 +1,6 @@
 // ignore_for_file: deprecated_member_use, use_build_context_synchronously, unused_element
 
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -1611,8 +1612,8 @@ class _CartPageState extends State<CartPage> {
               children: [
                 ClipRRect(
                   borderRadius: BorderRadius.circular(14),
-                  child: Image.network(
-                    productModel.image1,
+                  child: CachedNetworkImage(
+                    imageUrl: productModel.image1,
                     height: 95,
                     width: 95,
                     fit: BoxFit.cover,

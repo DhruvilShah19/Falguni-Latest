@@ -4,7 +4,6 @@ import 'dart:convert';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -59,10 +58,6 @@ class _AuditOrdersPageState extends State<AuditOrdersPage>
   _AuditResult? lookupResult;
   String? lookupError;
 
-  String? _baseUrl;
-  String? _clientId;
-  String? _clientSecret;
-
   // Tab 3
   String id = '';
   String currencySymbol = '';
@@ -71,7 +66,6 @@ class _AuditOrdersPageState extends State<AuditOrdersPage>
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
-    _loadEnv();
     _getUserDetails();
     _getCurrencySymbol();
   }
@@ -109,28 +103,6 @@ class _AuditOrdersPageState extends State<AuditOrdersPage>
     _orderIdController.dispose();
     super.dispose();
   }
-
-  Future<void> _loadEnv() async {
-    if (!dotenv.isInitialized) await dotenv.load(fileName: ".env");
-    String c(String? v) =>
-        (v ?? '').replaceAll("'", '').replaceAll('"', '').trim();
-    String apiUrl = c(dotenv.env['apiUrl']);
-    _clientId = c(dotenv.env['client_id']);
-    _clientSecret = c(dotenv.env['client_secret']);
-    if (apiUrl.isNotEmpty) {
-      _baseUrl = apiUrl;
-      if (_baseUrl!.endsWith('/'))
-        _baseUrl = _baseUrl!.substring(0, _baseUrl!.length - 1);
-      if (_baseUrl!.endsWith('/orders'))
-        _baseUrl = _baseUrl!.substring(0, _baseUrl!.length - '/orders'.length);
-    }
-  }
-
-  Map<String, String> get _h => {
-        'x-client-id': _clientId!,
-        'x-client-secret': _clientSecret!,
-        'x-api-version': '2023-08-01',
-      };
 
   @override
   Widget build(BuildContext context) {
@@ -391,13 +363,6 @@ class _AuditOrdersPageState extends State<AuditOrdersPage>
       totalOrders = verifiedPaid = notPaid = noOrderId = 0;
     });
     try {
-      if (_baseUrl == null || _clientId == null || _clientSecret == null) {
-        setState(() {
-          isLoading = false;
-          errorMessage = "Missing credentials.";
-        });
-        return;
-      }
       final user = FirebaseAuth.instance.currentUser;
       if (user == null) {
         setState(() {
@@ -495,52 +460,29 @@ class _AuditOrdersPageState extends State<AuditOrdersPage>
   // SHARED: Fetch single order from Cashfree API
   // ═══════════════════════════════════════════════════════════════════════════
 
+  // Goes through the server proxy (holds the real Cashfree secret) instead
+  // of calling Cashfree directly from the device -- a device-side secret
+  // can be pulled straight out of the shipped APK.
   Future<_AuditResult?> _fetchOrder(String cfOrderId,
       {String appOrderId = 'N/A', String fallbackTime = ''}) async {
     try {
-      final resp = await http.get(
-        Uri.parse('$_baseUrl/orders/$cfOrderId'),
-        headers: _h,
-      );
+      final resp = await http.get(Uri.parse(
+          'https://falguni-latest.vercel.app/api/cashfree/verify?orderId=$cfOrderId'));
       if (resp.statusCode == 200) {
         var od = jsonDecode(resp.body);
-        String name = '', phone = '', payMethod = '', payTime = '';
-        double amount = double.tryParse('${od['order_amount']}') ?? 0;
-        String status = od['order_status']?.toString() ?? 'UNKNOWN';
-
-        if (od['customer_details'] != null) {
-          name = od['customer_details']['customer_name']?.toString() ?? '';
-          phone = od['customer_details']['customer_phone']?.toString() ?? '';
-        }
-        try {
-          final payResp = await http.get(
-            Uri.parse('$_baseUrl/orders/$cfOrderId/payments'),
-            headers: _h,
-          );
-          if (payResp.statusCode == 200) {
-            var pl = jsonDecode(payResp.body);
-            if (pl is List && pl.isNotEmpty) {
-              var p = pl.firstWhere(
-                (x) => x['payment_status'] == 'SUCCESS',
-                orElse: () => pl.first,
-              );
-              payMethod = p['payment_group']?.toString() ?? '';
-              payTime = p['payment_time']?.toString() ?? '';
-            }
-          }
-        } catch (_) {}
+        String status = od['cfStatus']?.toString() ?? 'UNKNOWN';
 
         return _AuditResult(
           appOrderId: appOrderId,
           cfOrderId: cfOrderId,
           cfStatus: status,
-          isPaid: status == 'PAID',
-          amount: amount,
-          customerName: name,
-          customerPhone: phone,
-          paymentMethod: payMethod,
+          isPaid: od['isPaid'] == true,
+          amount: double.tryParse('${od['amount']}') ?? 0,
+          customerName: od['customerName']?.toString() ?? '',
+          customerPhone: od['customerPhone']?.toString() ?? '',
+          paymentMethod: od['paymentMethod']?.toString() ?? '',
           timeCreated: fallbackTime,
-          cfPaymentTime: payTime,
+          cfPaymentTime: od['cfPaymentTime']?.toString() ?? '',
         );
       } else if (resp.statusCode == 404) {
         setState(() => lookupError = "Order not found on Cashfree.");

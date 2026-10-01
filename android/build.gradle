@@ -13,6 +13,24 @@ subprojects {
     project.evaluationDependsOn(":app")
 }
 
+// shared_preferences_android 2.4.20 pulls androidx.datastore 1.2.0, whose
+// prebuilt libdatastore_shared_counter.so isn't 16 KB-page aligned (crashes
+// on 16 KB-page devices). 1.1.7 is the last datastore release known to be
+// aligned -- force every module (including the plugin's own build) onto it
+// until shared_preferences_android bumps past 1.2.0 with a fixed build.
+subprojects {
+    project.configurations.all {
+        resolutionStrategy {
+            force 'androidx.datastore:datastore:1.1.7'
+            force 'androidx.datastore:datastore-android:1.1.7'
+            force 'androidx.datastore:datastore-core:1.1.7'
+            force 'androidx.datastore:datastore-core-android:1.1.7'
+            force 'androidx.datastore:datastore-preferences:1.1.7'
+            force 'androidx.datastore:datastore-preferences-android:1.1.7'
+        }
+    }
+}
+
 tasks.register("clean", Delete) {
     delete rootProject.buildDir
 }

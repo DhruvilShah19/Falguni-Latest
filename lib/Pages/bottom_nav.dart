@@ -17,7 +17,6 @@ import 'package:falguni_app/Pages/profile_home.dart';
 import '../Providers/auth.dart';
 import '../Theme/theme.dart';
 import '../Theme/theme_data.dart';
-import '../Widgets/drawer_clippath.dart';
 import 'loading.dart';
 
 class BottomNavPage extends StatefulWidget {
@@ -180,13 +179,6 @@ class _BottomNavPageState extends State<BottomNavPage> {
   }
 
   // ---------------------------------------------------------------------------
-  // DRAWER HELPERS
-  // ---------------------------------------------------------------------------
-
-  void _openDrawerHome() {
-    _scaffoldHome.currentState?.openDrawer();
-  }
-
   String _initials() {
     final base = (fullname.isNotEmpty ? fullname : email).trim();
     if (base.isEmpty) return "U";
@@ -219,30 +211,6 @@ class _BottomNavPageState extends State<BottomNavPage> {
     );
   }
 
-  Widget _drawerItem({
-    required IconData icon,
-    required String title,
-    required VoidCallback onTap,
-    Color? iconColor,
-    Color? textColor,
-  }) {
-    return ListTile(
-      dense: false,
-      leading: Icon(icon, color: iconColor ?? kGold, size: 22),
-      title: Text(
-        title,
-        style: TextStyle(
-          fontSize: 15,
-          fontWeight: FontWeight.w500,
-          color: textColor ?? Colors.white,
-        ),
-      ),
-      trailing:
-          const Icon(Icons.chevron_right, color: Colors.white24, size: 20),
-      onTap: onTap,
-      contentPadding: const EdgeInsets.symmetric(horizontal: 12),
-    );
-  }
 
   // ---------------------------------------------------------------------------
   // BUILD
@@ -256,320 +224,6 @@ class _BottomNavPageState extends State<BottomNavPage> {
     return Scaffold(
       key: _scaffoldHome,
 
-      // -----------------------------------------------------------------------
-      // MODERN MINIMAL DRAWER
-      // -----------------------------------------------------------------------
-      drawer: SizedBox(
-        width: MediaQuery.of(context).size.width * 0.82,
-        child: Drawer(
-          backgroundColor: kBgTop,
-          child: SafeArea(
-            child: Column(
-              children: [
-                // Header
-                DrawerHeader(
-                  margin: EdgeInsets.zero,
-                  padding: EdgeInsets.zero,
-                  child: ClipPath(
-                    clipper: CustomClipPath(),
-                    child: Container(
-                      color: kBgMid,
-                      child: Padding(
-                        padding: const EdgeInsets.fromLTRB(16, 10, 16, 12),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            // Top row
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                IconButton(
-                                  onPressed: () => Navigator.pop(context),
-                                  icon: const Icon(
-                                    Icons.arrow_back,
-                                    color: Colors.white,
-                                  ),
-                                ),
-                                Icon(
-                                  isLight
-                                      ? Icons.light_mode_outlined
-                                      : Icons.dark_mode_outlined,
-                                  color: kGold,
-                                  size: 20,
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 4),
-                            Row(
-                              children: [
-                                _buildUserAvatar(),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        isLogged
-                                            ? 'Hello, $fullname'
-                                            : 'Hello, Guest'.tr(),
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                        style: const TextStyle(
-                                          fontSize: 18,
-                                          fontWeight: FontWeight.w600,
-                                          color: Colors.white,
-                                        ),
-                                      ),
-                                      if (isLogged && email.isNotEmpty) ...[
-                                        const SizedBox(height: 4),
-                                        Text(
-                                          email,
-                                          maxLines: 1,
-                                          overflow: TextOverflow.ellipsis,
-                                          style: const TextStyle(
-                                            fontSize: 13,
-                                            color: Colors.white70,
-                                          ),
-                                        ),
-                                      ],
-                                      if (isLogged &&
-                                          deliveryAddress.isNotEmpty) ...[
-                                        const SizedBox(height: 4),
-                                        Row(
-                                          children: [
-                                            const Icon(
-                                              Icons.location_on_outlined,
-                                              size: 14,
-                                              color: kGold,
-                                            ),
-                                            const SizedBox(width: 4),
-                                            Expanded(
-                                              child: Text(
-                                                deliveryAddress,
-                                                maxLines: 1,
-                                                overflow: TextOverflow.ellipsis,
-                                                style: const TextStyle(
-                                                  fontSize: 12,
-                                                  color: Colors.white70,
-                                                ),
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ],
-                                    ],
-                                  ),
-                                )
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-
-                // Body list (scrollable)
-                Expanded(
-                  child: ListView(
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.only(
-                            left: 16.0, bottom: 6, top: 4),
-                        child: Text(
-                          "Account".tr(),
-                          style: const TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
-                            color: kGold,
-                          ),
-                        ),
-                      ),
-                      _drawerItem(
-                        icon: Icons.shopping_bag_outlined,
-                        title: "Orders".tr(),
-                        onTap: () {
-                          if (userRef == null) {
-                            Navigator.of(context).pushNamed('/login');
-                          } else {
-                            Navigator.of(context).pushNamed('/orders');
-                          }
-                        },
-                      ),
-                      _drawerItem(
-                        icon: Icons.delivery_dining,
-                        title: "Logistics/Courier".tr(),
-                        onTap: () {
-                          if (userRef == null) {
-                            Navigator.of(context).pushNamed('/login');
-                          } else {
-                            Navigator.of(context).pushNamed('/courier');
-                          }
-                        },
-                      ),
-                      _drawerItem(
-                        icon: Icons.person_outline,
-                        title: "Profile".tr(),
-                        onTap: () {
-                          if (userRef == null) {
-                            Navigator.of(context).pushNamed('/login');
-                          } else {
-                            Navigator.of(context).pushNamed('/profile');
-                          }
-                        },
-                      ),
-                      _drawerItem(
-                        icon: Icons.room_outlined,
-                        title: "Delivery Address".tr(),
-                        onTap: () {
-                          if (userRef == null) {
-                            Navigator.of(context).pushNamed('/login');
-                          } else {
-                            Navigator.of(context)
-                                .pushNamed('/delivery-address');
-                          }
-                        },
-                      ),
-                      _drawerItem(
-                        icon: Icons.wallet_outlined,
-                        title: "Wallet".tr(),
-                        onTap: () {
-                          if (userRef == null) {
-                            Navigator.of(context).pushNamed('/login');
-                          } else {
-                            Navigator.of(context).pushNamed('/wallet');
-                          }
-                        },
-                      ),
-                      _drawerItem(
-                        icon: Icons.favorite_border,
-                        title: "Favorites".tr(),
-                        onTap: () {
-                          if (userRef == null) {
-                            Navigator.of(context).pushNamed('/login');
-                          } else {
-                            Navigator.of(context).pushNamed('/favorites');
-                          }
-                        },
-                      ),
-
-                      const Divider(
-                          indent: 16, endIndent: 16, color: Colors.white24),
-
-                      if (referralStatus)
-                        _drawerItem(
-                          icon: Icons.wallet_giftcard_outlined,
-                          title: "Share and earn".tr(),
-                          onTap: () {
-                            if (userRef == null) {
-                              Navigator.of(context).pushNamed('/login');
-                            } else {
-                              Navigator.of(context).pushNamed('/referral-page');
-                            }
-                          },
-                        ),
-                      _drawerItem(
-                        icon: Icons.card_giftcard_outlined,
-                        title: "Promo Code".tr(),
-                        onTap: () => Navigator.of(context).pushNamed('/coupon'),
-                      ),
-                      _drawerItem(
-                        icon: Icons.help_center_outlined,
-                        title: "F.A.Q.".tr(),
-                        onTap: () => Navigator.of(context).pushNamed('/faq'),
-                      ),
-                      _drawerItem(
-                        icon: Icons.local_shipping_outlined,
-                        title: "Delivery Charges".tr(),
-                        onTap: () =>
-                            Navigator.of(context).pushNamed('/delivery-charges'),
-                      ),
-                      _drawerItem(
-                        icon: Icons.support_agent_outlined,
-                        title: "Contact Us".tr(),
-                        onTap: () => Navigator.of(context).pushNamed('/contact'),
-                      ),
-                      _drawerItem(
-                        icon: Icons.privacy_tip_outlined,
-                        title: "Privacy Policy".tr(),
-                        onTap: () =>
-                            Navigator.of(context).pushNamed('/privacy-policy'),
-                      ),
-                      _drawerItem(
-                        icon: Icons.description_outlined,
-                        title: "Terms & Conditions".tr(),
-                        onTap: () => Navigator.of(context)
-                            .pushNamed('/terms-and-conditions'),
-                      ),
-                      _drawerItem(
-                        icon: Icons.info_outline_rounded,
-                        title: "Website Disclaimer".tr(),
-                        onTap: () => Navigator.of(context)
-                            .pushNamed('/website-disclaimer'),
-                      ),
-                      _drawerItem(
-                        icon: Icons.notifications_outlined,
-                        title: "Notifications".tr(),
-                        onTap: () {
-                          if (userRef == null) {
-                            Navigator.of(context).pushNamed('/login');
-                          } else {
-                            Navigator.of(context).pushNamed('/notifications');
-                          }
-                        },
-                      ),
-
-                      // Theme switch
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                        child: ListTileSwitch(
-                          leading: const Icon(Icons.color_lens_outlined,
-                              color: kGold),
-                          title: const Text(
-                            'Theme Mode',
-                            style: TextStyle(fontSize: 15, color: Colors.white),
-                          ).tr(),
-                          value: themeMode == null ? true : themeMode,
-                          onChanged: (val) {
-                            setState(() {
-                              _lightTheme = val;
-                              themeMode = val;
-                            });
-                            _onThemeChanged(val, themeNotifier);
-                          },
-                        ),
-                      ),
-
-                      const SizedBox(height: 8),
-
-                      // Login / Logout
-                      isLogged
-                          ? _drawerItem(
-                              icon: Icons.logout,
-                              title: "Log Out".tr(),
-                              onTap: () {
-                                AuthService().signOut(context);
-                              },
-                              iconColor: Colors.redAccent,
-                              textColor: Colors.redAccent,
-                            )
-                          : _drawerItem(
-                              icon: Icons.login,
-                              title: "Log in".tr(),
-                              onTap: () {
-                                Navigator.of(context).pushNamed('/login');
-                              },
-                            ),
-                      const SizedBox(height: 8),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
 
       // -----------------------------------------------------------------------
       // MODERN MINIMAL BOTTOM NAV
@@ -684,7 +338,7 @@ class _BottomNavPageState extends State<BottomNavPage> {
       // BODY – unchanged logic, just using _page
       // -----------------------------------------------------------------------
       body: _page == 0
-          ? HomePage(openDrawer: _openDrawerHome)
+          ? HomePage()
           : _page == 1
               ? (!isLogged
                   ? const LoadingPage()
@@ -697,9 +351,7 @@ class _BottomNavPageState extends State<BottomNavPage> {
                       ? (!isLogged
                           ? const LoadingPage()
                           : const NotificationsPage(isbottomNav: true))
-                      : (!isLogged
-                          ? const LoadingPage()
-                          : const ProfileHome(isbottomNav: true)),
+                      : const ProfileHome(isbottomNav: true),
     );
   }
 }

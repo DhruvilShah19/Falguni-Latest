@@ -1,5 +1,6 @@
 // ignore_for_file: prefer_const_constructors, prefer_const_literals_to_create_immutables, avoid_types_as_parameter_names, use_build_context_synchronously, deprecated_member_use
 
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
@@ -500,8 +501,8 @@ class _FavoritesPageState extends State<FavoritesPage> {
                   // IMAGE
                   ClipRRect(
                     borderRadius: BorderRadius.circular(14),
-                    child: Image.network(
-                      productModel.image1,
+                    child: CachedNetworkImage(
+                      imageUrl: productModel.image1,
                       height: 140,
                       width: double.infinity,
                       fit: BoxFit.cover,
@@ -546,8 +547,8 @@ class _FavoritesPageState extends State<FavoritesPage> {
                 children: [
                   ClipRRect(
                     borderRadius: BorderRadius.circular(14),
-                    child: Image.network(
-                      productModel.image1,
+                    child: CachedNetworkImage(
+                      imageUrl: productModel.image1,
                       height: 72,
                       width: 72,
                       fit: BoxFit.cover,

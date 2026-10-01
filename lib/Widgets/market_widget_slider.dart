@@ -1,5 +1,6 @@
 // ignore_for_file: avoid_print
 
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
@@ -162,8 +163,8 @@ class _MarketWidgetSliderState extends State<MarketWidgetSlider> {
                                                         topRight:
                                                             Radius.circular(
                                                                 15)),
-                                                child: Image.network(
-                                                  marketModel.image1,
+                                                child: CachedNetworkImage(
+                                                  imageUrl: marketModel.image1,
                                                   height: 80,
                                                   fit: BoxFit.cover,
                                                   width: double.infinity,

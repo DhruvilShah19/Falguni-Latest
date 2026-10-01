@@ -1,5 +1,6 @@
 // ignore_for_file: deprecated_member_use
 
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:shimmer/shimmer.dart';
 import '../Model/products.dart';
@@ -48,12 +49,12 @@ class OrderSummaryWidget extends StatelessWidget {
             ),
             child: ClipRRect(
               borderRadius: BorderRadius.circular(11),
-              child: Image.network(
-                product.image1,
+              child: CachedNetworkImage(
+                imageUrl: product.image1,
                 height: 80,
                 width: 80,
                 fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) {
+                errorWidget: (context, url, error) {
                   return Container(
                     height: 80,
                     width: 80,
