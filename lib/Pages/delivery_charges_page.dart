@@ -72,12 +72,12 @@ class DeliveryChargesPage extends StatelessWidget {
             DistanceTierRule(
                 tier: 'Hyperlocal', maxDistanceKm: 5, fee: 50, freeAbove: 400),
             DistanceTierRule(
-                tier: 'Intercity',
+                tier: 'Nearby',
                 maxDistanceKm: 10,
                 fee: 100,
                 freeAbove: 1200),
             DistanceTierRule(
-                tier: 'Interstate',
+                tier: 'Extended Local',
                 maxDistanceKm: 15,
                 fee: 150,
                 freeAbove: 1800),
@@ -103,7 +103,7 @@ class DeliveryChargesPage extends StatelessWidget {
       ),
       _DeliveryZone(
         color: const Color(0xFF60A5FA),
-        tier: 'Intercity Delivery',
+        tier: 'Nearby Delivery',
         range:
             '${hyperlocal.maxDistanceKm.toInt()} – ${intercity.maxDistanceKm.toInt()} km',
         charge: _inr(intercity.fee),
@@ -116,7 +116,7 @@ class DeliveryChargesPage extends StatelessWidget {
       ),
       _DeliveryZone(
         color: const Color(0xFFFB923C),
-        tier: 'Interstate Delivery',
+        tier: 'Extended Local Delivery',
         range:
             '${intercity.maxDistanceKm.toInt()} – ${interstate.maxDistanceKm.toInt()} km',
         charge: _inr(interstate.fee),
@@ -133,7 +133,7 @@ class DeliveryChargesPage extends StatelessWidget {
         range: 'Above ${interstate.maxDistanceKm.toInt()} km — anywhere in Gujarat',
         charge: _inr(gujarat.feePerKg),
         chargeNote: 'per kg',
-        freeAbove: _inr(gujarat.freeAbove),
+        freeAbove: '₹2,000: 5 kg · ₹3,000: 7.5 kg · ₹4,000: 10 kg · ₹5,000: 15 kg',
         weightTable: [
           ['2 kg', _inr(2 * gujarat.feePerKg)],
           ['5 kg', _inr(5 * gujarat.feePerKg)],
@@ -150,7 +150,7 @@ class DeliveryChargesPage extends StatelessWidget {
         range: 'Above ${interstate.maxDistanceKm.toInt()} km — outside Gujarat',
         charge: _inr(panIndia.feePerKg),
         chargeNote: 'per kg',
-        freeAbove: _inr(panIndia.freeAbove),
+        freeAbove: '₹3,500: 5 kg · ₹5,000: 7.5 kg · ₹7,000: 10 kg · ₹10,000: 15 kg',
         weightTable: [
           ['1 kg', _inr(1 * panIndia.feePerKg)],
           ['3 kg', _inr(3 * panIndia.feePerKg)],
@@ -166,9 +166,9 @@ class DeliveryChargesPage extends StatelessWidget {
 
   static const List<String> _notes = [
     'Distance is calculated from the Falguni Gruh Udhyog store to the delivery address.',
-    'Weight-based shipping is calculated on the final packed weight.',
-    'Free delivery is automatically applied when your order meets the eligible value.',
-    'Orders above the free-delivery threshold are delivered free irrespective of weight.',
+    'Outstation estimates currently include product weight × 1.25 + 0.25 kg per order for packaging; the store can adjust this temporary allowance.',
+    'Eligibility uses merchandise value after discounts, before delivery. Local thresholds are inclusive.',
+    'Outstation free weight is capped at 15 kg. Excess weight costs ₹40/kg within Gujarat or ₹100/kg outside Gujarat.',
   ];
 
   @override
@@ -326,8 +326,8 @@ class _ZoneCard extends StatelessWidget {
               ),
               const SizedBox(width: 10),
               _StatPill(
-                value: 'Above ${zone.freeAbove}',
-                label: 'Free delivery',
+                value: zone.freeAbove,
+                label: 'Free allowance from',
                 valueColor: Colors.greenAccent,
               ),
             ],
@@ -520,7 +520,7 @@ class _ComparisonTable extends StatelessWidget {
                   Expanded(
                     flex: 4,
                     child: Text(
-                      '${zone.range}\n${zone.charge} ${zone.chargeNote} · Free above ${zone.freeAbove}',
+                      '${zone.range}\n${zone.charge} ${zone.chargeNote} · Free allowance from ${zone.freeAbove}',
                       style: TextStyle(
                         color: Colors.white.withOpacity(0.6),
                         fontSize: 11.5,

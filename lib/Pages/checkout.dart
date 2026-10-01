@@ -1,7 +1,6 @@
 // ignore_for_file: curly_braces_in_flow_control_structures, use_build_context_synchronously, avoid_print, deprecated_member_use, unused_import, prefer_const_constructors
 
 import 'dart:async';
-import 'dart:math' as math;
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -27,12 +26,10 @@ import 'package:uuid/uuid.dart';
 
 import 'order_success_page.dart';
 import 'delivery_addresses.dart';
-import '../Providers/delivery_config.dart';
 import 'checkout_step1_delivery.dart';
 import 'checkout_step2_payment.dart';
 import 'checkout_step3_completed.dart';
 import '../Model/address.dart';
-import 'package:geocoding/geocoding.dart';
 import '../Model/formatter.dart';
 import '../Model/products.dart';
 import '../Providers/analytics.dart';
@@ -54,7 +51,7 @@ class _CheckoutPageState extends State<CheckoutPage>
   static const Color kBgMid = Color(0xFF5C4033);
 
   int _index = 0;
-  DocumentReference? userDetails;
+  StreamSubscription<DocumentSnapshot<Map<String, dynamic>>>? userDetails;
   String id = '';
   String addressID = '';
   DocumentReference? userRef;
@@ -63,6 +60,10 @@ class _CheckoutPageState extends State<CheckoutPage>
   bool selectedStepper1 = true;
   bool selectedStepper2 = false;
   num deliveryFee = 0;
+  Map<String, dynamic>? deliveryCalculation;
+  bool deliveryQuoteLoading = false;
+  String? deliveryQuoteError;
+  int _quoteRequest = 0;
   // Mirrors the website's DeliveryTier labels (lib/deliveryPricing.ts) so
   // customers see the same "Hyperlocal Delivery" / "Interstate Delivery"
   // etc. badge on both platforms instead of just a bare fee number.
@@ -127,6 +128,7 @@ class _CheckoutPageState extends State<CheckoutPage>
   Future<List<ProductsModel>> getMyCartToOrders() {
     var logger = Logger();
     return userRef!.collection('Cart').get().then((snapshot) {
+      orders.clear();
       for (var element in snapshot.docs) {
         orders.add(element.data());
       }
@@ -223,8 +225,9 @@ class _CheckoutPageState extends State<CheckoutPage>
           .doc(user!.uid)
           .snapshots()
           .listen((value) {
+        if (!mounted) return;
         setState(() {
-          id = value['id'];
+          id = user.uid;
           fullname = value['fullname'];
           email = value['email'] ?? 'user@example.com';
           phone = value['phone'];
@@ -236,7 +239,7 @@ class _CheckoutPageState extends State<CheckoutPage>
           getVendorID();
           getDeliveryLocationLatAndLong();
         });
-      }) as DocumentReference?;
+      });
     });
   }
 
@@ -385,6 +388,14 @@ class _CheckoutPageState extends State<CheckoutPage>
     getDeliveryFee();
     getOneSignalDetails();
     getCouponStatus();
+  }
+
+  @override
+  void dispose() {
+    ++_quoteRequest;
+    userDetails?.cancel();
+    _animationController?.dispose();
+    super.dispose();
   }
 
   // --- CASHFREE INTEGRATION METHODS ---
@@ -565,7 +576,20 @@ class _CheckoutPageState extends State<CheckoutPage>
       }
     } catch (_) {}
 
+    final reviewedTotal = subTotal + (deliveryBool == false ? 0 : deliveryFee);
+    if (!await refreshDeliveryQuote()) {
+      if (mounted) {
+        setState(() => isProcessingPayment = false);
+        Fluttertoast.showToast(msg: deliveryQuoteError ?? 'Unable to calculate delivery');
+      }
+      return;
+    }
     num calculatedAmount = subTotal + (deliveryBool == false ? 0 : deliveryFee);
+    if ((calculatedAmount - reviewedTotal).abs() >= 0.01) {
+      setState(() => isProcessingPayment = false);
+      Fluttertoast.showToast(msg: 'Your total changed. Please review the updated total and tap Pay again.');
+      return;
+    }
     String cleanPhone = phone.replaceAll(RegExp(r'\D'), '');
     if (cleanPhone.length > 10)
       cleanPhone = cleanPhone.substring(cleanPhone.length - 10);
@@ -596,6 +620,7 @@ class _CheckoutPageState extends State<CheckoutPage>
         "customer_phone": "+91$cleanPhone"
       },
       "cart_details": {
+        "expectedTotal": calculatedAmount,
         "isPickup": pickupBool,
         "isApp": true,
         "deliveryLat": deliveryAddressLat,
@@ -607,8 +632,8 @@ class _CheckoutPageState extends State<CheckoutPage>
 
     try {
       final http.Response response = await http.post(
-        Uri.parse('https://falguni-latest.vercel.app/api/cashfree/create-order'),
-        headers: headers,
+        Uri.parse('https://falguni-latest.vercel.app/api/v2/cashfree/create-order'),
+        headers: {...headers, 'Authorization': 'Bearer ${await FirebaseAuth.instance.currentUser!.getIdToken()}'},
         body: jsonEncode(requestBody),
       );
 
@@ -711,91 +736,45 @@ class _CheckoutPageState extends State<CheckoutPage>
   double deliveryAddressLong = 0;
   bool? stopFetchingData;
 
-  // Straight-line (Haversine) distance -- kept as a pure primitive, same as
-  // the website's getDistanceFromLatLonInKm. Use getRoadDistanceEstimateKm
-  // below for actual tier/fee decisions.
-  double calculateDistance(double lat1, double lon1, double lat2, double lon2) {
-    var p = 0.017453292519943295; // Math.PI / 180
-    var c = math.cos;
-    var a = 0.5 -
-        c((lat2 - lat1) * p) / 2 +
-        c(lat1 * p) * c(lat2 * p) * (1 - c((lon2 - lon1) * p)) / 2;
-    return 12742 * math.asin(math.sqrt(a)); // 2 * R; R = 6371 km
-  }
-
-  // Straight-line distance understates real road distance -- roads bend
-  // around blocks and can't cross buildings/rivers directly.
-  // DeliveryConfig.roadDistanceFactor comes from the website's
-  // /api/delivery-config (falling back to the same 1.3x default if that
-  // fetch hasn't completed), so both platforms use the same correction
-  // instead of the app carrying its own hardcoded copy.
-  double getRoadDistanceEstimateKm(
-      double lat1, double lon1, double lat2, double lon2) {
-    return calculateDistance(lat1, lon1, lat2, lon2) *
-        DeliveryConfig.roadDistanceFactor;
-  }
-
-  double parseWeightToKg(String unitString) {
-    if (unitString.isEmpty) return 1.0;
-    String str = unitString.toLowerCase();
-    RegExp regex = RegExp(r'([0-9.]+)\s*(kg|gm|g|ltr|ml)');
-    Match? match = regex.firstMatch(str);
-    if (match != null) {
-      double value = double.parse(match.group(1)!);
-      String unit = match.group(2)!;
-      if (unit == 'kg' || unit == 'ltr') return value;
-      if (unit == 'gm' || unit == 'g' || unit == 'ml') return value / 1000;
+  Future<bool> refreshDeliveryQuote() async {
+    final request = ++_quoteRequest;
+    final address = deliveryAddress;
+    final pickup = pickupBool;
+    setState(() { deliveryQuoteLoading = true; deliveryQuoteError = null; });
+    try {
+      final token = await FirebaseAuth.instance.currentUser!.getIdToken();
+      final response = await http.post(
+        Uri.parse('https://falguni-latest.vercel.app/api/delivery-quote'),
+        headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer $token'},
+        body: jsonEncode({'isPickup': pickup, 'isApp': true, 'deliveryAddress': address}),
+      ).timeout(const Duration(seconds: 25));
+      if (!mounted || request != _quoteRequest || address != deliveryAddress || pickup != pickupBool) return false;
+      final data = jsonDecode(response.body) as Map<String, dynamic>;
+      if (response.statusCode != 200) throw Exception(data['message'] ?? 'Unable to calculate delivery');
+      setState(() {
+        subTotal = data['discountedTotal'] as num;
+        deliveryFee = data['fee'] as num;
+        deliveryCalculation = data['delivery'] as Map<String, dynamic>?;
+        deliveryTierName = deliveryCalculation?['tier'] as String?;
+        deliveryAddressLat = (deliveryCalculation?['destination']?['lat'] as num?)?.toDouble() ?? 0;
+        deliveryAddressLong = (deliveryCalculation?['destination']?['lng'] as num?)?.toDouble() ?? 0;
+        deliveryQuoteLoading = false;
+      });
+      return true;
+    } catch (error) {
+      if (mounted && request == _quoteRequest) setState(() {
+        deliveryQuoteLoading = false;
+        deliveryCalculation = null;
+        deliveryTierName = null;
+        deliveryQuoteError = error.toString().replaceFirst('Exception: ', '');
+      });
+      return false;
     }
-    return 1.0;
-  }
-
-  double calculateTotalWeight() {
-    double totalWeight = 0;
-    for (var item in orders) {
-      double w = parseWeightToKg(item['selected'] ?? item['unitname1'] ?? '');
-      num qty = item['quantity'] ?? 1;
-      totalWeight += w * qty;
-    }
-    return totalWeight;
   }
 
   getDeliveryLocationLatAndLong() async {
-    setState(() {
-      deliveryAddressLong = 0;
-      deliveryAddressLat = 0;
-    });
-    if (deliveryAddressLat == 0 && deliveryAddressLong == 0) {
-      List<Location> locations = await locationFromAddress(deliveryAddress);
-      if (mounted) {
-        setState(() {
-          for (var element in locations) {
-            deliveryAddressLong = element.longitude;
-            deliveryAddressLat = element.latitude;
-          }
-          
-          if (deliveryAddressLat != 0 && deliveryAddressLong != 0) {
-            double distanceKm = getRoadDistanceEstimateKm(23.0360, 72.5294, deliveryAddressLat, deliveryAddressLong);
-            num cartSubTotal = subTotal;
-            double weight = calculateTotalWeight();
-            // Tier/fee thresholds come from DeliveryConfig (fetched from
-            // the website's /api/delivery-config, same numbers
-            // calculateDeliveryFee uses in lib/deliveryPricing.ts) instead
-            // of a separate hardcoded if/else chain here.
-            final result = DeliveryConfig.calculateFee(
-                distanceKm, deliveryAddress, cartSubTotal, weight);
-            deliveryFee = result.fee;
-            deliveryTierName = result.tier;
-          } else {
-            // Address didn't resolve to a location -- don't leave a stale
-            // fee/tier badge from whatever address was selected previously
-            // showing next to an address that couldn't actually be geocoded.
-            deliveryFee = 0;
-            deliveryTierName = null;
-          }
-        });
-        print('Lat is $deliveryAddressLat, Long is $deliveryAddressLong, Fee is $deliveryFee');
-      }
-    }
+    setState(() { deliveryAddressLat = 0; deliveryAddressLong = 0; deliveryCalculation = null; });
+    await refreshDeliveryQuote();
   }
 
   String pickupAddress = '';
@@ -818,6 +797,10 @@ class _CheckoutPageState extends State<CheckoutPage>
   }
 
   getDeliveryFeeQuote() async {
+    if (!await refreshDeliveryQuote()) {
+      if (mounted) Fluttertoast.showToast(msg: deliveryQuoteError ?? 'Please retry the delivery quote');
+      return;
+    }
     setState(() {
       _index = 1;
       selectedStepper2 = true;
@@ -931,7 +914,7 @@ class _CheckoutPageState extends State<CheckoutPage>
         deliveryAddressLong: deliveryAddressLong,
         isAddressEmpty: isAddressEmpty,
         getMyCart: getMyCart,
-        deliveryTierName: deliveryTierName,
+        deliveryTierName: deliveryQuoteLoading ? 'Calculating' : deliveryQuoteError != null ? 'Quote unavailable — tap Confirm to retry' : deliveryTierName,
         onDeliveryAddressTap: () {
           Navigator.of(context).pushNamed('/delivery-address').then((value) {
             getDeliveryLocationLatAndLong();
@@ -961,6 +944,7 @@ class _CheckoutPageState extends State<CheckoutPage>
         payWithCard: payWithCard,
         subTotal: subTotal,
         deliveryFee: deliveryFee,
+        deliveryCalculation: deliveryCalculation,
         deliveryBool: deliveryBool,
         currencySymbol: currencySymbol,
         onOnlinePaymentChanged: (val) {
@@ -1094,7 +1078,7 @@ class _CheckoutPageState extends State<CheckoutPage>
                                                           title:
                                                               'Select Delivery Method',
                                                           message:
-                                                              'Please select Pickup or use the Manual Delivery Request option to proceed.',
+                                                              'Please select Delivery or Store Pickup to proceed.',
                                                           buttonText: 'OK',
                                                           accentColor: kGold,
                                                           icon: Icons
@@ -1176,9 +1160,7 @@ class _CheckoutPageState extends State<CheckoutPage>
                                                       borderRadius:
                                                           BorderRadius.circular(
                                                               12))),
-                                              onPressed: deliveryAddressLat ==
-                                                          0 &&
-                                                      deliveryBool == true
+                                              onPressed: deliveryQuoteLoading
                                                   ? null
                                                   : () {
                                                       if (isAddressEmpty ==
@@ -1218,11 +1200,7 @@ class _CheckoutPageState extends State<CheckoutPage>
                                                             getDeliveryFeeQuote();
                                                           }
                                                         } else {
-                                                          setState(() {
-                                                            _index = 1;
-                                                            selectedStepper2 =
-                                                                true;
-                                                          });
+                                                          getDeliveryFeeQuote();
                                                         }
                                                       }
                                                     },

@@ -17,7 +17,7 @@ interface Props {
 export default function CartOrderSummary({
   itemCount,
   subtotal,
-  freeShippingThreshold = 699,
+
 }: Props) {
   const { couponCode, couponDiscount, setCoupon, clearCoupon, isPickup, setIsPickup } = useCartStore();
   const { isOpen, openTime } = useStoreStatusStore();
@@ -35,11 +35,7 @@ export default function CartOrderSummary({
     }
   }, [enableCoupons, couponCode, clearCoupon]);
 
-  // Free shipping & pickup logic
-  const isFreeDelivery = subtotal >= freeShippingThreshold;
-  const baseShipping = isPickup ? 0 : 60;
-  const shippingDiscount = isPickup ? 0 : isFreeDelivery ? 60 : 0;
-  const netShipping = baseShipping - shippingDiscount;
+  const netShipping = 0; // Delivery is quoted after an address is selected at checkout.
 
   // Coupon discount calculation
   const couponSavings = couponDiscount > 0 ? (subtotal * couponDiscount) / 100 : 0;
@@ -117,11 +113,7 @@ export default function CartOrderSummary({
           ) : (
             <span className="flex items-center gap-1">
               <Truck size={12} className="text-[#733617] shrink-0" />
-              {isFreeDelivery ? (
-                <span className="text-[#2E7D32] font-semibold">Free Delivery Unlocked!</span>
-              ) : (
-                <span>Standard Delivery: ₹60 (Free above ₹{freeShippingThreshold})</span>
-              )}
+              <span>Delivery quoted at checkout based on address and weight</span>
             </span>
           )}
         </div>
@@ -143,17 +135,9 @@ export default function CartOrderSummary({
             {isPickup ? 'Store Pickup Fee' : 'Shipping'}
           </span>
           <span className={`font-bold ${isPickup ? 'text-[#2E7D32]' : ''}`}>
-            {isPickup ? 'FREE' : `₹${baseShipping}`}
+            {isPickup ? 'FREE' : 'At checkout'}
           </span>
         </div>
-
-        {/* Discount on Shipping (when eligible for home delivery) */}
-        {!isPickup && isFreeDelivery && (
-          <div className="flex items-center justify-between text-[#2E7D32] font-medium">
-            <span>Discount on Shipping</span>
-            <span className="font-bold">-₹{shippingDiscount}</span>
-          </div>
-        )}
 
         {/* Coupon Discount (if applied) */}
         {couponDiscount > 0 && (
@@ -199,20 +183,6 @@ export default function CartOrderSummary({
             </p>
             <p className="text-[11px] text-[#65544A] mt-0.5">
               Collect at our Vastrapur flagship store with zero delivery fees.
-            </p>
-          </div>
-        </div>
-      ) : isFreeDelivery ? (
-        <div className="bg-[#F0F7F2] border border-[#D5EAD9] rounded-xl p-3 my-4 flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-white border border-[#D5EAD9] flex items-center justify-center shrink-0">
-            <Truck className="w-4 h-4 text-[#2E7D32]" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-xs font-bold text-[#2E7D32] uppercase tracking-wider">
-              Free Delivery Applied
-            </p>
-            <p className="text-[11px] text-[#3B6645] mt-0.5">
-              You saved ₹60 on shipping!
             </p>
           </div>
         </div>

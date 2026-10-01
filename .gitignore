@@ -49,3 +49,4 @@ app.*.map.json
 serviceAccountKey.json
 *firebase-adminsdk*.json
 .vercel
+.env*

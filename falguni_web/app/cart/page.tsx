@@ -141,7 +141,7 @@ export default function CartPage() {
               {/* ── 3. Free Delivery Progress Bar ── */}
               <FreeDeliveryProgressBar
                 subtotal={sub}
-                threshold={699}
+                
                 isPickup={isPickup}
                 onToggleDelivery={() => setIsPickup(false)}
               />
@@ -170,7 +170,7 @@ export default function CartPage() {
                   <CartOrderSummary
                     itemCount={itemCount}
                     subtotal={sub}
-                    freeShippingThreshold={699}
+                    
                   />
                 </div>
               </div>
@@ -184,7 +184,7 @@ export default function CartPage() {
             <div>
               <span className="text-[11px] text-[#8A796F] block">Total to pay</span>
               <span className="text-lg font-black text-[#2D1508]">
-                ₹{(isPickup || sub >= 699 ? sub : sub + 60).toFixed(0)}
+                ₹{sub.toFixed(0)}
               </span>
             </div>
             {!isOpen ? (

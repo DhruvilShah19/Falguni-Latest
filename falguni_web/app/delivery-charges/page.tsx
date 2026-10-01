@@ -7,7 +7,7 @@ import {
   MapPin, Truck, PackageCheck, Info, Sparkles, 
   Calculator, Check, ArrowRight, ShieldCheck, Phone 
 } from 'lucide-react';
-import { DISTANCE_TIERS, OUTSTATION_TIERS } from '@/lib/deliveryPricing';
+import { DISTANCE_TIERS, OUTSTATION_TIERS, calculateDeliveryFee, getFreeDeliveryThreshold } from '@/lib/deliveryPricing';
 
 const inr = (n: number) => `₹${n.toLocaleString('en-IN')}`;
 
@@ -39,7 +39,7 @@ const ZONES = [
     color: '#3B82F6', // blue
     bgLight: 'bg-blue-50',
     borderLight: 'border-blue-200',
-    tier: 'Intercity Ahmedabad & Gandhinagar',
+    tier: 'Nearby',
     range: `${hyperlocal.maxDistanceKm} – ${intercity.maxDistanceKm} km`,
     charge: inr(intercity.fee),
     chargeNote: 'Flat delivery fee',
@@ -57,7 +57,7 @@ const ZONES = [
     color: '#F97316', // orange
     bgLight: 'bg-orange-50',
     borderLight: 'border-orange-200',
-    tier: 'Extended Suburban & Interstate',
+    tier: 'Extended Local',
     range: `${intercity.maxDistanceKm} – ${interstate.maxDistanceKm} km`,
     charge: inr(interstate.fee),
     chargeNote: 'Flat delivery fee',
@@ -79,7 +79,7 @@ const ZONES = [
     range: `Above ${interstate.maxDistanceKm} km — Anywhere in Gujarat`,
     charge: `${inr(gujarat.feePerKg)} / kg`,
     chargeNote: 'Weight-based parcel dispatch',
-    freeAbove: inr(gujarat.freeAbove),
+    freeAbove: '₹2,000: 5 kg; ₹3,000: 7.5 kg; ₹4,000: 10 kg; ₹5,000: 15 kg',
     freeAboveVal: gujarat.freeAbove,
     feeVal: gujarat.feePerKg,
     description: 'Surat, Vadodara, Rajkot, Bhavnagar, Jamnagar, Bhuj & all Gujarat pin codes via express surface logistics.',
@@ -90,7 +90,7 @@ const ZONES = [
     ],
     examples: [
       { label: 'Order Value ₹1,800 (4 kg)', result: inr(4 * gujarat.feePerKg) },
-      { label: `Order Value ${inr(gujarat.freeAbove + 300)} (any weight)`, result: 'FREE Delivery' },
+      { label: `Order Value ${inr(gujarat.freeAbove + 300)} (5 kg)`, result: 'FREE Delivery' },
     ],
   },
   {
@@ -102,7 +102,7 @@ const ZONES = [
     range: `Above ${interstate.maxDistanceKm} km — All States & UTs`,
     charge: `${inr(panIndia.feePerKg)} / kg`,
     chargeNote: 'Air & surface food-grade transit',
-    freeAbove: inr(panIndia.freeAbove),
+    freeAbove: '₹3,500: 5 kg; ₹5,000: 7.5 kg; ₹7,000: 10 kg; ₹10,000: 15 kg',
     freeAboveVal: panIndia.freeAbove,
     feeVal: panIndia.feePerKg,
     description: 'Mumbai, Delhi NCR, Bengaluru, Hyderabad, Kolkata, Chennai, and 19,000+ pin codes nationwide.',
@@ -113,17 +113,17 @@ const ZONES = [
     ],
     examples: [
       { label: 'Order Value ₹2,800 (3 kg)', result: inr(3 * panIndia.feePerKg) },
-      { label: `Order Value ${inr(panIndia.freeAbove + 500)} (any weight)`, result: 'FREE Delivery' },
+      { label: `Order Value ${inr(panIndia.freeAbove + 500)} (5 kg)`, result: 'FREE Delivery' },
     ],
   },
 ];
 
 const NOTES = [
-  'Distance is accurately calculated from the nearest Falguni Gruh Udhyog store to your doorstep address.',
-  'Weight-based courier shipping is calculated on the actual packed weight with nitrogen-flushed protective seals.',
-  'FREE delivery applies automatically during checkout whenever your cart meets the eligible minimum order value.',
-  'Eligible free-delivery orders enjoy 100% complimentary shipping regardless of parcel weight.',
-  'All packages are vacuum-sealed with food-grade moisture barriers ensuring peak freshness upon arrival.',
+  'Distance is estimated from the configured dispatch store using straight-line distance × 1.3.',
+  'Outstation estimates currently use product weight × 1.25 + 0.25 kg per order for packaging. The store can adjust this temporary allowance until measured courier pricing is available.',
+  'Local thresholds include the stated amount. Outstation free allowances depend on cart value after discounts and chargeable weight.',
+  'Free-weight allowance is capped at 15 kg; excess weight is charged at the applicable per-kg rate.',
+  'Your checkout shows the eligible value, delivery zone, weight allowance and final fee.',
 ];
 
 export default function DeliveryChargesPage() {
@@ -138,46 +138,11 @@ export default function DeliveryChargesPage() {
     const val = Math.max(0, calcOrderValue);
     const weight = Math.max(0.5, calcWeight);
 
-    let tier = ZONES[0];
-    let fee = 0;
-    let isFree = false;
-    let freeAbove = hyperlocal.freeAbove;
-
-    if (dist <= hyperlocal.maxDistanceKm) {
-      tier = ZONES[0];
-      freeAbove = hyperlocal.freeAbove;
-      if (val >= freeAbove) {
-        isFree = true;
-      } else {
-        fee = hyperlocal.fee;
-      }
-    } else if (dist <= intercity.maxDistanceKm) {
-      tier = ZONES[1];
-      freeAbove = intercity.freeAbove;
-      if (val >= freeAbove) {
-        isFree = true;
-      } else {
-        fee = intercity.fee;
-      }
-    } else if (dist <= interstate.maxDistanceKm) {
-      tier = ZONES[2];
-      freeAbove = interstate.freeAbove;
-      if (val >= freeAbove) {
-        isFree = true;
-      } else {
-        fee = interstate.fee;
-      }
-    } else {
-      // Outstation: Defaults to Gujarat unless user selects All India
-      tier = ZONES[3];
-      freeAbove = gujarat.freeAbove;
-      if (val >= freeAbove) {
-        isFree = true;
-      } else {
-        fee = Math.round(weight * gujarat.feePerKg);
-      }
-    }
-
+    const result = calculateDeliveryFee(dist, 'Gujarat', val, weight);
+    const tier = ZONES[dist <= 5 ? 0 : dist <= 10 ? 1 : dist <= 15 ? 2 : 3];
+    const fee = result.fee;
+    const isFree = fee === 0;
+    const freeAbove = getFreeDeliveryThreshold(result.tier, weight);
     const diffForFree = Math.max(0, freeAbove - val);
 
     return {
@@ -293,8 +258,8 @@ export default function DeliveryChargesPage() {
                   />
                   <div className="flex justify-between text-[10px] text-[#8A796F] mt-1 font-medium">
                     <span>1 km (Local)</span>
-                    <span>15 km (Intercity)</span>
-                    <span>30 km (Interstate)</span>
+                    <span>10 km (Nearby)</span>
+                    <span>15 km (Extended Local)</span>
                     <span>50+ km (Outstation)</span>
                   </div>
                 </div>
@@ -313,7 +278,7 @@ export default function DeliveryChargesPage() {
                   <input
                     type="range"
                     min={100}
-                    max={3000}
+                    max={10000}
                     step={50}
                     value={calcOrderValue}
                     onChange={(e) => setCalcOrderValue(Number(e.target.value))}
@@ -321,9 +286,9 @@ export default function DeliveryChargesPage() {
                   />
                   <div className="flex justify-between text-[10px] text-[#8A796F] mt-1 font-medium">
                     <span>₹100</span>
-                    <span>₹500 (Free Local)</span>
+                    <span>₹400 (Free Local)</span>
                     <span>₹1,500</span>
-                    <span>₹3,000</span>
+                    <span>₹10,000</span>
                   </div>
                 </div>
 
@@ -456,7 +421,7 @@ export default function DeliveryChargesPage() {
                       </div>
                       <div className="border-l border-[#EFE6DC] pl-3">
                         <span className="text-[9px] uppercase tracking-wider text-[#8A796F] font-bold block">
-                          Free Above
+                          Free allowance from
                         </span>
                         <span className="text-base font-black text-emerald-700">
                           {zone.freeAbove}
@@ -514,7 +479,7 @@ export default function DeliveryChargesPage() {
                       </td>
                       <td className="text-xs text-[#65544A] py-3.5 px-3">{zone.range}</td>
                       <td className="text-xs font-bold text-[#733617] py-3.5 px-3">{zone.charge}</td>
-                      <td className="text-xs font-bold text-emerald-700 py-3.5 px-3">Above {zone.freeAbove}</td>
+                      <td className="text-xs font-bold text-emerald-700 py-3.5 px-3">From {zone.freeAbove}</td>
                     </tr>
                   ))}
                 </tbody>

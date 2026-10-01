@@ -3,14 +3,16 @@
 import Image from 'next/image';
 import { ShoppingBag, Truck, ShieldCheck, RotateCcw, Headphones } from 'lucide-react';
 import type { CartItem } from '@/types';
-import type { DeliverySpeed } from './DeliveryOptionsSection';
+import type { DeliveryFeeResult } from '@/lib/deliveryPricing';
 
 interface Props {
   items: CartItem[];
   subtotal: number;
-  deliverySpeed?: DeliverySpeed;
+  deliveryQuote?: (DeliveryFeeResult & { weightBasis: string }) | null;
+  quotedTotal?: number;
+  quoteMessage?: string;
   isPickup?: boolean;
-  freeShippingThreshold?: number;
+
   couponDiscount?: number;
   couponCode?: string;
 }
@@ -18,37 +20,16 @@ interface Props {
 export default function CheckoutOrderSummary({
   items,
   subtotal,
-  deliverySpeed = 'standard',
+  deliveryQuote, quotedTotal, quoteMessage,
   isPickup = false,
-  freeShippingThreshold = 699,
   couponDiscount = 0,
   couponCode = '',
 }: Props) {
-  const isFreeStandard = subtotal >= freeShippingThreshold;
-
-  // Calculate shipping cost
-  let shippingCost = 60;
-  let shippingDiscount = 0;
-
-  if (isPickup) {
-    shippingCost = 0;
-    shippingDiscount = 0;
-  } else if (deliverySpeed === 'express') {
-    shippingCost = 80;
-    shippingDiscount = 0;
-  } else {
-    // Standard
-    shippingCost = 60;
-    shippingDiscount = isFreeStandard ? 60 : 0;
-  }
-
-  const netShipping = shippingCost - shippingDiscount;
+  const shippingCost = isPickup ? 0 : deliveryQuote?.fee ?? 0;
+  const netShipping = shippingCost;
   const couponSavings = couponDiscount > 0 ? (subtotal * couponDiscount) / 100 : 0;
-  const total = Math.max(0, subtotal - couponSavings + netShipping);
+  const total = quotedTotal ?? Math.max(0, subtotal - couponSavings + netShipping);
   const totalQuantity = items.reduce((sum, i) => sum + (i.quantity || 1), 0);
-
-  const remainingForFree = Math.max(0, freeShippingThreshold - subtotal);
-  const progressPercent = Math.min(100, Math.round((subtotal / freeShippingThreshold) * 100));
 
   return (
     <div className="w-full bg-white border border-[#EFE6DC] rounded-2xl p-5 sm:p-6 shadow-xs">
@@ -128,16 +109,9 @@ export default function CheckoutOrderSummary({
             {isPickup ? 'Store Pickup (Vastrapur)' : 'Shipping'}
           </span>
           <span className="font-bold">
-            {isPickup ? <span className="text-[#2E7D32]">FREE</span> : `₹${shippingCost}`}
+            {isPickup || deliveryQuote?.fee === 0 ? <span className="text-[#2E7D32]">FREE</span> : deliveryQuote ? `₹${shippingCost.toFixed(2)}` : 'Pending'}
           </span>
         </div>
-
-        {!isPickup && shippingDiscount > 0 && (
-          <div className="flex items-center justify-between text-[#2E7D32] font-medium">
-            <span>Discount on Shipping</span>
-            <span className="font-bold">-₹{shippingDiscount}</span>
-          </div>
-        )}
 
         {couponDiscount > 0 && (
           <div className="flex items-center justify-between text-[#2E7D32] font-medium">
@@ -161,48 +135,23 @@ export default function CheckoutOrderSummary({
           </span>
         </div>
         <span className="text-2xl sm:text-[28px] font-black text-[#2D1508] tracking-tight">
-          ₹{total.toFixed(0)}
+          {quotedTotal === undefined ? 'Pending quote' : `₹${total.toFixed(2)}`}
         </span>
       </div>
 
-      {/* ── Free Delivery Status Card ── */}
-      <div className="bg-[#F0F7F2] border border-[#D5EAD9] rounded-xl p-3 my-4">
-        <div className="flex items-center justify-between gap-2 mb-1.5">
-          <div className="flex items-center gap-1.5">
-            <Truck className="w-3.5 h-3.5 text-[#2E7D32] shrink-0" />
-            <span className="text-xs font-bold text-[#2E7D32]">
-              {isPickup
-                ? 'Store Pickup Selected'
-                : isFreeStandard
-                ? 'Yay! You got FREE delivery'
-                : 'Free Delivery Target'}
-            </span>
-          </div>
-          <span className="text-[11px] font-bold text-[#2D1508]">
-            {isPickup
-              ? 'Free'
-              : isFreeStandard
-              ? 'Unlocked'
-              : `₹${remainingForFree} more to go`}
-          </span>
-        </div>
-
-        <p className="text-[10px] text-[#65544A] mb-2 leading-tight">
-          {isPickup
-            ? 'Pick up your freshly packed order from our Vastrapur flagship store with zero delivery fee.'
-            : isFreeStandard
-            ? 'Free standard shipping is applied to this order!'
-            : `Add items worth ₹${remainingForFree} more to unlock FREE delivery.`}
-        </p>
-
-        {/* Progress Track */}
-        <div className="w-full bg-[#E5DFD7] h-1.5 rounded-full overflow-hidden">
-          <div
-            className="h-full bg-[#2E7D32] rounded-full transition-all duration-500"
-            style={{ width: isPickup ? '100%' : `${progressPercent}%` }}
-          />
-        </div>
-      </div>
+      {!isPickup && <div className="rounded-xl bg-[#F0F7F2] p-3 my-4 text-sm space-y-1" aria-live="polite">
+        {quoteMessage ? <p>{quoteMessage}</p> : deliveryQuote && <>
+          <p>Delivery zone: {deliveryQuote.tier}</p>
+          <p>Eligible cart value: ₹{deliveryQuote.cartValue.toFixed(2)}</p>
+          {deliveryQuote.chargeableWeight !== null && <>
+            <p>Chargeable weight: {deliveryQuote.chargeableWeight.toFixed(3)} kg</p>
+            <p>Free allowance: {deliveryQuote.freeWeight} kg</p>
+            <p>Additional weight: {deliveryQuote.excessWeight.toFixed(3)} kg × ₹{deliveryQuote.ratePerKg}/kg</p>
+            {deliveryQuote.weightBasis === 'buffered-product-weight-estimate' && <p className="text-xs">Estimated packed weight includes a temporary packaging allowance. It is not a measured volumetric weight.</p>}
+            {deliveryQuote.weightBasis === 'product-weight-estimate' && <p className="text-xs">Based on product weight; package dimensions are not yet available.</p>}
+          </>}
+        </>}
+      </div>}
 
       {/* ── Trust Badges Strip ── */}
       <div className="mt-4 pt-4 border-t border-[#EFE6DC] space-y-2.5">

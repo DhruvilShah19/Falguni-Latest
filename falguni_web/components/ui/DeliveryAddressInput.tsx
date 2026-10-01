@@ -8,6 +8,7 @@ import {
   STUDIO_FALGUNI_LATLNG,
   getRoadDistanceEstimateKm,
   calculateDeliveryFee,
+  estimatePackedWeight,
   getFreeDeliveryThreshold,
   type DeliveryTier,
   type DeliveryDetails,
@@ -33,8 +34,8 @@ interface DeliveryAddressInputProps {
 export default function DeliveryAddressInput({ onDeliveryCalculated, defaultAddress }: DeliveryAddressInputProps) {
   const { isLoaded } = useJsApiLoader({ googleMapsApiKey: GOOGLE_API_KEY, libraries });
   const { subTotal, totalWeightKg } = useCartStore();
-  const cartSubTotal = subTotal();
-  const weight = totalWeightKg();
+  const cartSubTotal = useCartStore.getState().discountedTotal();
+  const weight = totalWeightKg() > 0 ? estimatePackedWeight(totalWeightKg()) : 0;
 
   // ── New Places API (AutocompleteSuggestion) with session tokens ──
   // Google bills a whole typing session as ONE cheap "Place Details" call
@@ -258,7 +259,7 @@ export default function DeliveryAddressInput({ onDeliveryCalculated, defaultAddr
                   <div className="text-[var(--color-fg-muted)] text-[9px] uppercase tracking-widest font-bold mb-1 flex items-center gap-1.5"><Clock size={10} className="text-[var(--color-primary)]" /> ETA</div>
                   <div className="text-[var(--color-fg)] font-medium text-xs">
                     {activeDetails.tier === 'Hyperlocal' ? `~${Math.round((activeDetails.durationSeconds / 60) + 30)} mins` :
-                     activeDetails.tier === 'Intercity' ? `~${Math.max(1, Math.round((activeDetails.durationSeconds / 3600) + 1))} hrs` :
+                     activeDetails.tier === 'Nearby' ? `~${Math.max(1, Math.round((activeDetails.durationSeconds / 3600) + 1))} hrs` :
                      '2-3 Days'}
                   </div>
                 </div>
@@ -300,7 +301,7 @@ export default function DeliveryAddressInput({ onDeliveryCalculated, defaultAddr
                       <span className="text-[var(--color-fg)] flex items-center gap-2">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-[var(--color-primary)]"><rect x="1" y="3" width="15" height="13"></rect><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon><circle cx="5.5" cy="18.5" r="2.5"></circle><circle cx="18.5" cy="18.5" r="2.5"></circle></svg>
                         <div className="flex-1">
-                          Add <span className="text-[var(--color-primary)] font-black tracking-wide">₹{Math.max(0, getFreeDeliveryThreshold(activeDetails.tier) - cartSubTotal).toFixed(2)}</span> more for Free Delivery
+                          {Number.isFinite(getFreeDeliveryThreshold(activeDetails.tier, weight)) ? <>Add ₹{Math.max(0, getFreeDeliveryThreshold(activeDetails.tier, weight) - cartSubTotal).toFixed(2)} more for free delivery at this weight</> : <>Free-weight allowance is capped at 15 kg. Excess weight is chargeable.</>}
                         </div>
                       </span>
                     </div>
@@ -309,7 +310,7 @@ export default function DeliveryAddressInput({ onDeliveryCalculated, defaultAddr
                       <div
                         className="bg-[var(--color-primary)] h-full rounded-full transition-all duration-1000 ease-out"
                         style={{
-                          width: `${Math.min(100, (cartSubTotal / getFreeDeliveryThreshold(activeDetails.tier)) * 100)}%`
+                          width: `${Math.min(100, (cartSubTotal / getFreeDeliveryThreshold(activeDetails.tier, weight)) * 100)}%`
                         }}
                       />
                     </div>

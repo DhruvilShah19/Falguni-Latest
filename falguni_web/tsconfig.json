@@ -37,6 +37,11 @@
     "**/*.mts"
   ],
   "exclude": [
-    "node_modules"
+    "node_modules",
+    "get_order.ts",
+    "find_old_orders.ts",
+    "check_vendor.ts",
+    "check_no_vendor.ts",
+    "fix_vendor_id.ts"
   ]
 }

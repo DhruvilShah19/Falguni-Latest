@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { adminDb } from '@/lib/firebase-admin';
-import { getRoadDistanceEstimateKm, parseWeightToKg, STUDIO_FALGUNI_LATLNG } from '@/lib/deliveryPricing';
+import { buildDeliveryQuote, DeliveryQuoteError } from '@/lib/deliveryQuote';
+import { getAuth } from 'firebase-admin/auth';
 
 export async function POST(req: Request) {
   try {
@@ -10,6 +11,13 @@ export async function POST(req: Request) {
     const customerId = customer_details?.customer_id;
     if (!customerId) {
       return NextResponse.json({ message: 'Customer ID is required.' }, { status: 400 });
+    }
+
+    try {
+      const token = req.headers.get('authorization')?.replace(/^Bearer /, '');
+      if (!token || (await getAuth().verifyIdToken(token)).uid !== customerId) throw new Error('Unauthorized');
+    } catch {
+      return NextResponse.json({ message: 'Please sign in again.' }, { status: 401 });
     }
 
     // 0. Enforce Store Status (Open / Closed for new orders)
@@ -29,54 +37,17 @@ export async function POST(req: Request) {
       }
     }
 
-    // Compatibility endpoint for already-published mobile apps. Web v2 uses
-    // /api/v2/cashfree/create-order. Retire this with the mobile app rollout.
-    const cartSnapshot = await adminDb.collection('users').doc(customerId).collection('Cart').get();
-    if (cartSnapshot.empty) return NextResponse.json({ message: 'Cart is empty.' }, { status: 400 });
-    let subTotal = 0;
-    let totalWeightKg = 0;
-    cartSnapshot.forEach(doc => {
-      const item = doc.data();
-      subTotal += Number(item.price || 0);
-      totalWeightKg += parseWeightToKg(item.selected || item.unitname1 || '') * (item.quantity || 1);
-    });
-    let discountedTotal = subTotal;
-    let discountPercentage = 0;
-    let appliedCouponCode: string | null = null;
-    if (cart_details?.isApp) {
-      const user = await adminDb.collection('users').doc(customerId).get();
-      const reward = Number(user.data()?.['Coupon Reward'] || 0);
-      if (reward > 0) { discountPercentage = reward; discountedTotal = subTotal - subTotal * reward / 100; }
-    } else if (cart_details?.couponCode) {
-      const system = await adminDb.collection('Coupon System').doc('Coupon System').get();
-      if (!system.exists || (system.data()?.Status ?? true)) {
-        const coupons = await adminDb.collection('Coupons').where('coupon', '==', cart_details.couponCode).limit(1).get();
-        if (!coupons.empty) {
-          const pct = Number(coupons.docs[0].data().percentage || 0);
-          if (pct > 0) { discountPercentage = pct; discountedTotal = subTotal - subTotal * pct / 100; appliedCouponCode = cart_details.couponCode; }
-        }
-      }
+    // Recompute the reviewed quote immediately before charging.
+    const quote = await buildDeliveryQuote(customerId, cart_details || {});
+    const { items, subTotal, discountedTotal, discountPercentage, appliedCouponCode, fee, finalTotal } = quote;
+    const order_amount = finalTotal;
+    if (!Number.isFinite(order_amount) || order_amount <= 0) {
+      return NextResponse.json({ message: 'Invalid order amount calculated.' }, { status: 400 });
     }
-    let fee = 0;
-    if (cart_details && !cart_details.isPickup) {
-      if (cart_details.deliverySpeed === 'express') fee = 80;
-      else if (subTotal >= 699) fee = 0;
-      else {
-        const distance = cart_details.deliveryLat && cart_details.deliveryLng
-          ? getRoadDistanceEstimateKm(STUDIO_FALGUNI_LATLNG.lat, STUDIO_FALGUNI_LATLNG.lng, Number(cart_details.deliveryLat), Number(cart_details.deliveryLng)) : Infinity;
-        const gujarat = String(cart_details.deliveryAddress || '').toLowerCase().includes('gujarat');
-        const calculated = distance <= 5 ? (subTotal >= 400 ? 0 : 50)
-          : distance <= 10 ? (subTotal >= 1200 ? 0 : 100)
-          : distance <= 15 ? (subTotal >= 1800 ? 0 : 150)
-          : subTotal >= (gujarat ? 2000 : 3500) ? 0 : Math.ceil(totalWeightKg) * (gujarat ? 40 : 100);
-        fee = calculated > 0 ? calculated : 60;
-      }
+    const expectedTotal = Number(cart_details?.expectedTotal);
+    if (!Number.isFinite(expectedTotal) || Math.round(expectedTotal * 100) !== Math.round(finalTotal * 100)) {
+      return NextResponse.json({ message: 'Your cart or delivery price changed. Please refresh the delivery quote before paying.', quote: { ...quote, items: undefined } }, { status: 409 });
     }
-    const finalTotal = discountedTotal + fee;
-    const order_amount = Number(finalTotal.toFixed(2));
-    if (order_amount <= 0) return NextResponse.json({ message: 'Invalid order amount calculated.' }, { status: 400 });
-    const items: any[] = [];
-    cartSnapshot.forEach(doc => items.push(doc.data()));
 
     const now = new Date();
     const dateStr = now.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
@@ -186,6 +157,8 @@ export async function POST(req: Request) {
       couponDiscount: discountPercentage,
       discountedSubTotal: discountedTotal,
       deliveryFee: fee,
+      deliveryCalculation: quote.delivery,
+      deliveryPolicyVersion: 2,
       deliveryAddress: cart_details?.isPickup ? '' : (cart_details?.deliveryAddress || ''),
       pickupAddress: cart_details?.isPickup
         ? `${cart_details?.pickupStoreTitle ? cart_details.pickupStoreTitle + ': ' : ''}${cart_details?.pickupStoreAddress || 'Shop No 1, Hirak Complex, Opposite Shakti Enclave, Nehru Park, Mahavir Nagar Society, Vastrapur, Ahmedabad, Gujarat 380015'}`
@@ -271,7 +244,7 @@ export async function POST(req: Request) {
   } catch (error: any) {
     console.error('API Error:', error);
     return NextResponse.json(
-      { message: 'An internal error occurred while connecting to the payment gateway.' },
+      { message: error instanceof DeliveryQuoteError ? error.message : 'An internal error occurred while connecting to the payment gateway.' },
       { status: 500 }
     );
   }

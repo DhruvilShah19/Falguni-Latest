@@ -14,6 +14,7 @@ class CheckoutStep2Payment extends StatelessWidget {
   final bool payWithCard;
   final num subTotal;
   final num deliveryFee;
+  final Map<String, dynamic>? deliveryCalculation;
   final bool deliveryBool;
   final String currencySymbol;
   final Function(bool?) onOnlinePaymentChanged;
@@ -25,6 +26,7 @@ class CheckoutStep2Payment extends StatelessWidget {
     required this.payWithCard,
     required this.subTotal,
     required this.deliveryFee,
+    this.deliveryCalculation,
     required this.deliveryBool,
     required this.currencySymbol,
     required this.onOnlinePaymentChanged,
@@ -171,6 +173,21 @@ class CheckoutStep2Payment extends StatelessWidget {
                       ],
                     ),
                     if (deliveryBool) ...[
+                      if (deliveryCalculation != null)
+                        Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          child: Text(
+                            'Delivery zone: ${deliveryCalculation!['tier']}\n'
+                            'Eligible cart value: ₹${(deliveryCalculation!['cartValue'] as num).toStringAsFixed(2)}'
+                            '${deliveryCalculation!['chargeableWeight'] == null ? '' : '\nChargeable weight: ${deliveryCalculation!['chargeableWeight']} kg\nFree allowance: ${deliveryCalculation!['freeWeight']} kg\nAdditional weight: ${deliveryCalculation!['excessWeight']} kg × ₹${deliveryCalculation!['ratePerKg']}/kg'}'
+                            '${deliveryCalculation!['weightBasis'] == 'buffered-product-weight-estimate' ? '\nEstimated packed weight includes a temporary packaging allowance; this is not measured volumetric weight.' : ''}'
+                            '${deliveryCalculation!['weightBasis'] == 'product-weight-estimate' ? '\nBased on product weight; package dimensions are not yet available.' : ''}',
+                            style: const TextStyle(
+                                color: Colors.white70,
+                                fontSize: 13,
+                                height: 1.6),
+                          ),
+                        ),
                       const SizedBox(height: 8),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,

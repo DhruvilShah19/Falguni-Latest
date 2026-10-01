@@ -33,17 +33,22 @@ class OutstationTierRule {
   final String tier;
   final num feePerKg;
   final num freeAbove;
+  final List<List<num>> freeWeightSlabs;
 
   const OutstationTierRule({
     required this.tier,
     required this.feePerKg,
     required this.freeAbove,
+    required this.freeWeightSlabs,
   });
 
   factory OutstationTierRule.fromJson(Map<String, dynamic> json) {
     return OutstationTierRule(
       tier: json['tier'] as String,
       feePerKg: json['feePerKg'] as num,
+      freeWeightSlabs: (json['freeWeightSlabs'] as List)
+          .map((s) => <num>[s['minCartValue'] as num, s['weightKg'] as num])
+          .toList(),
       freeAbove: json['freeAbove'] as num,
     );
   }
@@ -83,16 +88,32 @@ class DeliveryConfig {
     DistanceTierRule(
         tier: 'Hyperlocal', maxDistanceKm: 5, fee: 50, freeAbove: 400),
     DistanceTierRule(
-        tier: 'Intercity', maxDistanceKm: 10, fee: 100, freeAbove: 1200),
+        tier: 'Nearby', maxDistanceKm: 10, fee: 100, freeAbove: 1200),
     DistanceTierRule(
-        tier: 'Interstate', maxDistanceKm: 15, fee: 150, freeAbove: 1800),
+        tier: 'Extended Local', maxDistanceKm: 15, fee: 150, freeAbove: 1800),
   ];
 
   static OutstationTierRule gujaratOutstation = const OutstationTierRule(
-      tier: 'Gujarat Outstation', feePerKg: 40, freeAbove: 2000);
+      tier: 'Gujarat Outstation',
+      feePerKg: 40,
+      freeAbove: 2000,
+      freeWeightSlabs: [
+        [2000, 5],
+        [3000, 7.5],
+        [4000, 10],
+        [5000, 15]
+      ]);
 
   static OutstationTierRule panIndia = const OutstationTierRule(
-      tier: 'PAN India', feePerKg: 100, freeAbove: 3500);
+      tier: 'PAN India',
+      feePerKg: 100,
+      freeAbove: 3500,
+      freeWeightSlabs: [
+        [3500, 5],
+        [5000, 7.5],
+        [7000, 10],
+        [10000, 15]
+      ]);
 
   static Future<void> init() async {
     try {
@@ -102,6 +123,8 @@ class DeliveryConfig {
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body) as Map<String, dynamic>;
+
+        if (data['policyVersion'] != 2) return;
 
         // Parse everything into locals first, and only assign to the
         // static fields once every piece has parsed successfully. Assigning
@@ -119,8 +142,7 @@ class DeliveryConfig {
         final newDistanceTiers = tiersJson
             .map((e) => DistanceTierRule.fromJson(e as Map<String, dynamic>))
             .toList();
-        final outstationJson =
-            data['outstationTiers'] as Map<String, dynamic>;
+        final outstationJson = data['outstationTiers'] as Map<String, dynamic>;
         final newGujaratOutstation = OutstationTierRule.fromJson(
             outstationJson['gujarat'] as Map<String, dynamic>);
         final newPanIndia = OutstationTierRule.fromJson(
@@ -147,19 +169,39 @@ class DeliveryConfig {
   // just walking whichever tier list is currently loaded (fetched or
   // fallback) instead of a hardcoded if/else chain.
   static DeliveryFeeResult calculateFee(
-      double distanceKm, String address, num subTotal, double weightKg) {
+      double distanceKm, String state, num subTotal, double weightKg,
+      {double volumetricWeightKg = 0}) {
+    if (!distanceKm.isFinite ||
+        distanceKm < 0 ||
+        !subTotal.isFinite ||
+        subTotal < 0) {
+      throw ArgumentError('Valid distance and cart value required');
+    }
     for (final rule in distanceTiers) {
       if (distanceKm <= rule.maxDistanceKm) {
         return DeliveryFeeResult(
             rule.tier, subTotal >= rule.freeAbove ? 0 : rule.fee);
       }
     }
-
-    final isGujarat = address.toLowerCase().contains('gujarat');
+    if (state.trim().isEmpty ||
+        !weightKg.isFinite ||
+        weightKg <= 0 ||
+        !volumetricWeightKg.isFinite ||
+        volumetricWeightKg < 0) {
+      throw ArgumentError('Valid state and shipping weights required');
+    }
+    final isGujarat =
+        RegExp(r'\bgujarat\b', caseSensitive: false).hasMatch(state) ||
+            ['gj', 'in-gj'].contains(state.trim().toLowerCase());
     final rule = isGujarat ? gujaratOutstation : panIndia;
+    final weight =
+        weightKg > volumetricWeightKg ? weightKg : volumetricWeightKg;
+    num allowance = 0;
+    for (final slab in rule.freeWeightSlabs) {
+      if (subTotal >= slab[0]) allowance = slab[1];
+    }
+    final excess = weight > allowance ? weight - allowance : 0;
     return DeliveryFeeResult(
-      rule.tier,
-      subTotal >= rule.freeAbove ? 0 : weightKg.ceil() * rule.feePerKg,
-    );
+        rule.tier, (excess * rule.feePerKg * 100).round() / 100);
   }
 }

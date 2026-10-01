@@ -11,7 +11,7 @@ interface Props {
 
 export default function FreeDeliveryProgressBar({
   subtotal,
-  threshold = 699,
+
   isPickup = false,
   onToggleDelivery,
 }: Props) {
@@ -47,48 +47,7 @@ export default function FreeDeliveryProgressBar({
     );
   }
 
-  const remaining = Math.max(0, threshold - subtotal);
-  const isUnlocked = remaining === 0;
-  const progressPercent = Math.min(100, Math.round((subtotal / threshold) * 100));
-
-  return (
-    <div className="w-full bg-[#F0F7F2] border border-[#D5EAD9] rounded-xl p-3.5 sm:p-4 mb-6 shadow-xs">
-      <div className="flex items-center justify-between gap-2 text-xs sm:text-sm font-medium mb-2.5">
-        <div className="flex items-center gap-2 text-[#2D1508]">
-          {isUnlocked ? (
-            <Sparkles className="w-4 h-4 text-[#2E7D32] shrink-0" />
-          ) : (
-            <CheckCircle2 className="w-4 h-4 text-[#2E7D32] shrink-0" />
-          )}
-          <span>
-            {isUnlocked ? (
-              <span className="font-bold text-[#2E7D32]">
-                🎉 Congratulations! You have unlocked FREE DELIVERY!
-              </span>
-            ) : (
-              <span>
-                You are eligible for <strong className="font-bold">FREE DELIVERY!</strong> Add{' '}
-                <strong className="font-bold">₹{remaining}</strong> more to unlock it.
-              </span>
-            )}
-          </span>
-        </div>
-        <span className="text-xs sm:text-sm font-bold text-[#2D1508] shrink-0">
-          {isUnlocked ? (
-            <span className="text-[#2E7D32]">Unlocked!</span>
-          ) : (
-            `₹${remaining} more to go`
-          )}
-        </span>
-      </div>
-
-      {/* Progress Track */}
-      <div className="w-full bg-[#E5DFD7] h-2 sm:h-2.5 rounded-full overflow-hidden">
-        <div
-          className="h-full bg-[#733617] rounded-full transition-all duration-500 ease-out"
-          style={{ width: `${progressPercent}%` }}
-        />
-      </div>
-    </div>
-  );
+  return <div className="rounded-xl border border-[#EFE6DC] p-4 mb-6 text-sm">
+    Delivery is calculated at checkout from your address and eligible cart value. Outstation charges also depend on weight, with free-weight allowances up to 15 kg.
+  </div>;
 }

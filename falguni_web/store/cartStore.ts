@@ -1,7 +1,7 @@
 'use client';
 import { create } from 'zustand';
 import type { CartItem } from '@/types';
-import { DeliveryDetails, calculateDeliveryFee, parseWeightToKg } from '@/lib/deliveryPricing';
+import { DeliveryDetails, calculateDeliveryFee, parseWeightToKg, estimatePackedWeight } from '@/lib/deliveryPricing';
 
 // Re-exported for backward compatibility with any existing imports of
 // parseWeightToKg from this file -- canonical definition now lives in
@@ -73,8 +73,8 @@ export const useCartStore = create<CartState>((set, get) => ({
     const details = get().deliveryDetails;
     if (!details) return 0;
 
-    const cartSubTotal = get().subTotal(); // Use Subtotal before discounts!
-    const weight = get().totalWeightKg();
+    const cartSubTotal = get().discountedTotal();
+    const weight = get().totalWeightKg() > 0 ? estimatePackedWeight(get().totalWeightKg()) : 0;
     return calculateDeliveryFee(details.distanceKm, details.address, cartSubTotal, weight).fee;
   },
 }));

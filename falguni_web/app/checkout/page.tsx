@@ -17,6 +17,7 @@ import OrderNotesSection from '@/components/checkout/OrderNotesSection';
 import CheckoutOrderSummary from '@/components/checkout/CheckoutOrderSummary';
 import WhyShopWithFalguni from '@/components/checkout/WhyShopWithFalguni';
 import CheckoutBottomBar from '@/components/checkout/CheckoutBottomBar';
+import type { DeliveryFeeResult } from '@/lib/deliveryPricing';
 import type { ExtendedAddress } from '@/components/checkout/AddressModal';
 
 export default function CheckoutPage() {
@@ -43,6 +44,37 @@ export default function CheckoutPage() {
   const [placing, setPlacing] = useState(false);
   const [cashfree, setCashfree] = useState<any>(null);
   const { isOpen: storeOpen, closedMessage: storeClosedMsg, openTime } = useStoreStatusStore();
+
+  const [quote, setQuote] = useState<{ finalTotal: number; discountedTotal: number; delivery: (DeliveryFeeResult & { weightBasis: string }) | null } | null>(null);
+  const [quoteError, setQuoteError] = useState('');
+  const [quoteLoading, setQuoteLoading] = useState(false);
+  const [quoteRevision, setQuoteRevision] = useState(0);
+  const deliveryAddress = [selectedAddress?.houseNumber, selectedAddress?.address || selectedAddress?.Addresses, selectedAddress?.closestbusStop].filter(Boolean).join(', ');
+  const quoteKey = JSON.stringify({ isPickup, deliveryAddress, couponCode, items });
+  const [quotedKey, setQuotedKey] = useState('');
+  useEffect(() => {
+    let cancelled = false;
+    setQuote(null);
+    setQuoteError('');
+    setQuoteLoading(false);
+    if (!firebaseUser || (!isPickup && !deliveryAddress)) return;
+    setQuoteLoading(true);
+    (async () => {
+      try {
+        const token = await firebaseUser.getIdToken();
+        const response = await fetch('/api/delivery-quote', {
+          method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+          body: JSON.stringify({ isPickup, deliveryAddress, couponCode }),
+        });
+        const result = await response.json();
+        if (!response.ok) throw new Error(result.message || 'Unable to calculate delivery');
+        if (!cancelled) { setQuote(result); setQuotedKey(quoteKey); }
+      } catch (error) {
+        if (!cancelled) setQuoteError(error instanceof Error ? error.message : 'Unable to calculate delivery');
+      } finally { if (!cancelled) setQuoteLoading(false); }
+    })();
+    return () => { cancelled = true; };
+  }, [firebaseUser, quoteKey, quoteRevision, isPickup, deliveryAddress, couponCode]);
 
   // Sync userDoc contact to pickupContact once userDoc is ready
   useEffect(() => {
@@ -118,6 +150,8 @@ export default function CheckoutPage() {
       return;
     }
 
+    if (!quote || quoteLoading || quotedKey !== quoteKey) { alert('Please wait for a valid delivery quote before paying.'); return; }
+
     const finalPhone = isPickup 
       ? pickupContact.phone 
       : (selectedAddress?.phone || userDoc?.phone || (userDoc as any)?.Phone || '');
@@ -183,9 +217,9 @@ export default function CheckoutPage() {
 
       const initialOrderId = `order_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
 
-      const response = await fetch('/api/cashfree/create-order', {
+      const response = await fetch('/api/v2/cashfree/create-order', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${await firebaseUser.getIdToken()}` },
         body: JSON.stringify({
           order_id: initialOrderId,
           customer_details: {
@@ -201,9 +235,9 @@ export default function CheckoutPage() {
               pickupStore?.address ||
               'Shop No 1, Hirak Complex, Opposite Shakti Enclave, Nehru Park, Mahavir Nagar Society, Vastrapur, Ahmedabad, Gujarat 380015',
             pickupContactPhone: pickupContact.phone || cleanPhone,
-            deliverySpeed: 'standard',
+            expectedTotal: quote.finalTotal,
             couponCode: couponCode || '',
-            deliveryAddress: fullAddrString,
+            deliveryAddress,
             phone: cleanPhone,
             fullName: recipientName,
           },
@@ -216,6 +250,7 @@ export default function CheckoutPage() {
 
       const data = await response.json();
       if (!response.ok) {
+        if (response.status === 409) setQuoteRevision(v => v + 1);
         alert(`Payment Initialization Failed: ${data.message || 'Please try again.'}`);
         setPlacing(false);
         return;
@@ -344,11 +379,14 @@ export default function CheckoutPage() {
                   items={items}
                   subtotal={sub}
                   isPickup={isPickup}
-                  freeShippingThreshold={699}
+                  deliveryQuote={quote?.delivery}
+                  quotedTotal={quote?.finalTotal}
+                  quoteMessage={quoteError || (quoteLoading ? 'Calculating delivery…' : !quote ? 'Select an address to calculate delivery' : '')}
                   couponDiscount={couponDiscount}
                   couponCode={couponCode}
                 />
 
+                {quoteError && <button type="button" onClick={() => setQuoteRevision(v => v + 1)} className="underline">Retry delivery quote</button>}
                 <WhyShopWithFalguni />
               </div>
             </div>

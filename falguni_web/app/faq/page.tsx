@@ -105,10 +105,10 @@ const FAQS: FAQItem[] = [
       <span>
         Delivery is priced transparently based on distance and weight:
         <ul className="list-disc pl-5 mt-2 space-y-1">
-          <li><strong>Hyperlocal (Within 5 km):</strong> ₹50 flat fee (FREE on orders above ₹600).</li>
-          <li><strong>Intercity (5–10 km):</strong> ₹100 flat fee (FREE on orders above ₹1,200).</li>
-          <li><strong>Interstate / Extended (10–15 km):</strong> ₹150 flat fee (FREE on orders above ₹1,800).</li>
-          <li><strong>Outstation & Pan-India:</strong> Calculated per kg based on total package weight.</li>
+          <li><strong>Hyperlocal (Within 5 km):</strong> ₹50 flat fee (FREE on orders at or above ₹400).</li>
+          <li><strong>Nearby (&gt;5–10 km):</strong> ₹100 flat fee (FREE on orders at or above ₹1,200).</li>
+          <li><strong>Extended Local (&gt;10–15 km):</strong> ₹150 flat fee (FREE on orders at or above ₹1,800).</li>
+          <li><strong>Outstation & Pan-India:</strong> ₹40/kg within Gujarat or ₹100/kg outside Gujarat, after subtracting the eligible free-weight allowance (maximum 15 kg).</li>
         </ul>
         <span className="block mt-2">
           Review our comprehensive breakdown on the <Link href="/delivery-charges" className="text-[#733617] font-bold underline hover:opacity-80">Delivery Charges page</Link>.

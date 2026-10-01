@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
+import { adminDb } from '@/lib/firebase-admin';
 import {
+  DEFAULT_PACKING_BUFFER,
   DISTANCE_TIERS,
   OUTSTATION_TIERS,
   ROAD_DISTANCE_FACTOR,
@@ -18,10 +20,13 @@ import {
 // client sends. This endpoint only feeds the DISPLAY estimate shown to the
 // customer before they pay.
 export async function GET() {
+  const settings = (await adminDb.collection('Delivery Settings').doc('Framework').get()).data() || {};
   return NextResponse.json(
     {
+      policyVersion: 2,
+      packingBuffer: settings.packingBuffer || DEFAULT_PACKING_BUFFER,
       roadDistanceFactor: ROAD_DISTANCE_FACTOR,
-      storeOrigin: STUDIO_FALGUNI_LATLNG,
+      storeOrigin: settings.storeOrigin || STUDIO_FALGUNI_LATLNG,
       distanceTiers: DISTANCE_TIERS,
       outstationTiers: OUTSTATION_TIERS,
       hyperlocalDeliveryHours: HYPERLOCAL_DELIVERY_HOURS,
