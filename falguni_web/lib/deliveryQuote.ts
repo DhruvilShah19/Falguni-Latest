@@ -17,7 +17,7 @@ async function resolveDestination(address: string) {
   const data = await response.json();
   const result = data.results?.[0];
   const state = result?.address_components?.find((c: { types: string[] }) => c.types.includes('administrative_area_level_1'))?.long_name;
-  if (data.status !== 'OK' || !result || result.partial_match || !state) {
+  if (data.status !== 'OK' || !result || !state) {
     throw new DeliveryQuoteError('Please enter a complete delivery address with city, state and PIN code.');
   }
   return { ...result.geometry.location, state } as { lat: number; lng: number; state: string };
