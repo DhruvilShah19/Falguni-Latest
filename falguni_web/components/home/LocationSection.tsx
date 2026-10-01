@@ -154,7 +154,4 @@ export default function LocationSection() {
         </div>
       </div>
     </section>
-
-      </div>
-    </section>
   );
