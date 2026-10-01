@@ -36,7 +36,11 @@ export async function GET(request: NextRequest) {
 
     const response = await fetch(
       `https://maps.googleapis.com/maps/api/place/autocomplete/json?${params}`,
-      { signal: AbortSignal.timeout(8000), cache: 'no-store' }
+      { 
+        signal: AbortSignal.timeout(8000), 
+        cache: 'no-store',
+        headers: { 'Referer': 'https://www.falgunigruhudhyog.in/' }
+      }
     );
 
     if (!response.ok) {

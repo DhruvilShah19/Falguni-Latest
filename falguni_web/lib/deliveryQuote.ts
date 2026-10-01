@@ -8,7 +8,11 @@ async function resolveDestination(address: string) {
   const key = process.env.GOOGLE_MAPS_GEOCODING_KEY || process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
   if (!key) throw new DeliveryQuoteError('Delivery address verification is unavailable. Please contact the store.');
   const params = new URLSearchParams({ address, components: 'country:IN', key });
-  const response = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?${params}`, { signal: AbortSignal.timeout(10000), cache: 'no-store' });
+  const response = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?${params}`, { 
+    signal: AbortSignal.timeout(10000), 
+    cache: 'no-store',
+    headers: { 'Referer': 'https://www.falgunigruhudhyog.in/' }
+  });
   if (!response.ok) throw new DeliveryQuoteError('Could not verify the delivery address. Please try again.');
   const data = await response.json();
   const result = data.results?.[0];
