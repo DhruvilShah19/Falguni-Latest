@@ -1,14 +1,14 @@
 'use client';
 
-import { useRef, useState, type ElementType } from 'react';
+import { useRef, useState, useEffect, type ElementType } from 'react';
 import { MapPin } from 'lucide-react';
 
 interface PlaceSuggestion {
   id: string;
   title: string;
+  subtitle?: string;
   fullAddress: string;
-  landmark: string;
-  pincode: string;
+  placeId?: string;
 }
 
 interface AddressAutocompleteFieldProps {
@@ -18,6 +18,13 @@ interface AddressAutocompleteFieldProps {
   onChange: (address: string) => void;
   required?: boolean;
   placeholder?: string;
+}
+
+// Generate a simple session token (UUID v4-like) for Google Places billing.
+function generateSessionToken() {
+  return 'xxxx-xxxx-xxxx'.replace(/x/g, () =>
+    Math.floor(Math.random() * 16).toString(16)
+  );
 }
 
 export default function AddressAutocompleteField({
@@ -31,6 +38,10 @@ export default function AddressAutocompleteField({
   const [suggestions, setSuggestions] = useState<PlaceSuggestion[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const sessionRef = useRef(generateSessionToken());
+
+  // Reset session token on mount
+  useEffect(() => { sessionRef.current = generateSessionToken(); }, []);
 
   const handleInputChange = (val: string) => {
     onChange(val);
@@ -44,7 +55,9 @@ export default function AddressAutocompleteField({
     setIsSearching(true);
     debounceRef.current = setTimeout(async () => {
       try {
-        const res = await fetch(`/api/places-autocomplete?q=${encodeURIComponent(val.trim())}`);
+        const res = await fetch(
+          `/api/places-autocomplete?q=${encodeURIComponent(val.trim())}&session=${sessionRef.current}`
+        );
         if (res.ok) {
           const data = await res.json();
           if (data.success && Array.isArray(data.suggestions)) {
@@ -65,6 +78,8 @@ export default function AddressAutocompleteField({
   const handleSelect = (suggestion: PlaceSuggestion) => {
     setSuggestions([]);
     onChange(suggestion.fullAddress);
+    // Start a new session for the next search
+    sessionRef.current = generateSessionToken();
   };
 
   return (
@@ -105,7 +120,7 @@ export default function AddressAutocompleteField({
               <MapPin size={14} className="flex-shrink-0 mt-0.5 text-[#733617]" aria-hidden="true" />
               <div className="min-w-0">
                 <p className="text-xs font-semibold text-[#2D1508]">{suggestion.title}</p>
-                <p className="text-[10px] text-[#65544A] truncate">{suggestion.fullAddress}</p>
+                <p className="text-[10px] text-[#65544A] truncate">{suggestion.subtitle || suggestion.fullAddress}</p>
               </div>
             </li>
           ))}

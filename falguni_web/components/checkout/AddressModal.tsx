@@ -1,11 +1,17 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { X, MapPin } from 'lucide-react';
 import { collection, addDoc, doc, updateDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import type { AddressModel } from '@/types';
 
+interface PlaceSuggestion {
+  id: string;
+  title: string;
+  subtitle?: string;
+  fullAddress: string;
+}
 export interface ExtendedAddress extends AddressModel {
   fullName?: string;
   phone?: string;
@@ -37,6 +43,41 @@ export default function AddressModal({
   const [closestBusStop, setClosestBusStop] = useState(initialAddress?.closestbusStop || '');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const [suggestions, setSuggestions] = useState<PlaceSuggestion[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const sessionRef = useRef(Date.now().toString(36) + Math.random().toString(36).slice(2));
+
+  const handleAddressSearch = (val: string) => {
+    setStreetAddress(val);
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    if (!val.trim() || val.trim().length < 2) {
+      setSuggestions([]);
+      setIsSearching(false);
+      return;
+    }
+    setIsSearching(true);
+    debounceRef.current = setTimeout(async () => {
+      try {
+        const res = await fetch(`/api/places-autocomplete?q=${encodeURIComponent(val.trim())}&session=${sessionRef.current}`);
+        if (res.ok) {
+          const data = await res.json();
+          setSuggestions(data.success && Array.isArray(data.suggestions) ? data.suggestions : []);
+        }
+      } catch { setSuggestions([]); }
+      finally { setIsSearching(false); }
+    }, 300);
+  };
+
+  const handleAddressSelect = (s: PlaceSuggestion) => {
+    setStreetAddress(s.fullAddress);
+    setSuggestions([]);
+    sessionRef.current = Date.now().toString(36) + Math.random().toString(36).slice(2);
+    // Auto-fill landmark from subtitle
+    if (s.subtitle && !closestBusStop) {
+      setClosestBusStop(s.subtitle.split(',').slice(0, 2).join(',').trim());
+    }
+  };
 
   if (!isOpen) return null;
 
@@ -204,17 +245,42 @@ export default function AddressModal({
           </div>
 
           {/* Street Address / Area / City */}
-          <div>
+          <div className="relative">
             <label className="block text-xs font-bold text-[#2D1508] mb-1">
               Area, Street, City, Pincode
             </label>
-            <textarea
-              rows={2}
-              value={streetAddress}
-              onChange={(e) => setStreetAddress(e.target.value)}
-              placeholder="e.g. Vastrapur, Ahmedabad - 380015, Gujarat, India"
-              className="w-full bg-[#FAF7F2] border border-[#EFE6DC] focus:border-[#733617] rounded-xl px-3.5 py-2.5 text-xs text-[#2D1508] outline-none transition resize-none"
-            />
+            <div className="relative">
+              <input
+                type="text"
+                value={streetAddress}
+                onChange={(e) => handleAddressSearch(e.target.value)}
+                placeholder="e.g. Vastrapur, Ahmedabad - 380015, Gujarat, India"
+                autoComplete="off"
+                className="w-full bg-[#FAF7F2] border border-[#EFE6DC] focus:border-[#733617] rounded-xl px-3.5 py-2.5 text-xs text-[#2D1508] outline-none transition"
+              />
+              {isSearching && (
+                <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                  <div className="w-3.5 h-3.5 border-2 border-[#733617]/30 border-t-[#733617] rounded-full animate-spin" />
+                </div>
+              )}
+            </div>
+            {suggestions.length > 0 && (
+              <ul className="absolute left-0 right-0 mt-1 z-50 rounded-xl bg-white border border-[#EFE6DC] shadow-xl max-h-48 overflow-y-auto divide-y divide-[#FAF7F2]">
+                {suggestions.map((s, idx) => (
+                  <li
+                    key={s.id || idx}
+                    onClick={() => handleAddressSelect(s)}
+                    className="flex items-start gap-2.5 cursor-pointer px-3.5 py-2.5 hover:bg-[#FAF7F2] text-left transition-colors"
+                  >
+                    <MapPin size={13} className="flex-shrink-0 mt-0.5 text-[#733617]" />
+                    <div className="min-w-0">
+                      <p className="text-xs font-semibold text-[#2D1508]">{s.title}</p>
+                      <p className="text-[10px] text-[#65544A] truncate">{s.subtitle || s.fullAddress}</p>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
 
           {/* Landmark / Closest Bus Stop */}

@@ -17,9 +17,9 @@ import Link from 'next/link';
 interface PlaceSuggestion {
   id: string;
   title: string;
+  subtitle?: string;
   fullAddress: string;
-  landmark: string;
-  pincode: string;
+  placeId?: string;
 }
 
 export default function AddAddressPage() {
@@ -39,6 +39,7 @@ export default function AddAddressPage() {
   const [isSearching, setIsSearching] = useState(false);
   const [focusedSuggestionIndex, setFocusedSuggestionIndex] = useState<number>(-1);
   const searchDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const sessionRef = useRef(Date.now().toString(36) + Math.random().toString(36).slice(2));
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => { 
@@ -67,7 +68,7 @@ export default function AddAddressPage() {
     setIsSearching(true);
     searchDebounceRef.current = setTimeout(async () => {
       try {
-        const res = await fetch(`/api/places-autocomplete?q=${encodeURIComponent(val.trim())}`);
+        const res = await fetch(`/api/places-autocomplete?q=${encodeURIComponent(val.trim())}&session=${sessionRef.current}`);
         if (res.ok) {
           const data = await res.json();
           if (data.success && Array.isArray(data.suggestions)) {
@@ -92,10 +93,12 @@ export default function AddAddressPage() {
     setFocusedSuggestionIndex(-1);
     setError('');
     setSuccessInfo('Location selected from suggestions.');
-    
-    // Auto-fill landmark if available and empty
-    if (s.landmark && !closestBusStop) {
-      setClosestBusStop(s.landmark);
+    // Start a new session for the next search
+    sessionRef.current = Date.now().toString(36) + Math.random().toString(36).slice(2);
+
+    // Auto-fill landmark from subtitle if available and empty
+    if ((s.subtitle) && !closestBusStop) {
+      setClosestBusStop(s.subtitle.split(',').slice(0, 2).join(',').trim());
     }
   };
 
@@ -431,7 +434,7 @@ export default function AddAddressPage() {
                                 {s.title}
                               </p>
                               <p className="text-[11px] text-[#65544A] truncate">
-                                {s.fullAddress}
+                                {s.subtitle || s.fullAddress}
                               </p>
                             </div>
                           </li>
